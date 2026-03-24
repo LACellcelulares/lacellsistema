@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Listar OS</title>
+</head>
+<body>
+    <h2>📄 Ordens de Serviço</h2>
+    <hr>
+
+    {% if ordens %}
+        <ul>
+        {% for os in ordens %}
+            <li>
+                <b>Cliente:</b> {{ os.cliente }} |
+                <b>Telefone:</b> {{ os.telefone }} |
+                <b>Aparelho:</b> {{ os.aparelho }} |
+                <b>Valor:</b> R$ {{ os.valor }}
+            </li>
+            <br>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhuma OS cadastrada.</p>
+    {% endif %}
+
+    <br>
+    <a href="/painel">⬅ Voltar ao Painel</a>
+</body>
+</html>
