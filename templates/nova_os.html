@@ -1,4 +1,4 @@
-<h2>Nova OS</h2>
+<h2>Nova Ordem de Serviço</h2>
 
 <form method="post">
 
@@ -11,24 +11,43 @@ Telefone:<br>
 Aparelho:<br>
 <input name="aparelho"><br><br>
 
+IMEI:<br>
+<input name="imei"><br><br>
+
+CPF/CNPJ:<br>
+<input name="cpf"><br><br>
+
 Defeito:<br>
 <input name="defeito"><br><br>
 
 Valor:<br>
 <input name="valor"><br><br>
 
+Forma de Pagamento:<br>
+<input name="pagamento"><br><br>
+
+Sinal:<br>
+<input name="sinal"><br><br>
+
+Restante:<br>
+<input name="restante"><br><br>
+
 Garantia:<br>
 <select name="garantia">
-<option value="Sem garantia">Sem garantia</option>
-<option value="30 dias">30 dias</option>
-<option value="60 dias">60 dias</option>
-<option value="90 dias">90 dias</option>
+<option>Sem garantia</option>
+<option>30 dias</option>
+<option>60 dias</option>
+<option>90 dias</option>
 </select><br><br>
 
-Senha padrão (ex: 1-2-3):<br>
+Senha:<br>
+<input name="senha"><br><br>
+
+Senha padrão (1-2-3):<br>
 <input name="senha_padrao"><br><br>
 
 <button type="submit">Gerar OS</button>
+
 </form>
 
 <script>
