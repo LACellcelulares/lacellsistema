@@ -8,8 +8,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
-USUARIO = "admin"
-SENHA = "1234"
+USUARIO = "pytty"
+SENHA = "diemfafa"
 
 PASTA_PDF = "pdfs"
 os.makedirs(PASTA_PDF, exist_ok=True)
