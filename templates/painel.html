@@ -1,9 +1,121 @@
 <!DOCTYPE html>
-<html>
-<head><title>Painel</title></head>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel — L&A CELL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body{
+            margin:0;
+            font-family: Arial, Helvetica, sans-serif;
+            background:#0f172a;
+            color:white;
+        }
+
+        .topo{
+            background:#111827;
+            padding:15px 25px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            box-shadow:0 0 10px rgba(0,0,0,0.4);
+        }
+
+        .logo{
+            font-size:20px;
+            font-weight:bold;
+            color:#22c55e;
+        }
+
+        .sair{
+            background:#ef4444;
+            padding:8px 15px;
+            border-radius:6px;
+            text-decoration:none;
+            color:white;
+        }
+
+        .container{
+            padding:30px;
+        }
+
+        .titulo{
+            font-size:22px;
+            margin-bottom:20px;
+        }
+
+        .cards{
+            display:flex;
+            gap:20px;
+            flex-wrap:wrap;
+        }
+
+        .card{
+            background:#111827;
+            padding:25px;
+            border-radius:12px;
+            width:250px;
+            text-align:center;
+            box-shadow:0 0 15px rgba(0,0,0,0.4);
+            transition:0.2s;
+        }
+
+        .card:hover{
+            transform:scale(1.05);
+        }
+
+        .card a{
+            text-decoration:none;
+            color:white;
+        }
+
+        .botao{
+            display:block;
+            margin-top:15px;
+            padding:10px;
+            background:#22c55e;
+            border-radius:8px;
+            color:#0f172a;
+            font-weight:bold;
+        }
+    </style>
+</head>
+
 <body>
-<h2>Painel</h2>
-<a href="/nova">Nova OS</a><br><br>
-<a href="/sair">Sair</a>
+
+    <div class="topo">
+        <div class="logo">L&A CELL</div>
+        <a class="sair" href="/sair">Sair</a>
+    </div>
+
+    <div class="container">
+
+        <div class="titulo">Painel do Sistema</div>
+
+        <div class="cards">
+
+            <div class="card">
+                <h3>Nova OS</h3>
+                <p>Criar nova ordem de serviço</p>
+                <a href="/nova" class="botao">Abrir</a>
+            </div>
+
+            <div class="card">
+                <h3>Histórico</h3>
+                <p>(em breve)</p>
+                <div class="botao" style="background:#374151;">Bloqueado</div>
+            </div>
+
+            <div class="card">
+                <h3>Configurações</h3>
+                <p>(em breve)</p>
+                <div class="botao" style="background:#374151;">Bloqueado</div>
+            </div>
+
+        </div>
+
+    </div>
+
 </body>
 </html>
