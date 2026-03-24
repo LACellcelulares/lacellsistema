@@ -8,12 +8,16 @@ from reportlab.lib.styles import getSampleStyleSheet
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
+# 🔐 LOGIN
 USUARIO = "pytty"
 SENHA = "diemfafa"
 
+# 📂 PASTA PDF
 PASTA_PDF = "pdfs"
 os.makedirs(PASTA_PDF, exist_ok=True)
 
+
+# 📄 GERAR PDF COMPLETO
 def gerar_pdf(numero, dados):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
@@ -26,6 +30,7 @@ def gerar_pdf(numero, dados):
         el.append(Spacer(1,10))
 
         el.append(Paragraph("L&A CELL - Assistência Técnica", styles['Heading2']))
+        el.append(Paragraph("WhatsApp: (11) 98083-3734", styles['Normal']))
         el.append(Spacer(1,10))
 
         el.append(Paragraph(f"ORDEM DE SERVIÇO Nº {numero}", styles['Normal']))
@@ -55,15 +60,23 @@ def gerar_pdf(numero, dados):
     return caminho
 
 
+# 🔐 LOGIN
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        if request.form.get("usuario") == USUARIO and request.form.get("senha") == SENHA:
+        usuario = request.form.get("usuario")
+        senha = request.form.get("senha")
+
+        if usuario == USUARIO and senha == SENHA:
             session["logado"] = True
             return redirect(url_for("painel"))
-    return render_template("login.html")
+        else:
+            return render_template("login.html", erro="Usuário ou senha inválidos")
+
+    return render_template("login.html", erro=None)
 
 
+# 📊 PAINEL
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -71,13 +84,16 @@ def painel():
     return render_template("painel.html")
 
 
+# 🧾 NOVA OS
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
         return redirect(url_for("login"))
 
     if request.method == "POST":
-        numero = datetime.now().strftime("%d%H%M%S")
+
+        # 🔢 NÚMERO OS MELHOR
+        numero = datetime.now().strftime("%Y%m%d%H%M")
 
         dados = {
             "cliente": request.form.get("cliente"),
@@ -102,11 +118,13 @@ def nova():
     return render_template("nova_os.html")
 
 
+# 🚪 SAIR
 @app.route("/sair")
 def sair():
     session.clear()
     return redirect(url_for("login"))
 
 
+# ▶️ RODAR
 if __name__ == "__main__":
     app.run(debug=True)
