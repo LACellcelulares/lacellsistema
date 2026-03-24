@@ -1,14 +1,141 @@
 <!DOCTYPE html>
-<html>
-<head><title>Nova OS</title></head>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova OS — L&A CELL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body{
+            margin:0;
+            font-family: Arial, Helvetica, sans-serif;
+            background:#0f172a;
+            color:white;
+        }
+
+        .topo{
+            background:#111827;
+            padding:15px 25px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        .logo{
+            color:#22c55e;
+            font-weight:bold;
+        }
+
+        .voltar{
+            background:#374151;
+            padding:8px 15px;
+            border-radius:6px;
+            text-decoration:none;
+            color:white;
+        }
+
+        .container{
+            padding:25px;
+        }
+
+        h2{
+            margin-bottom:20px;
+        }
+
+        form{
+            background:#111827;
+            padding:20px;
+            border-radius:12px;
+            max-width:700px;
+        }
+
+        .linha{
+            display:flex;
+            gap:10px;
+            margin-bottom:10px;
+        }
+
+        input{
+            flex:1;
+            padding:10px;
+            border:none;
+            border-radius:6px;
+            background:#1f2937;
+            color:white;
+        }
+
+        .full{
+            width:100%;
+            margin-bottom:10px;
+        }
+
+        button{
+            width:100%;
+            padding:12px;
+            margin-top:15px;
+            border:none;
+            border-radius:8px;
+            background:#22c55e;
+            color:#0f172a;
+            font-weight:bold;
+            cursor:pointer;
+        }
+
+        button:hover{
+            opacity:0.9;
+        }
+    </style>
+</head>
+
 <body>
-<h2>Nova Ordem de Serviço</h2>
-<form method="post">
-<label>Cliente:</label><br>
-<input name="cliente"><br><br>
-<button type="submit">Gerar OS (PDF)</button>
-</form>
-<br>
-<a href="/painel">Voltar</a>
+
+    <div class="topo">
+        <div class="logo">L&A CELL</div>
+        <a class="voltar" href="/painel">Voltar</a>
+    </div>
+
+    <div class="container">
+
+        <h2>Nova Ordem de Serviço</h2>
+
+        <form method="post">
+
+            <div class="linha">
+                <input name="cliente" placeholder="Cliente" required>
+                <input name="telefone" placeholder="Telefone">
+            </div>
+
+            <div class="linha">
+                <input name="aparelho" placeholder="Aparelho">
+                <input name="imei" placeholder="IMEI">
+            </div>
+
+            <input class="full" name="cpf" placeholder="CPF/CNPJ">
+
+            <input class="full" name="defeito" placeholder="Defeito">
+
+            <div class="linha">
+                <input name="valor" placeholder="Valor">
+                <input name="pagamento" placeholder="Pagamento">
+            </div>
+
+            <div class="linha">
+                <input name="sinal" placeholder="Sinal">
+                <input name="restante" placeholder="Restante">
+            </div>
+
+            <input class="full" name="garantia" placeholder="Garantia">
+
+            <div class="linha">
+                <input name="senha" placeholder="Senha numérica">
+                <input name="senha_padrao" placeholder="Senha desenho">
+            </div>
+
+            <button type="submit">GERAR OS (PDF)</button>
+
+        </form>
+
+    </div>
+
 </body>
 </html>
