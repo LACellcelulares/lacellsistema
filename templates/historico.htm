@@ -1,0 +1,18 @@
+<h2>Histórico</h2>
+
+<form>
+<input name="busca" placeholder="Buscar cliente ou telefone">
+<button>Buscar</button>
+</form>
+
+{% for os in lista %}
+<div style="border:1px solid #ccc; margin:10px; padding:10px;">
+OS: {{ os.numero }}<br>
+Cliente: {{ os.cliente }}<br>
+Telefone: {{ os.telefone }}<br>
+
+<a href="/reimprimir/{{ os.numero }}">Reimprimir</a>
+</div>
+{% endfor %}
+
+<a href="/painel">Voltar</a>
