@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>L&A CELL — Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body{
+            margin:0;
+            font-family: Arial, Helvetica, sans-serif;
+            background:#0f172a;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
+        .box{
+            background:#111827;
+            padding:40px;
+            border-radius:12px;
+            width:320px;
+            box-shadow:0 0 20px rgba(0,0,0,0.4);
+            text-align:center;
+        }
+        h1{
+            color:#22c55e;
+            margin-bottom:25px;
+        }
+        input{
+            width:100%;
+            padding:12px;
+            margin:10px 0;
+            border-radius:8px;
+            border:none;
+            background:#1f2937;
+            color:white;
+        }
+        button{
+            width:100%;
+            padding:12px;
+            margin-top:15px;
+            border-radius:8px;
+            border:none;
+            background:#22c55e;
+            color:#0f172a;
+            font-weight:bold;
+            cursor:pointer;
+        }
+        button:hover{
+            opacity:0.9;
+        }
+        .erro{
+            color:#ef4444;
+            margin-top:10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>L&A CELL</h1>
+        <form method="POST">
+            <input type="text" name="usuario" placeholder="Usuário" required>
+            <input type="password" name="senha" placeholder="Senha" required>
+            <button type="submit">Entrar</button>
+        </form>
+        {% if erro %}
+            <div class="erro">{{ erro }}</div>
+        {% endif %}
+    </div>
+</body>
+</html>
