@@ -1,141 +1,48 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Nova OS — L&A CELL</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<h2>Nova OS</h2>
 
-    <style>
-        body{
-            margin:0;
-            font-family: Arial, Helvetica, sans-serif;
-            background:#0f172a;
-            color:white;
-        }
+<form method="post">
 
-        .topo{
-            background:#111827;
-            padding:15px 25px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
+Cliente:<br>
+<input name="cliente"><br><br>
 
-        .logo{
-            color:#22c55e;
-            font-weight:bold;
-        }
+Telefone:<br>
+<input name="telefone" id="tel"><br><br>
 
-        .voltar{
-            background:#374151;
-            padding:8px 15px;
-            border-radius:6px;
-            text-decoration:none;
-            color:white;
-        }
+Aparelho:<br>
+<input name="aparelho"><br><br>
 
-        .container{
-            padding:25px;
-        }
+Defeito:<br>
+<input name="defeito"><br><br>
 
-        h2{
-            margin-bottom:20px;
-        }
+Valor:<br>
+<input name="valor"><br><br>
 
-        form{
-            background:#111827;
-            padding:20px;
-            border-radius:12px;
-            max-width:700px;
-        }
+Garantia:<br>
+<select name="garantia">
+<option value="Sem garantia">Sem garantia</option>
+<option value="30 dias">30 dias</option>
+<option value="60 dias">60 dias</option>
+<option value="90 dias">90 dias</option>
+</select><br><br>
 
-        .linha{
-            display:flex;
-            gap:10px;
-            margin-bottom:10px;
-        }
+Senha padrão (ex: 1-2-3):<br>
+<input name="senha_padrao"><br><br>
 
-        input{
-            flex:1;
-            padding:10px;
-            border:none;
-            border-radius:6px;
-            background:#1f2937;
-            color:white;
-        }
+<button type="submit">Gerar OS</button>
+</form>
 
-        .full{
-            width:100%;
-            margin-bottom:10px;
-        }
+<script>
+document.getElementById('tel').addEventListener('input', function(e){
+    let v = e.target.value.replace(/\D/g,'');
+    if(v.length > 11) v = v.slice(0,11);
 
-        button{
-            width:100%;
-            padding:12px;
-            margin-top:15px;
-            border:none;
-            border-radius:8px;
-            background:#22c55e;
-            color:#0f172a;
-            font-weight:bold;
-            cursor:pointer;
-        }
+    if(v.length > 6)
+        v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1)$2-$3');
+    else if(v.length > 2)
+        v = v.replace(/(\d{2})(\d{0,5})/, '($1)$2');
 
-        button:hover{
-            opacity:0.9;
-        }
-    </style>
-</head>
+    e.target.value = v;
+});
+</script>
 
-<body>
-
-    <div class="topo">
-        <div class="logo">L&A CELL</div>
-        <a class="voltar" href="/painel">Voltar</a>
-    </div>
-
-    <div class="container">
-
-        <h2>Nova Ordem de Serviço</h2>
-
-        <form method="post">
-
-            <div class="linha">
-                <input name="cliente" placeholder="Cliente" required>
-                <input name="telefone" placeholder="Telefone">
-            </div>
-
-            <div class="linha">
-                <input name="aparelho" placeholder="Aparelho">
-                <input name="imei" placeholder="IMEI">
-            </div>
-
-            <input class="full" name="cpf" placeholder="CPF/CNPJ">
-
-            <input class="full" name="defeito" placeholder="Defeito">
-
-            <div class="linha">
-                <input name="valor" placeholder="Valor">
-                <input name="pagamento" placeholder="Pagamento">
-            </div>
-
-            <div class="linha">
-                <input name="sinal" placeholder="Sinal">
-                <input name="restante" placeholder="Restante">
-            </div>
-
-            <input class="full" name="garantia" placeholder="Garantia">
-
-            <div class="linha">
-                <input name="senha" placeholder="Senha numérica">
-                <input name="senha_padrao" placeholder="Senha desenho">
-            </div>
-
-            <button type="submit">GERAR OS (PDF)</button>
-
-        </form>
-
-    </div>
-
-</body>
-</html>
+<a href="/painel">Voltar</a>
