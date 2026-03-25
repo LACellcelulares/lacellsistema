@@ -1,29 +1,86 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Listar OS</title>
+<meta charset="UTF-8">
+<title>Listar OS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+    body{
+        margin:0;
+        background:#0f172a;
+        font-family:Arial, Helvetica, sans-serif;
+        color:white;
+        padding:15px;
+    }
+
+    h2{
+        text-align:center;
+        color:#22c55e;
+        margin-bottom:20px;
+    }
+
+    .lista{
+        max-width:600px;
+        margin:auto;
+        background:#111827;
+        padding:20px;
+        border-radius:12px;
+        box-shadow:0 0 15px rgba(0,0,0,.4);
+    }
+
+    .os-card{
+        background:#1f2937;
+        padding:15px;
+        border-radius:10px;
+        margin-bottom:15px;
+        box-shadow:0 0 10px rgba(0,0,0,.3);
+    }
+
+    .os-card b{
+        color:#22c55e;
+    }
+
+    .vazio{
+        text-align:center;
+        font-size:18px;
+        color:#9ca3af;
+        padding:20px;
+    }
+
+    .voltar{
+        display:block;
+        text-align:center;
+        margin-top:20px;
+        text-decoration:none;
+        color:#22c55e;
+        font-weight:bold;
+    }
+</style>
 </head>
+
 <body>
-    <h2>📄 Ordens de Serviço</h2>
-    <hr>
 
-    {% if ordens %}
-        <ul>
-        {% for os in ordens %}
-            <li>
-                <b>Cliente:</b> {{ os.cliente }} |
-                <b>Telefone:</b> {{ os.telefone }} |
-                <b>Aparelho:</b> {{ os.aparelho }} |
-                <b>Valor:</b> R$ {{ os.valor }}
-            </li>
-            <br>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>Nenhuma OS cadastrada.</p>
-    {% endif %}
+<h2>📄 Ordens de Serviço</h2>
 
-    <br>
-    <a href="/painel">⬅ Voltar ao Painel</a>
+<div class="lista">
+
+{% if ordens %}
+    {% for os in ordens %}
+        <div class="os-card">
+            <b>Cliente:</b> {{ os.cliente }} <br>
+            <b>Telefone:</b> {{ os.telefone }} <br>
+            <b>Aparelho:</b> {{ os.aparelho }} <br>
+            <b>Valor:</b> R$ {{ os.valor }}
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="vazio">Nenhuma OS cadastrada.</div>
+{% endif %}
+
+</div>
+
+<a href="/painel" class="voltar">⬅ Voltar ao Painel</a>
+
 </body>
 </html>
