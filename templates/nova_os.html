@@ -1,28 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Nova OS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+    body{
+        margin:0;
+        background:#0f172a;
+        font-family:Arial, Helvetica, sans-serif;
+        color:white;
+        padding:15px;
+    }
+
+    h2{
+        color:#22c55e;
+        text-align:center;
+        margin-bottom:20px;
+    }
+
+    .box{
+        background:#111827;
+        padding:20px;
+        border-radius:12px;
+        max-width:460px;
+        margin:auto;
+        box-shadow:0 0 20px rgba(0,0,0,.35);
+    }
+
+    label{
+        font-size:15px;
+        font-weight:bold;
+    }
+
+    input, select{
+        width:100%;
+        padding:12px;
+        margin:8px 0 18px 0;
+        border-radius:8px;
+        border:none;
+        background:#1f2937;
+        color:white;
+        font-size:15px;
+    }
+
+    button{
+        width:100%;
+        padding:14px;
+        border:none;
+        border-radius:8px;
+        background:#22c55e;
+        color:#0f172a;
+        font-weight:bold;
+        font-size:16px;
+        cursor:pointer;
+    }
+
+    button:hover{
+        opacity:.9;
+    }
+
+    a{
+        display:block;
+        text-align:center;
+        margin-top:20px;
+        color:#22c55e;
+        text-decoration:none;
+        font-size:16px;
+    }
+</style>
+</head>
+
+<body>
+
 <h2>🧾 Nova Ordem de Serviço</h2>
 
+<div class="box">
+
 <form method="post">
-Cliente:<br><input name="cliente" required><br><br>
-Telefone:<br><input name="telefone" id="tel" required><br><br>
-Aparelho:<br><input name="aparelho" required><br><br>
-IMEI:<br><input name="imei"><br><br>
-CPF:<br><input name="cpf"><br><br>
-Defeito:<br><input name="defeito"><br><br>
-Valor:<br><input name="valor" id="valor"><br><br>
-Sinal:<br><input name="sinal" id="sinal"><br><br>
-Restante:<br><input name="restante" id="restante" readonly><br><br>
-Pagamento:<br><input name="pagamento"><br><br>
-Entrega:<br><input type="date" name="entrega"><br><br>
-Garantia:<br>
+
+<label>Cliente:</label>
+<input name="cliente" required>
+
+<label>Telefone:</label>
+<input name="telefone" id="tel" required>
+
+<label>Aparelho:</label>
+<input name="aparelho" required>
+
+<label>IMEI:</label>
+<input name="imei">
+
+<label>CPF:</label>
+<input name="cpf">
+
+<label>Defeito:</label>
+<input name="defeito">
+
+<label>Valor:</label>
+<input name="valor" id="valor">
+
+<label>Sinal:</label>
+<input name="sinal" id="sinal">
+
+<label>Restante:</label>
+<input name="restante" id="restante" readonly>
+
+<label>Pagamento:</label>
+<input name="pagamento">
+
+<label>Entrega:</label>
+<input type="date" name="entrega">
+
+<label>Garantia:</label>
 <select name="garantia">
-<option>Sem garantia</option>
-<option>30 dias</option>
-<option>60 dias</option>
-<option>90 dias</option>
-</select><br><br>
-Senha:<br><input name="senha"><br><br>
+    <option>Sem garantia</option>
+    <option>30 dias</option>
+    <option>60 dias</option>
+    <option>90 dias</option>
+</select>
+
+<label>Senha do aparelho:</label>
+<input name="senha">
 
 <button type="submit">💾 Gerar OS</button>
 </form>
+</div>
+
+<a href="/painel">⬅ Voltar</a>
 
 <script>
 document.getElementById('tel').addEventListener('input', e=>{
@@ -41,4 +147,5 @@ valor.oninput=calc
 sinal.oninput=calc
 </script>
 
-<br><a href="/painel">⬅ Voltar</a>
+</body>
+</html>
