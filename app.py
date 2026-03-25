@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, send_file
+from flask import Flask, render_template, request, redirect, session, send_file, abort
 import os
 import json
 from datetime import datetime
@@ -42,12 +42,9 @@ def salvar_os(dados):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ===== DESENHO SENHA PADRÃO 9 PONTOS =====
+# ===== DESENHO SENHA PADRÃO =====
 def desenhar_padrao():
-    pontos = [["○","○","○"],
-              ["○","○","○"],
-              ["○","○","○"]]
-
+    pontos = [["○","○","○"],["○","○","○"],["○","○","○"]]
     tabela = Table(pontos, colWidths=22, rowHeights=22)
     tabela.setStyle(TableStyle([
         ('GRID',(0,0),(-1,-1),1,colors.black),
@@ -55,24 +52,19 @@ def desenhar_padrao():
     ]))
     return tabela
 
-# ===== PDF OS (A4 — DUAS VIAS) =====
+# ===== PDF OS — 2 VIAS A4 =====
 def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
 
-    doc = SimpleDocTemplate(
-        caminho,
-        pagesize=A4,
-        rightMargin=30,leftMargin=30,
-        topMargin=30,bottomMargin=30
-    )
+    doc = SimpleDocTemplate(caminho, pagesize=A4,
+        rightMargin=30,leftMargin=30,topMargin=25,bottomMargin=25)
 
     el = []
 
-    def via(titulo):
+    def bloco(titulo):
         el.append(Paragraph(f"<b>{titulo}</b>", styles['Heading4']))
         el.append(Spacer(1,6))
-
         el.append(Paragraph(loja, styles['Heading2']))
         el.append(Paragraph(f"WhatsApp: {whatsapp}", styles['Normal']))
         el.append(Spacer(1,6))
@@ -80,48 +72,45 @@ def gerar_pdf_os(numero, dados, loja, whatsapp):
         linhas = [
             f"ORDEM DE SERVIÇO Nº {numero}",
             f"Data: {dados['data']}",
-            f"Data de Entrega: {dados['entrega']}",
+            f"Entrega: {dados['entrega']}",
             f"Cliente: {dados['cliente']}",
             f"Telefone: {dados['telefone']}",
             f"Aparelho: {dados['aparelho']}",
             f"IMEI: {dados['imei']}    CPF/CNPJ: {dados['cpf']}",
             f"Defeito: {dados['defeito']}",
             f"Valor: R$ {dados['valor']:.2f}",
-            f"Forma de Pagamento: {dados['pagamento']}",
+            f"Pagamento: {dados['pagamento']}",
             f"Sinal: R$ {dados['sinal']:.2f}",
             f"Restante: R$ {dados['restante']:.2f}",
             f"Garantia: {dados['garantia']}",
             f"Senha Numérica: {dados['senha']}",
         ]
 
-        for linha in linhas:
-            el.append(Paragraph(linha, styles['Normal']))
+        for l in linhas:
+            el.append(Paragraph(l, styles['Normal']))
 
-        el.append(Spacer(1,10))
-        el.append(Paragraph("Senha Padrão (desenho):", styles['Normal']))
-        el.append(Spacer(1,6))
+        el.append(Spacer(1,8))
+        el.append(Paragraph("Senha Padrão:", styles['Normal']))
+        el.append(Spacer(1,4))
         el.append(desenhar_padrao())
 
-        el.append(Spacer(1,16))
-        el.append(Paragraph("Assinatura do Cliente: ____________________________________", styles['Normal']))
-        el.append(Spacer(1,12))
+        el.append(Spacer(1,14))
+        el.append(Paragraph("Assinatura Cliente: _________________________________", styles['Normal']))
+        el.append(Spacer(1,10))
+        el.append(Paragraph("Assinatura Loja: ____________________________________", styles['Normal']))
 
-    # VIA CLIENTE
-    via("VIA DO CLIENTE")
-
-    el.append(Spacer(1,18))
-    el.append(Paragraph("✂️ ------------------------------------------------------------------------------", styles['Normal']))
-    el.append(Spacer(1,18))
-
-    # VIA LOJA
-    via("VIA DA LOJA")
+    bloco("VIA DO CLIENTE")
+    el.append(Spacer(1,14))
+    el.append(Paragraph("✂️ --------------------------------------------------------------", styles['Normal']))
+    el.append(Spacer(1,14))
+    bloco("VIA DA LOJA")
 
     doc.build(el)
     return caminho
 
-# ===== PDF RELATÓRIO (SEPARADO POR LOJA) =====
+# ===== PDF RELATÓRIO =====
 def gerar_pdf_relatorio(lista, loja_nome, mes_ref):
-    caminho = os.path.join(PASTA_PDF, f"RELATORIO_{loja_nome}_{mes_ref}.pdf")
+    caminho = os.path.join(PASTA_PDF, f"RELATORIO_{mes_ref}.pdf")
     styles = getSampleStyleSheet()
 
     total_qtd = len(lista)
@@ -130,21 +119,18 @@ def gerar_pdf_relatorio(lista, loja_nome, mes_ref):
     doc = SimpleDocTemplate(caminho, pagesize=A4)
     el = []
 
-    el.append(Paragraph("RELATÓRIO MENSAL DE ORDENS DE SERVIÇO", styles['Heading2']))
+    el.append(Paragraph("RELATÓRIO MENSAL DE OS", styles['Heading2']))
     el.append(Spacer(1,8))
     el.append(Paragraph(f"Loja: {loja_nome}", styles['Normal']))
     el.append(Paragraph(f"Mês: {mes_ref}", styles['Normal']))
-    el.append(Paragraph(f"Total de OS: {total_qtd}", styles['Normal']))
-    el.append(Paragraph(f"Faturamento Total: R$ {total_valor:.2f}", styles['Normal']))
+    el.append(Paragraph(f"Total OS: {total_qtd}", styles['Normal']))
+    el.append(Paragraph(f"Faturamento: R$ {total_valor:.2f}", styles['Normal']))
     el.append(Spacer(1,12))
 
     dados_tabela = [["OS","Cliente","Aparelho","Valor"]]
-
     for o in lista:
         dados_tabela.append([
-            o["numero"],
-            o["cliente"],
-            o["aparelho"],
+            o["numero"], o["cliente"], o["aparelho"],
             f"R$ {float(o['valor']):.2f}"
         ])
 
@@ -224,19 +210,48 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ===== HISTÓRICO (SÓ DA LOJA) =====
+# ===== HISTÓRICO + BUSCA =====
 @app.route("/historico")
 def historico():
     if not session.get("logado"):
         return redirect("/")
 
     usuario = session["usuario"]
+    busca = request.args.get("q","").lower()
+
     lista = carregar_os()
-    lista = [o for o in lista if o.get("loja") == usuario]
+    lista = [o for o in lista if o.get("loja")==usuario]
 
-    return render_template("historico.html", lista=lista)
+    if busca:
+        lista = [
+            o for o in lista
+            if busca in o["cliente"].lower()
+            or busca in o["aparelho"].lower()
+            or busca in o["numero"].lower()
+        ]
 
-# ===== RELATÓRIO (SÓ DA LOJA) =====
+    return render_template("historico.html", lista=lista, busca=busca)
+
+# ===== VISUALIZAR OS =====
+@app.route("/os/<numero>")
+def ver_os(numero):
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    lista = carregar_os()
+
+    os_encontrada = next((o for o in lista if o["numero"]==numero and o["loja"]==usuario), None)
+    if not os_encontrada:
+        abort(404)
+
+    loja_nome = USUARIOS[usuario]["loja"]
+    whatsapp = USUARIOS[usuario]["whatsapp"]
+
+    pdf = gerar_pdf_os(numero, os_encontrada, loja_nome, whatsapp)
+    return send_file(pdf)
+
+# ===== RELATÓRIO =====
 @app.route("/relatorio")
 def relatorio():
     if not session.get("logado"):
@@ -247,7 +262,7 @@ def relatorio():
     mes_ref = datetime.now().strftime("%m-%Y")
 
     lista = carregar_os()
-    lista = [o for o in lista if o.get("loja") == usuario]
+    lista = [o for o in lista if o.get("loja")==usuario]
 
     pdf = gerar_pdf_relatorio(lista, loja_nome, mes_ref)
     return send_file(pdf, as_attachment=True)
