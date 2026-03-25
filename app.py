@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, session, send_file
 import os
 import json
 from datetime import datetime
-import matplotlib.pyplot as plt
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
@@ -43,37 +42,14 @@ def salvar_os(dados):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ===== DESENHO SENHA =====
-def desenhar_padrao(padrao):
-    pontos = [["○","○","○"],["○","○","○"],["○","○","○"]]
-    if padrao:
-        try:
-            nums = [int(x) for x in padrao.split("-")]
-            for n in nums:
-                linha = (n-1)//3
-                col = (n-1)%3
-                pontos[linha][col] = "●"
-        except:
-            pass
-
-    tabela = Table(pontos, colWidths=18, rowHeights=18)
-    tabela.setStyle(TableStyle([
-        ('GRID',(0,0),(-1,-1),1,colors.black),
-        ('ALIGN',(0,0),(-1,-1),'CENTER')
-    ]))
-    return tabela
-
-# ===== PDF OS A4 =====
-def gerar_pdf(numero, dados, loja, whatsapp):
+# ===== PDF OS =====
+def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
 
-    doc = SimpleDocTemplate(
-        caminho,
-        pagesize=A4,
-        rightMargin=30,leftMargin=30,
-        topMargin=30,bottomMargin=30
-    )
+    doc = SimpleDocTemplate(caminho, pagesize=A4,
+                            rightMargin=30,leftMargin=30,
+                            topMargin=30,bottomMargin=30)
 
     el = []
 
@@ -81,7 +57,7 @@ def gerar_pdf(numero, dados, loja, whatsapp):
         el.append(Paragraph(f"<b>{tipo}</b>", styles['Heading4']))
         el.append(Spacer(1,6))
 
-        el.append(Paragraph(loja, styles['Heading3']))
+        el.append(Paragraph(loja, styles['Heading2']))
         el.append(Paragraph(f"WhatsApp: {whatsapp}", styles['Normal']))
         el.append(Spacer(1,6))
 
@@ -105,11 +81,7 @@ def gerar_pdf(numero, dados, loja, whatsapp):
         for linha in linhas:
             el.append(Paragraph(linha, styles['Normal']))
 
-        el.append(Spacer(1,6))
-        el.append(Paragraph("Senha padrão (desenho):", styles['Normal']))
-        el.append(desenhar_padrao(dados['senha_padrao']))
-
-        el.append(Spacer(1,10))
+        el.append(Spacer(1,12))
         el.append(Paragraph("Assinatura: ____________________________________", styles['Normal']))
         el.append(Spacer(1,12))
         el.append(Paragraph("------------------------------------------------------------", styles['Normal']))
@@ -121,7 +93,49 @@ def gerar_pdf(numero, dados, loja, whatsapp):
     doc.build(el)
     return caminho
 
-# ===== LOGIN (CORRIGIDO) =====
+# ===== PDF RELATÓRIO =====
+def gerar_pdf_relatorio(lista, loja_nome, mes_ref):
+    caminho = os.path.join(PASTA_PDF, f"RELATORIO_{loja_nome}_{mes_ref}.pdf")
+    styles = getSampleStyleSheet()
+
+    total_qtd = len(lista)
+    total_valor = sum(float(o["valor"]) for o in lista)
+
+    doc = SimpleDocTemplate(caminho, pagesize=A4,
+                            rightMargin=30,leftMargin=30,
+                            topMargin=30,bottomMargin=30)
+
+    el = []
+    el.append(Paragraph("RELATÓRIO MENSAL DE ORDENS DE SERVIÇO", styles['Heading2']))
+    el.append(Spacer(1,8))
+    el.append(Paragraph(f"Loja: {loja_nome}", styles['Normal']))
+    el.append(Paragraph(f"Mês: {mes_ref}", styles['Normal']))
+    el.append(Paragraph(f"Total de OS: {total_qtd}", styles['Normal']))
+    el.append(Paragraph(f"Faturamento Total: R$ {total_valor:.2f}", styles['Normal']))
+    el.append(Spacer(1,12))
+
+    dados_tabela = [["OS","Cliente","Aparelho","Valor"]]
+
+    for o in lista:
+        dados_tabela.append([
+            o["numero"],
+            o["cliente"],
+            o["aparelho"],
+            f"R$ {float(o['valor']):.2f}"
+        ])
+
+    tabela = Table(dados_tabela, colWidths=[80,150,150,80])
+    tabela.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
+        ('GRID',(0,0),(-1,-1),1,colors.black),
+        ('ALIGN',(3,1),(3,-1),'RIGHT')
+    ]))
+
+    el.append(tabela)
+    doc.build(el)
+    return caminho
+
+# ===== LOGIN =====
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -179,13 +193,44 @@ def nova():
 
         salvar_os(dados)
 
-        loja = USUARIOS[usuario]["loja"]
+        loja_nome = USUARIOS[usuario]["loja"]
         whatsapp = USUARIOS[usuario]["whatsapp"]
 
-        pdf = gerar_pdf(numero, dados, loja, whatsapp)
+        pdf = gerar_pdf_os(numero, dados, loja_nome, whatsapp)
         return send_file(pdf, as_attachment=True)
 
     return render_template("nova_os.html")
+
+# ===== HISTÓRICO (SÓ DA LOJA) =====
+@app.route("/historico")
+def historico():
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    lista = carregar_os()
+    lista = [o for o in lista if o.get("loja") == usuario]
+
+    return render_template("historico.html", lista=lista)
+
+# ===== RELATÓRIO MENSAL (SÓ DA LOJA) =====
+@app.route("/relatorio")
+def relatorio():
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    loja_nome = USUARIOS[usuario]["loja"]
+    mes_ref = datetime.now().strftime("%m/%Y")
+
+    lista = carregar_os()
+    lista = [
+        o for o in lista
+        if o.get("loja") == usuario and mes_ref in o.get("data","")
+    ]
+
+    pdf = gerar_pdf_relatorio(lista, loja_nome, mes_ref.replace("/","-"))
+    return send_file(pdf, as_attachment=True)
 
 # ===== SAIR =====
 @app.route("/sair")
