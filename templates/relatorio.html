@@ -1,7 +1,83 @@
-<h2>Relatório do mês</h2>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Relatório Mensal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-Total de OS: {{ qtd }}<br>
-Faturamento: R$ {{ total }}
+<style>
+    body{
+        margin:0;
+        background:#0f172a;
+        font-family:Arial, Helvetica, sans-serif;
+        color:white;
+        padding:20px;
+    }
 
-<br><br>
-<a href="/painel">Voltar</a>
+    h2{
+        text-align:center;
+        color:#22c55e;
+        margin-bottom:25px;
+    }
+
+    .box{
+        max-width:500px;
+        margin:auto;
+        background:#111827;
+        padding:25px;
+        border-radius:12px;
+        box-shadow:0 0 20px rgba(0,0,0,.35);
+        text-align:center;
+    }
+
+    .info{
+        background:#1f2937;
+        padding:20px;
+        border-radius:10px;
+        margin-bottom:20px;
+        font-size:18px;
+        box-shadow:0 0 10px rgba(0,0,0,.3);
+    }
+
+    b{
+        color:#22c55e;
+    }
+
+    .voltar{
+        display:block;
+        margin-top:20px;
+        text-align:center;
+        text-decoration:none;
+        background:#22c55e;
+        color:#0f172a;
+        padding:12px;
+        border-radius:8px;
+        font-weight:bold;
+        max-width:350px;
+        margin-left:auto;
+        margin-right:auto;
+    }
+
+    .voltar:hover{
+        opacity:.9;
+    }
+</style>
+</head>
+
+<body>
+
+<h2>📊 Relatório do Mês</h2>
+
+<div class="box">
+
+    <div class="info">
+        Total de OS: <b>{{ qtd }}</b><br><br>
+        Faturamento: <b>R$ {{ total }}</b>
+    </div>
+
+</div>
+
+<a href="/painel" class="voltar">⬅ Voltar</a>
+
+</body>
+</html>
