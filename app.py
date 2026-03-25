@@ -55,7 +55,7 @@ def desenhar_padrao():
     ]))
     return tabela
 
-# ===== PDF OS (1 FOLHA A4) =====
+# ===== PDF OS (A4 — DUAS VIAS) =====
 def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
@@ -69,39 +69,52 @@ def gerar_pdf_os(numero, dados, loja, whatsapp):
 
     el = []
 
-    el.append(Paragraph(loja, styles['Heading2']))
-    el.append(Paragraph(f"WhatsApp: {whatsapp}", styles['Normal']))
-    el.append(Spacer(1,8))
+    def via(titulo):
+        el.append(Paragraph(f"<b>{titulo}</b>", styles['Heading4']))
+        el.append(Spacer(1,6))
 
-    linhas = [
-        f"ORDEM DE SERVIÇO Nº {numero}",
-        f"Data: {dados['data']}",
-        f"Data de Entrega: {dados['entrega']}",
-        f"Cliente: {dados['cliente']}",
-        f"Telefone: {dados['telefone']}",
-        f"Aparelho: {dados['aparelho']}",
-        f"IMEI: {dados['imei']}    CPF/CNPJ: {dados['cpf']}",
-        f"Defeito: {dados['defeito']}",
-        f"Valor: R$ {dados['valor']:.2f}",
-        f"Forma de Pagamento: {dados['pagamento']}",
-        f"Sinal: R$ {dados['sinal']:.2f}",
-        f"Restante: R$ {dados['restante']:.2f}",
-        f"Garantia: {dados['garantia']}",
-        f"Senha Numérica: {dados['senha']}",
-    ]
+        el.append(Paragraph(loja, styles['Heading2']))
+        el.append(Paragraph(f"WhatsApp: {whatsapp}", styles['Normal']))
+        el.append(Spacer(1,6))
 
-    for linha in linhas:
-        el.append(Paragraph(linha, styles['Normal']))
+        linhas = [
+            f"ORDEM DE SERVIÇO Nº {numero}",
+            f"Data: {dados['data']}",
+            f"Data de Entrega: {dados['entrega']}",
+            f"Cliente: {dados['cliente']}",
+            f"Telefone: {dados['telefone']}",
+            f"Aparelho: {dados['aparelho']}",
+            f"IMEI: {dados['imei']}    CPF/CNPJ: {dados['cpf']}",
+            f"Defeito: {dados['defeito']}",
+            f"Valor: R$ {dados['valor']:.2f}",
+            f"Forma de Pagamento: {dados['pagamento']}",
+            f"Sinal: R$ {dados['sinal']:.2f}",
+            f"Restante: R$ {dados['restante']:.2f}",
+            f"Garantia: {dados['garantia']}",
+            f"Senha Numérica: {dados['senha']}",
+        ]
 
-    el.append(Spacer(1,10))
-    el.append(Paragraph("Senha Padrão (desenho):", styles['Normal']))
-    el.append(Spacer(1,6))
-    el.append(desenhar_padrao())
+        for linha in linhas:
+            el.append(Paragraph(linha, styles['Normal']))
+
+        el.append(Spacer(1,10))
+        el.append(Paragraph("Senha Padrão (desenho):", styles['Normal']))
+        el.append(Spacer(1,6))
+        el.append(desenhar_padrao())
+
+        el.append(Spacer(1,16))
+        el.append(Paragraph("Assinatura do Cliente: ____________________________________", styles['Normal']))
+        el.append(Spacer(1,12))
+
+    # VIA CLIENTE
+    via("VIA DO CLIENTE")
 
     el.append(Spacer(1,18))
-    el.append(Paragraph("Assinatura do Cliente: ____________________________________", styles['Normal']))
+    el.append(Paragraph("✂️ ------------------------------------------------------------------------------", styles['Normal']))
     el.append(Spacer(1,18))
-    el.append(Paragraph("Assinatura da Loja: _______________________________________", styles['Normal']))
+
+    # VIA LOJA
+    via("VIA DA LOJA")
 
     doc.build(el)
     return caminho
