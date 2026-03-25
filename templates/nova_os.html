@@ -6,7 +6,7 @@ Cliente:<br>
 <input name="cliente"><br><br>
 
 Telefone:<br>
-<input name="telefone"><br><br>
+<input name="telefone" id="tel"><br><br>
 
 Aparelho:<br>
 <input name="aparelho"><br><br>
@@ -32,6 +32,9 @@ Sinal:<br>
 Restante:<br>
 <input name="restante" id="restante" readonly><br><br>
 
+Data de Entrega:<br>
+<input type="date" name="entrega"><br><br>
+
 Garantia:<br>
 <select name="garantia">
 <option>Sem garantia</option>
@@ -50,13 +53,27 @@ Senha padrão (1-2-3):<br>
 </form>
 
 <script>
+// máscara telefone
+document.getElementById('tel').addEventListener('input', function(e){
+    let v = e.target.value.replace(/\D/g,'').slice(0,11);
+    if(v.length > 6)
+        v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1)$2-$3');
+    else if(v.length > 2)
+        v = v.replace(/(\d{2})(\d{0,5})/, '($1)$2');
+    e.target.value = v;
+});
+
+// calcular restante
 function calcular(){
-    let valor = parseFloat(document.getElementById('valor').value) || 0;
-    let sinal = parseFloat(document.getElementById('sinal').value) || 0;
-    document.getElementById('restante').value = (valor - sinal).toFixed(2);
+    let valor = parseFloat(valorInput.value) || 0;
+    let sinal = parseFloat(sinalInput.value) || 0;
+    restanteInput.value = (valor - sinal).toFixed(2);
 }
-document.getElementById('valor').addEventListener('input', calcular);
-document.getElementById('sinal').addEventListener('input', calcular);
+const valorInput = document.getElementById('valor');
+const sinalInput = document.getElementById('sinal');
+const restanteInput = document.getElementById('restante');
+valorInput.addEventListener('input', calcular);
+sinalInput.addEventListener('input', calcular);
 </script>
 
 <a href="/painel">Voltar</a>
