@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, session, send_file
 import os
 import json
 from datetime import datetime
+import matplotlib.pyplot as plt
+
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -240,7 +242,7 @@ def ver(numero):
 def reimprimir(numero):
     return send_file(os.path.join(PASTA_PDF, f"OS_{numero}.pdf"), as_attachment=True)
 
-# ===== RELATÓRIO =====
+# ===== RELATÓRIO PDF =====
 @app.route("/relatorio")
 def relatorio():
     if not session.get("logado"):
@@ -267,6 +269,41 @@ def relatorio():
 
     pdf = gerar_relatorio_pdf(lista_mes, mes_nome, total_valor, total_qtd)
     return send_file(pdf, as_attachment=True)
+
+# ===== GRÁFICO =====
+@app.route("/grafico")
+def grafico():
+    if not session.get("logado"):
+        return redirect("/")
+
+    if not os.path.exists(ARQUIVO_DB):
+        lista = []
+    else:
+        with open(ARQUIVO_DB, "r") as f:
+            lista = json.load(f)
+
+    ganhos = {}
+
+    for os_item in lista:
+        mes = os_item["data"][3:10]
+        valor = float(os_item["valor"])
+        ganhos[mes] = ganhos.get(mes, 0) + valor
+
+    meses = sorted(ganhos.keys())
+    valores = [ganhos[m] for m in meses]
+
+    plt.figure()
+    plt.bar(meses, valores)
+    plt.xlabel("Mês")
+    plt.ylabel("Faturamento (R$)")
+    plt.title("Ganhos por Mês")
+
+    caminho = os.path.join(PASTA_PDF, "grafico.png")
+    plt.tight_layout()
+    plt.savefig(caminho)
+    plt.close()
+
+    return send_file(caminho, as_attachment=True)
 
 # ===== SAIR =====
 @app.route("/sair")
