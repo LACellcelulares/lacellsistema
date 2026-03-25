@@ -12,8 +12,9 @@
     <b>OS:</b> {{ os.numero }}<br>
     <b>Cliente:</b> {{ os.cliente }}<br>
     <b>Aparelho:</b> {{ os.aparelho }}<br>
-    <b>Valor:</b> R$ {{ os.valor }}<br><br>
+    <b>Entrega:</b> {{ os.entrega }}<br><br>
 
+    <a href="/ver/{{ os.numero }}">👁️ Abrir</a> |
     <a href="/reimprimir/{{ os.numero }}">🖨 Reimprimir</a>
 </div>
 {% else %}
