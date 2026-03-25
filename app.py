@@ -12,7 +12,7 @@ from reportlab.lib import colors
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
-# ===== USUÁRIOS =====
+# ===== USUÁRIOS / LOJAS =====
 USUARIOS = {
     "pytty": {
         "senha": "diemfafa",
@@ -30,17 +30,16 @@ PASTA_PDF = "pdfs"
 ARQUIVO_DB = "os.json"
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ===== SALVAR OS =====
-def salvar_os(dados):
+# ===== BANCO JSON =====
+def carregar_os():
     if not os.path.exists(ARQUIVO_DB):
-        with open(ARQUIVO_DB, "w") as f:
-            json.dump([], f)
-
+        return []
     with open(ARQUIVO_DB, "r") as f:
-        lista = json.load(f)
+        return json.load(f)
 
+def salvar_os(dados):
+    lista = carregar_os()
     lista.append(dados)
-
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
@@ -122,22 +121,23 @@ def gerar_pdf(numero, dados, loja, whatsapp):
     doc.build(el)
     return caminho
 
-# ===== LOGIN =====
+# ===== LOGIN (CORRIGIDO) =====
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        usuario = request.form.get("usuario")
-        senha = request.form.get("senha")
+        usuario = request.form.get("usuario","").strip().lower()
+        senha = request.form.get("senha","").strip()
 
         if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
             session["logado"] = True
             session["usuario"] = usuario
             return redirect("/painel")
 
-        return render_template("login.html", erro="Login inválido")
+        return render_template("login.html", erro="Usuário ou senha inválidos")
 
     return render_template("login.html")
 
+# ===== PAINEL =====
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -151,13 +151,15 @@ def nova():
         return redirect("/")
 
     if request.method == "POST":
+        usuario = session["usuario"]
         numero = datetime.now().strftime("%Y%m%d%H%M")
+
         valor = float(request.form.get("valor") or 0)
         sinal = float(request.form.get("sinal") or 0)
-        restante = valor - sinal
 
         dados = {
             "numero": numero,
+            "loja": usuario,
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
             "aparelho": request.form.get("aparelho"),
@@ -167,7 +169,7 @@ def nova():
             "valor": valor,
             "pagamento": request.form.get("pagamento"),
             "sinal": sinal,
-            "restante": restante,
+            "restante": valor - sinal,
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "senha_padrao": request.form.get("senha_padrao"),
@@ -177,7 +179,6 @@ def nova():
 
         salvar_os(dados)
 
-        usuario = session["usuario"]
         loja = USUARIOS[usuario]["loja"]
         whatsapp = USUARIOS[usuario]["whatsapp"]
 
