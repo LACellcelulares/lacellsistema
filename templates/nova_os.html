@@ -1,115 +1,44 @@
 <h2>🧾 Nova Ordem de Serviço</h2>
 
 <form method="post">
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:900px">
-
-<div>
-Cliente:<br>
-<input name="cliente" required>
-</div>
-
-<div>
-Telefone:<br>
-<input name="telefone" id="tel" required>
-</div>
-
-<div>
-Aparelho / Modelo:<br>
-<input name="aparelho" required>
-</div>
-
-<div>
-IMEI:<br>
-<input name="imei">
-</div>
-
-<div>
-CPF/CNPJ:<br>
-<input name="cpf">
-</div>
-
-<div>
-Data de Entrega:<br>
-<input type="date" name="entrega">
-</div>
-
-<div style="grid-column:1 / 3">
-Defeito Relatado:<br>
-<input name="defeito" style="width:100%">
-</div>
-
-<div>
-Valor Total (R$):<br>
-<input name="valor" id="valor" required>
-</div>
-
-<div>
-Sinal Pago (R$):<br>
-<input name="sinal" id="sinal">
-</div>
-
-<div>
-Valor Restante (R$):<br>
-<input name="restante" id="restante" readonly>
-</div>
-
-<div>
-Forma de Pagamento:<br>
-<input name="pagamento">
-</div>
-
-<div>
+Cliente:<br><input name="cliente" required><br><br>
+Telefone:<br><input name="telefone" id="tel" required><br><br>
+Aparelho:<br><input name="aparelho" required><br><br>
+IMEI:<br><input name="imei"><br><br>
+CPF:<br><input name="cpf"><br><br>
+Defeito:<br><input name="defeito"><br><br>
+Valor:<br><input name="valor" id="valor"><br><br>
+Sinal:<br><input name="sinal" id="sinal"><br><br>
+Restante:<br><input name="restante" id="restante" readonly><br><br>
+Pagamento:<br><input name="pagamento"><br><br>
+Entrega:<br><input type="date" name="entrega"><br><br>
 Garantia:<br>
 <select name="garantia">
 <option>Sem garantia</option>
 <option>30 dias</option>
 <option>60 dias</option>
 <option>90 dias</option>
-</select>
-</div>
+</select><br><br>
+Senha:<br><input name="senha"><br><br>
 
-<div>
-Senha Numérica:<br>
-<input name="senha">
-</div>
-
-<div>
-Senha Padrão (ex: 1-2-5-8):<br>
-<input name="senha_padrao" placeholder="1-2-3-6-9">
-</div>
-
-</div>
-
-<br>
-<button type="submit" style="padding:10px 25px;font-size:16px">💾 Gerar OS</button>
+<button type="submit">💾 Gerar OS</button>
 </form>
 
-<br>
-<a href="/painel">⬅ Voltar ao Painel</a>
-
 <script>
-// ===== MÁSCARA TELEFONE =====
-document.getElementById('tel').addEventListener('input', function(e){
-    let v = e.target.value.replace(/\D/g,'').slice(0,11);
-    if(v.length > 6)
-        v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1)$2-$3');
-    else if(v.length > 2)
-        v = v.replace(/(\d{2})(\d{0,5})/, '($1)$2');
-    e.target.value = v;
-});
+document.getElementById('tel').addEventListener('input', e=>{
+ let v=e.target.value.replace(/\D/g,'').slice(0,11)
+ if(v.length>6) v=v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1)$2-$3')
+ else if(v.length>2) v=v.replace(/(\d{2})(\d{0,5})/,'($1)$2')
+ e.target.value=v
+})
 
-// ===== CALCULAR RESTANTE =====
-function calcular(){
-    let valor = parseFloat(valorInput.value.replace(",", ".")) || 0;
-    let sinal = parseFloat(sinalInput.value.replace(",", ".")) || 0;
-    restanteInput.value = (valor - sinal).toFixed(2);
+function calc(){
+ let v=parseFloat(valor.value)||0
+ let s=parseFloat(sinal.value)||0
+ restante.value=(v-s).toFixed(2)
 }
-
-const valorInput = document.getElementById('valor');
-const sinalInput = document.getElementById('sinal');
-const restanteInput = document.getElementById('restante');
-
-valorInput.addEventListener('input', calcular);
-sinalInput.addEventListener('input', calcular);
+valor.oninput=calc
+sinal.oninput=calc
 </script>
+
+<br><a href="/painel">⬅ Voltar</a>
