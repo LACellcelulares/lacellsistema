@@ -6,7 +6,7 @@ Cliente:<br>
 <input name="cliente"><br><br>
 
 Telefone:<br>
-<input name="telefone" id="tel"><br><br>
+<input name="telefone"><br><br>
 
 Aparelho:<br>
 <input name="aparelho"><br><br>
@@ -21,16 +21,16 @@ Defeito:<br>
 <input name="defeito"><br><br>
 
 Valor:<br>
-<input name="valor"><br><br>
+<input name="valor" id="valor"><br><br>
 
 Forma de Pagamento:<br>
 <input name="pagamento"><br><br>
 
 Sinal:<br>
-<input name="sinal"><br><br>
+<input name="sinal" id="sinal"><br><br>
 
 Restante:<br>
-<input name="restante"><br><br>
+<input name="restante" id="restante" readonly><br><br>
 
 Garantia:<br>
 <select name="garantia">
@@ -47,21 +47,16 @@ Senha padrão (1-2-3):<br>
 <input name="senha_padrao"><br><br>
 
 <button type="submit">Gerar OS</button>
-
 </form>
 
 <script>
-document.getElementById('tel').addEventListener('input', function(e){
-    let v = e.target.value.replace(/\D/g,'');
-    if(v.length > 11) v = v.slice(0,11);
-
-    if(v.length > 6)
-        v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1)$2-$3');
-    else if(v.length > 2)
-        v = v.replace(/(\d{2})(\d{0,5})/, '($1)$2');
-
-    e.target.value = v;
-});
+function calcular(){
+    let valor = parseFloat(document.getElementById('valor').value) || 0;
+    let sinal = parseFloat(document.getElementById('sinal').value) || 0;
+    document.getElementById('restante').value = (valor - sinal).toFixed(2);
+}
+document.getElementById('valor').addEventListener('input', calcular);
+document.getElementById('sinal').addEventListener('input', calcular);
 </script>
 
 <a href="/painel">Voltar</a>
