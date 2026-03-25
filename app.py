@@ -1,15 +1,23 @@
 from flask import Flask, render_template, request, redirect, session, send_file, abort
 import os, json
 from datetime import datetime
-
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
+# Google Drive
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+# ===============================
+# CONFIGURAÇÕES
+# ===============================
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
+# Usuários
 USUARIOS = {
     "pytty": {
         "senha": "diemfafa",
@@ -23,13 +31,34 @@ USUARIOS = {
     }
 }
 
+# Pastas locais
 PASTA_PDF = "pdfs"
 ARQUIVO_DB = "os.json"
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# =========================================================
-# Banco — reinicia do zero se existir arquivo antigo
-# =========================================================
+# Caminho da chave JSON
+SERVICE_ACCOUNT_FILE = r"C:\Users\wagner Casa\Downloads\pacific-aurora-491315-s1-ab1b66e00d32.json"
+
+# ID da pasta no Google Drive para backup
+DRIVE_FOLDER_ID = "1csPmYXDH9qLPY1dLx7e3XPsn5SDJwS2T"
+
+# ===============================
+# Funções Google Drive
+# ===============================
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
+credentials = service_account.Credentials.from_service_account_file(
+    SERVICE_ACCOUNT_FILE, scopes=SCOPES
+)
+drive_service = build('drive', 'drive', credentials=credentials)
+
+def upload_drive(file_path, file_name):
+    file_metadata = {'name': file_name, 'parents':[DRIVE_FOLDER_ID]}
+    media = MediaFileUpload(file_path, mimetype='application/pdf', resumable=True)
+    drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+
+# ===============================
+# Banco de OS
+# ===============================
 def carregar_os():
     if not os.path.exists(ARQUIVO_DB):
         return []
@@ -42,6 +71,9 @@ def salvar_os(d):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
+# ===============================
+# PDF OS
+# ===============================
 def desenhar_padrao():
     pontos = [["○"] * 3 for _ in range(3)]
     t = Table(pontos, 18, 18)
@@ -51,28 +83,15 @@ def desenhar_padrao():
     ]))
     return t
 
-
-# =========================================================
-# PDF OS – com duas vias
-# =========================================================
 def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
-
     styles = getSampleStyleSheet()
     normal = styles["Normal"]
     normal.fontSize = 9
     h4 = styles["Heading4"]
     h4.fontSize = 11
 
-    doc = SimpleDocTemplate(
-        caminho,
-        pagesize=A4,
-        rightMargin=20,
-        leftMargin=20,
-        topMargin=15,
-        bottomMargin=15
-    )
-
+    doc = SimpleDocTemplate(caminho, pagesize=A4, rightMargin=20, leftMargin=20, topMargin=15, bottomMargin=15)
     elementos = []
 
     def bloco(titulo):
@@ -110,20 +129,17 @@ def gerar_pdf_os(numero, dados, loja, whatsapp):
         elementos.append(Paragraph("Assinatura Loja: _________________________________", normal))
 
     bloco("VIA DO CLIENTE")
-
     elementos.append(Spacer(1, 6))
     elementos.append(Paragraph("✂️ --------------------------------------------------------------", normal))
     elementos.append(Spacer(1, 6))
-
     bloco("VIA DA LOJA")
 
     doc.build(elementos)
     return caminho
 
-
-# =========================================================
-# RELATÓRIO MENSAL
-# =========================================================
+# ===============================
+# Relatório
+# ===============================
 def gerar_pdf_relatorio(lista, loja, mes):
     caminho = os.path.join(PASTA_PDF, f"RELATORIO_{mes}.pdf")
     styles = getSampleStyleSheet()
@@ -150,45 +166,40 @@ def gerar_pdf_relatorio(lista, loja, mes):
     doc.build(el)
     return caminho
 
-
-# =========================================================
+# ===============================
 # ROTAS
-# =========================================================
-
-@app.route("/", methods=["GET", "POST"])
+# ===============================
+@app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        u = request.form.get("usuario", "").strip().lower()
-        s = request.form.get("senha", "").strip()
-        if u in USUARIOS and USUARIOS[u]["senha"] == s:
-            session["logado"] = True
-            session["usuario"] = u
+        u = request.form.get("usuario","").strip().lower()
+        s = request.form.get("senha","").strip()
+        if u in USUARIOS and USUARIOS[u]["senha"]==s:
+            session["logado"]=True
+            session["usuario"]=u
             return redirect("/painel")
         return render_template("login.html", erro="Login inválido")
     return render_template("login.html")
-
 
 @app.route("/painel")
 def painel():
     if not session.get("logado"): return redirect("/")
     u = session["usuario"]
     loja = USUARIOS[u]["loja"]
-    lista = [o for o in carregar_os() if o.get("loja") == loja]
+    lista = [o for o in carregar_os() if o.get("loja")==loja]
     total = len(lista)
     valor = sum(float(o["valor"]) for o in lista)
     return render_template("painel.html", total_os=total, total_valor=valor)
 
-
-@app.route("/nova", methods=["GET", "POST"])
+@app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"): return redirect("/")
-    if request.method == "POST":
+    if request.method=="POST":
         u = session["usuario"]
         loja = USUARIOS[u]["loja"]
         n = datetime.now().strftime("%Y%m%d%H%M")
         v = float(request.form.get("valor") or 0)
         s = float(request.form.get("sinal") or 0)
-
         d = {
             "numero": n,
             "usuario": u,
@@ -202,66 +213,58 @@ def nova():
             "valor": v,
             "pagamento": request.form.get("pagamento"),
             "sinal": s,
-            "restante": v - s,
+            "restante": v-s,
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "entrega": request.form.get("entrega"),
             "data": datetime.now().strftime("%d/%m/%Y %H:%M")
         }
-
         salvar_os(d)
         pdf = gerar_pdf_os(n, d, loja, USUARIOS[u]["whatsapp"])
+        # Faz backup no Drive
+        upload_drive(pdf, f"OS_{n}.pdf")
         return send_file(pdf, as_attachment=True)
-
     return render_template("nova_os.html")
-
 
 @app.route("/historico")
 def historico():
     if not session.get("logado"): return redirect("/")
     u = session["usuario"]
     loja = USUARIOS[u]["loja"]
-
     q = request.args.get("q","").lower()
-    lista = [o for o in carregar_os() if o.get("loja") == loja]
-
+    lista = [o for o in carregar_os() if o.get("loja")==loja]
     if q:
-        lista = [o for o in lista if q in o["cliente"].lower()
-                or q in o["aparelho"].lower()
-                or q in o["numero"].lower()]
-
+        lista = [o for o in lista if q in o["cliente"].lower() or q in o["aparelho"].lower() or q in o["numero"].lower()]
     return render_template("historico.html", lista=lista, busca=q)
-
 
 @app.route("/os/<numero>")
 def ver_os(numero):
     if not session.get("logado"): return redirect("/")
     u = session["usuario"]
     loja = USUARIOS[u]["loja"]
-
-    o = next((x for x in carregar_os() if x["numero"] == numero and x["loja"] == loja), None)
+    o = next((x for x in carregar_os() if x["numero"]==numero and x["loja"]==loja), None)
     if not o: abort(404)
-
     pdf = gerar_pdf_os(numero, o, loja, USUARIOS[u]["whatsapp"])
     return send_file(pdf)
-
 
 @app.route("/relatorio")
 def relatorio():
     if not session.get("logado"): return redirect("/")
     u = session["usuario"]
     loja = USUARIOS[u]["loja"]
-    lista = [o for o in carregar_os() if o["loja"] == loja]
+    lista = [o for o in carregar_os() if o["loja"]==loja]
     mes = datetime.now().strftime("%m-%Y")
     pdf = gerar_pdf_relatorio(lista, loja, mes)
+    upload_drive(pdf, f"RELATORIO_{mes}.pdf")
     return send_file(pdf, as_attachment=True)
-
 
 @app.route("/sair")
 def sair():
     session.clear()
     return redirect("/")
 
-
+# ===============================
+# EXECUÇÃO
+# ===============================
 if __name__ == "__main__":
     app.run(debug=True)
