@@ -18,7 +18,7 @@ ARQUIVO_DB = "os.json"
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# SALVAR OS
+# ===== SALVAR OS =====
 def salvar_os(dados):
     if not os.path.exists(ARQUIVO_DB):
         with open(ARQUIVO_DB, "w") as f:
@@ -32,7 +32,7 @@ def salvar_os(dados):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# DESENHO SENHA
+# ===== DESENHO SENHA =====
 def desenhar_padrao(padrao):
     pontos = [["○","○","○"],["○","○","○"],["○","○","○"]]
 
@@ -46,52 +46,63 @@ def desenhar_padrao(padrao):
         except:
             pass
 
-    tabela = Table(pontos, colWidths=20, rowHeights=20)
+    tabela = Table(pontos, colWidths=18, rowHeights=18)
     tabela.setStyle(TableStyle([
         ('GRID',(0,0),(-1,-1),1,colors.black),
         ('ALIGN',(0,0),(-1,-1),'CENTER')
     ]))
     return tabela
 
-# GERAR PDF COMPLETO
+# ===== PDF 1 FOLHA A4 =====
 def gerar_pdf(numero, dados):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
 
-    doc = SimpleDocTemplate(caminho, pagesize=A4)
+    doc = SimpleDocTemplate(
+        caminho,
+        pagesize=A4,
+        rightMargin=30,leftMargin=30,
+        topMargin=30,bottomMargin=30
+    )
+
     el = []
 
     def bloco(tipo):
-        el.append(Paragraph(f"<b>{tipo}</b>", styles['Heading3']))
-        el.append(Spacer(1,10))
+        el.append(Paragraph(f"<b>{tipo}</b>", styles['Heading4']))
+        el.append(Spacer(1,6))
 
-        el.append(Paragraph("L&A CELL - Assistência Técnica", styles['Heading2']))
+        el.append(Paragraph("L&A CELL - Assistência Técnica", styles['Heading3']))
         el.append(Paragraph("WhatsApp: (11) 98083-3734", styles['Normal']))
-        el.append(Spacer(1,10))
+        el.append(Spacer(1,6))
 
-        el.append(Paragraph(f"ORDEM DE SERVIÇO Nº {numero}", styles['Normal']))
-        el.append(Paragraph(f"Data: {dados['data']}", styles['Normal']))
-        el.append(Paragraph(f"Cliente: {dados['cliente']}", styles['Normal']))
-        el.append(Paragraph(f"Telefone: {dados['telefone']}", styles['Normal']))
-        el.append(Paragraph(f"Aparelho: {dados['aparelho']}", styles['Normal']))
-        el.append(Paragraph(f"IMEI: {dados['imei']}    CPF/CNPJ: {dados['cpf']}", styles['Normal']))
-        el.append(Paragraph(f"Defeito: {dados['defeito']}", styles['Normal']))
-        el.append(Paragraph(f"Valor: R$ {dados['valor']}", styles['Normal']))
-        el.append(Paragraph(f"Forma de Pagamento: {dados['pagamento']}", styles['Normal']))
-        el.append(Paragraph(f"Sinal: R$ {dados['sinal']}", styles['Normal']))
-        el.append(Paragraph(f"Restante: R$ {dados['restante']}", styles['Normal']))
-        el.append(Paragraph(f"Garantia: {dados['garantia']}", styles['Normal']))
-        el.append(Paragraph(f"Senha: {dados['senha']}", styles['Normal']))
+        linhas = [
+            f"ORDEM DE SERVIÇO Nº {numero}",
+            f"Data: {dados['data']}",
+            f"Cliente: {dados['cliente']}",
+            f"Telefone: {dados['telefone']}",
+            f"Aparelho: {dados['aparelho']}",
+            f"IMEI: {dados['imei']}    CPF/CNPJ: {dados['cpf']}",
+            f"Defeito: {dados['defeito']}",
+            f"Valor: R$ {dados['valor']}",
+            f"Forma de Pagamento: {dados['pagamento']}",
+            f"Sinal: R$ {dados['sinal']}",
+            f"Restante: R$ {dados['restante']}",
+            f"Garantia: {dados['garantia']}",
+            f"Senha: {dados['senha']}",
+        ]
 
+        for linha in linhas:
+            el.append(Paragraph(linha, styles['Normal']))
+
+        el.append(Spacer(1,6))
         el.append(Paragraph("Senha padrão (desenho):", styles['Normal']))
         el.append(desenhar_padrao(dados['senha_padrao']))
 
         el.append(Spacer(1,10))
         el.append(Paragraph("Assinatura: ____________________________________", styles['Normal']))
-
-        el.append(Spacer(1,20))
+        el.append(Spacer(1,12))
         el.append(Paragraph("------------------------------------------------------------", styles['Normal']))
-        el.append(Spacer(1,20))
+        el.append(Spacer(1,12))
 
     bloco("VIA DO CLIENTE")
     bloco("VIA DA LOJA")
@@ -99,7 +110,7 @@ def gerar_pdf(numero, dados):
     doc.build(el)
     return caminho
 
-# LOGIN
+# ===== LOGIN =====
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -109,14 +120,14 @@ def login():
         return render_template("login.html", erro="Login inválido")
     return render_template("login.html")
 
-# PAINEL
+# ===== PAINEL =====
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
         return redirect("/")
     return render_template("painel.html")
 
-# NOVA OS
+# ===== NOVA OS =====
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
@@ -124,6 +135,10 @@ def nova():
 
     if request.method == "POST":
         numero = datetime.now().strftime("%Y%m%d%H%M")
+
+        valor = float(request.form.get("valor") or 0)
+        sinal = float(request.form.get("sinal") or 0)
+        restante = valor - sinal
 
         dados = {
             "numero": numero,
@@ -133,10 +148,10 @@ def nova():
             "imei": request.form.get("imei"),
             "cpf": request.form.get("cpf"),
             "defeito": request.form.get("defeito"),
-            "valor": request.form.get("valor"),
+            "valor": valor,
             "pagamento": request.form.get("pagamento"),
-            "sinal": request.form.get("sinal"),
-            "restante": request.form.get("restante"),
+            "sinal": sinal,
+            "restante": restante,
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "senha_padrao": request.form.get("senha_padrao"),
@@ -149,7 +164,7 @@ def nova():
 
     return render_template("nova_os.html")
 
-# HISTÓRICO + BUSCA
+# ===== HISTÓRICO + BUSCA =====
 @app.route("/historico")
 def historico():
     if not session.get("logado"):
@@ -164,43 +179,21 @@ def historico():
             lista = json.load(f)
 
     if busca:
-        lista = [os for os in lista if busca in os["cliente"].lower() or busca in os["telefone"]]
+        lista = [
+            os_item for os_item in lista
+            if busca in os_item["cliente"].lower()
+            or busca in os_item["aparelho"].lower()
+            or busca in os_item["numero"]
+        ]
 
     return render_template("historico.html", lista=lista)
 
-# RELATÓRIO
-@app.route("/relatorio")
-def relatorio():
-    if not session.get("logado"):
-        return redirect("/")
-
-    mes = datetime.now().strftime("%m/%Y")
-
-    if not os.path.exists(ARQUIVO_DB):
-        lista = []
-    else:
-        with open(ARQUIVO_DB, "r") as f:
-            lista = json.load(f)
-
-    total = 0
-    qtd = 0
-
-    for os_item in lista:
-        if mes in os_item["data"]:
-            qtd += 1
-            try:
-                total += float(os_item["valor"])
-            except:
-                pass
-
-    return render_template("relatorio.html", total=total, qtd=qtd)
-
-# REIMPRIMIR
+# ===== REIMPRIMIR =====
 @app.route("/reimprimir/<numero>")
 def reimprimir(numero):
     return send_file(os.path.join(PASTA_PDF, f"OS_{numero}.pdf"), as_attachment=True)
 
-# SAIR
+# ===== SAIR =====
 @app.route("/sair")
 def sair():
     session.clear()
