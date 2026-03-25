@@ -27,6 +27,9 @@ PASTA_PDF = "pdfs"
 ARQUIVO_DB = "os.json"
 os.makedirs(PASTA_PDF, exist_ok=True)
 
+# =========================================================
+# Banco — reinicia do zero se existir arquivo antigo
+# =========================================================
 def carregar_os():
     if not os.path.exists(ARQUIVO_DB):
         return []
@@ -48,9 +51,10 @@ def desenhar_padrao():
     ]))
     return t
 
-# =====================================================================
-#   PDF EM UMA ÚNICA PÁGINA A4 COM DUAS VIAS
-# =====================================================================
+
+# =========================================================
+# PDF OS – com duas vias
+# =========================================================
 def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -99,31 +103,27 @@ def gerar_pdf_os(numero, dados, loja, whatsapp):
             elementos.append(Paragraph(l, normal))
 
         elementos.append(Spacer(1, 6))
-
         elementos.append(Paragraph("Senha padrão:", normal))
         elementos.append(desenhar_padrao())
-
         elementos.append(Spacer(1, 6))
         elementos.append(Paragraph("Assinatura Cliente: ______________________________", normal))
         elementos.append(Paragraph("Assinatura Loja: _________________________________", normal))
 
-    # VIA DO CLIENTE
     bloco("VIA DO CLIENTE")
 
     elementos.append(Spacer(1, 6))
     elementos.append(Paragraph("✂️ --------------------------------------------------------------", normal))
     elementos.append(Spacer(1, 6))
 
-    # VIA DA LOJA
     bloco("VIA DA LOJA")
 
     doc.build(elementos)
     return caminho
 
 
-# =====================================================================
-#   RELATÓRIO MENSAL
-# =====================================================================
+# =========================================================
+# RELATÓRIO MENSAL
+# =========================================================
 def gerar_pdf_relatorio(lista, loja, mes):
     caminho = os.path.join(PASTA_PDF, f"RELATORIO_{mes}.pdf")
     styles = getSampleStyleSheet()
@@ -151,9 +151,9 @@ def gerar_pdf_relatorio(lista, loja, mes):
     return caminho
 
 
-# =====================================================================
+# =========================================================
 # ROTAS
-# =====================================================================
+# =========================================================
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -172,7 +172,8 @@ def login():
 def painel():
     if not session.get("logado"): return redirect("/")
     u = session["usuario"]
-    lista = [o for o in carregar_os() if o.get("loja") == u]
+    loja = USUARIOS[u]["loja"]
+    lista = [o for o in carregar_os() if o.get("loja") == loja]
     total = len(lista)
     valor = sum(float(o["valor"]) for o in lista)
     return render_template("painel.html", total_os=total, total_valor=valor)
@@ -183,27 +184,35 @@ def nova():
     if not session.get("logado"): return redirect("/")
     if request.method == "POST":
         u = session["usuario"]
+        loja = USUARIOS[u]["loja"]
         n = datetime.now().strftime("%Y%m%d%H%M")
         v = float(request.form.get("valor") or 0)
         s = float(request.form.get("sinal") or 0)
+
         d = {
-            "numero": n, "loja": u,
+            "numero": n,
+            "usuario": u,
+            "loja": loja,
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
             "aparelho": request.form.get("aparelho"),
             "imei": request.form.get("imei"),
             "cpf": request.form.get("cpf"),
             "defeito": request.form.get("defeito"),
-            "valor": v, "pagamento": request.form.get("pagamento"),
-            "sinal": s, "restante": v - s,
+            "valor": v,
+            "pagamento": request.form.get("pagamento"),
+            "sinal": s,
+            "restante": v - s,
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "entrega": request.form.get("entrega"),
             "data": datetime.now().strftime("%d/%m/%Y %H:%M")
         }
+
         salvar_os(d)
-        pdf = gerar_pdf_os(n, d, USUARIOS[u]["loja"], USUARIOS[u]["whatsapp"])
+        pdf = gerar_pdf_os(n, d, loja, USUARIOS[u]["whatsapp"])
         return send_file(pdf, as_attachment=True)
+
     return render_template("nova_os.html")
 
 
@@ -211,12 +220,16 @@ def nova():
 def historico():
     if not session.get("logado"): return redirect("/")
     u = session["usuario"]
+    loja = USUARIOS[u]["loja"]
+
     q = request.args.get("q","").lower()
-    lista = [o for o in carregar_os() if o.get("loja") == u]
+    lista = [o for o in carregar_os() if o.get("loja") == loja]
+
     if q:
         lista = [o for o in lista if q in o["cliente"].lower()
                 or q in o["aparelho"].lower()
                 or q in o["numero"].lower()]
+
     return render_template("historico.html", lista=lista, busca=q)
 
 
@@ -224,9 +237,12 @@ def historico():
 def ver_os(numero):
     if not session.get("logado"): return redirect("/")
     u = session["usuario"]
-    o = next((x for x in carregar_os() if x["numero"]==numero and x["loja"]==u), None)
+    loja = USUARIOS[u]["loja"]
+
+    o = next((x for x in carregar_os() if x["numero"] == numero and x["loja"] == loja), None)
     if not o: abort(404)
-    pdf = gerar_pdf_os(numero, o, USUARIOS[u]["loja"], USUARIOS[u]["whatsapp"])
+
+    pdf = gerar_pdf_os(numero, o, loja, USUARIOS[u]["whatsapp"])
     return send_file(pdf)
 
 
@@ -234,9 +250,10 @@ def ver_os(numero):
 def relatorio():
     if not session.get("logado"): return redirect("/")
     u = session["usuario"]
-    lista = [o for o in carregar_os() if o.get("loja") == u]
+    loja = USUARIOS[u]["loja"]
+    lista = [o for o in carregar_os() if o["loja"] == loja]
     mes = datetime.now().strftime("%m-%Y")
-    pdf = gerar_pdf_relatorio(lista, USUARIOS[u]["loja"], mes)
+    pdf = gerar_pdf_relatorio(lista, loja, mes)
     return send_file(pdf, as_attachment=True)
 
 
