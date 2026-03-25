@@ -1,18 +1,24 @@
-<h2>Histórico</h2>
+<h2>📂 Histórico de OS</h2>
 
-<form>
-<input name="busca" placeholder="Buscar cliente ou telefone">
-<button>Buscar</button>
+<form method="get">
+    <input name="busca" placeholder="Buscar por cliente, aparelho ou nº OS">
+    <button type="submit">Buscar</button>
 </form>
 
-{% for os in lista %}
-<div style="border:1px solid #ccc; margin:10px; padding:10px;">
-OS: {{ os.numero }}<br>
-Cliente: {{ os.cliente }}<br>
-Telefone: {{ os.telefone }}<br>
+<hr>
 
-<a href="/reimprimir/{{ os.numero }}">Reimprimir</a>
+{% for os in lista %}
+<div style="border:1px solid #ccc; padding:10px; margin:10px;">
+    <b>OS:</b> {{ os.numero }}<br>
+    <b>Cliente:</b> {{ os.cliente }}<br>
+    <b>Aparelho:</b> {{ os.aparelho }}<br>
+    <b>Valor:</b> R$ {{ os.valor }}<br><br>
+
+    <a href="/reimprimir/{{ os.numero }}">🖨 Reimprimir</a>
 </div>
+{% else %}
+<p>Nenhuma OS encontrada.</p>
 {% endfor %}
 
-<a href="/painel">Voltar</a>
+<br>
+<a href="/painel">⬅ Voltar</a>
