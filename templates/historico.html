@@ -1,25 +1,27 @@
 <h2>📂 Histórico de OS</h2>
 
 <form method="get">
-    <input name="busca" placeholder="Buscar por cliente, aparelho ou nº OS">
-    <button type="submit">Buscar</button>
+<input name="q" placeholder="Buscar cliente, aparelho ou nº OS" value="{{ busca }}">
+<button>🔎 Buscar</button>
 </form>
 
+<br>
+
+{% for o in lista %}
 <hr>
+OS: <b>{{ o.numero }}</b><br>
+Cliente: {{ o.cliente }}<br>
+Aparelho: {{ o.aparelho }}<br>
+Valor: R$ {{ o.valor }}<br>
 
-{% for os in lista %}
-<div style="border:1px solid #ccc; padding:10px; margin:10px;">
-    <b>OS:</b> {{ os.numero }}<br>
-    <b>Cliente:</b> {{ os.cliente }}<br>
-    <b>Aparelho:</b> {{ os.aparelho }}<br>
-    <b>Entrega:</b> {{ os.entrega }}<br><br>
+<a href="/os/{{ o.numero }}" target="_blank">👁️ Ver</a>
+<a href="/os/{{ o.numero }}?download=1">🖨️ Imprimir</a>
 
-    <a href="/ver/{{ os.numero }}">👁️ Abrir</a> |
-    <a href="/reimprimir/{{ os.numero }}">🖨 Reimprimir</a>
-</div>
-{% else %}
-<p>Nenhuma OS encontrada.</p>
+<a target="_blank"
+href="https://wa.me/55{{ o.telefone|replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}">
+🟢 WhatsApp
+</a>
 {% endfor %}
 
-<br>
+<br><br>
 <a href="/painel">⬅ Voltar</a>
