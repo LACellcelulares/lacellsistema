@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session, send_file
 import os
 import json
 from datetime import datetime
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
@@ -15,7 +15,6 @@ SENHA = "diemfafa"
 
 PASTA_PDF = "pdfs"
 ARQUIVO_DB = "os.json"
-LOGO_ZAP = "static/whatsapp.png"
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
@@ -36,7 +35,6 @@ def salvar_os(dados):
 # ===== DESENHO SENHA =====
 def desenhar_padrao(padrao):
     pontos = [["○","○","○"],["○","○","○"],["○","○","○"]]
-
     if padrao:
         try:
             nums = [int(x) for x in padrao.split("-")]
@@ -54,7 +52,7 @@ def desenhar_padrao(padrao):
     ]))
     return tabela
 
-# ===== PDF A4 ÚNICO =====
+# ===== PDF OS A4 =====
 def gerar_pdf(numero, dados):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
@@ -73,11 +71,6 @@ def gerar_pdf(numero, dados):
         el.append(Spacer(1,6))
 
         el.append(Paragraph("L&A CELL - Assistência Técnica", styles['Heading3']))
-        el.append(Spacer(1,4))
-
-        # WhatsApp com ícone
-        if os.path.exists(LOGO_ZAP):
-            el.append(Image(LOGO_ZAP, width=12, height=12))
         el.append(Paragraph("WhatsApp: (11) 98083-3734", styles['Normal']))
         el.append(Spacer(1,6))
 
@@ -90,10 +83,10 @@ def gerar_pdf(numero, dados):
             f"Aparelho: {dados['aparelho']}",
             f"IMEI: {dados['imei']}    CPF/CNPJ: {dados['cpf']}",
             f"Defeito: {dados['defeito']}",
-            f"Valor: R$ {dados['valor']}",
+            f"Valor: R$ {dados['valor']:.2f}",
             f"Forma de Pagamento: {dados['pagamento']}",
-            f"Sinal: R$ {dados['sinal']}",
-            f"Restante: R$ {dados['restante']}",
+            f"Sinal: R$ {dados['sinal']:.2f}",
+            f"Restante: R$ {dados['restante']:.2f}",
             f"Garantia: {dados['garantia']}",
             f"Senha: {dados['senha']}",
         ]
@@ -114,6 +107,49 @@ def gerar_pdf(numero, dados):
     bloco("VIA DO CLIENTE")
     bloco("VIA DA LOJA")
 
+    doc.build(el)
+    return caminho
+
+# ===== PDF RELATÓRIO =====
+def gerar_relatorio_pdf(lista, mes_nome, total_valor, total_qtd):
+    caminho = os.path.join(PASTA_PDF, f"RELATORIO_{mes_nome}.pdf")
+    styles = getSampleStyleSheet()
+
+    doc = SimpleDocTemplate(
+        caminho,
+        pagesize=A4,
+        rightMargin=30,leftMargin=30,
+        topMargin=30,bottomMargin=30
+    )
+
+    el = []
+
+    el.append(Paragraph("RELATÓRIO MENSAL DE ORDENS DE SERVIÇO", styles['Heading2']))
+    el.append(Spacer(1,8))
+    el.append(Paragraph(f"Mês: {mes_nome}", styles['Normal']))
+    el.append(Paragraph(f"Total de OS: {total_qtd}", styles['Normal']))
+    el.append(Paragraph(f"Faturamento Total: R$ {total_valor:.2f}", styles['Normal']))
+    el.append(Spacer(1,12))
+
+    dados_tabela = [["OS", "Cliente", "Aparelho", "Valor"]]
+
+    for os_item in lista:
+        dados_tabela.append([
+            os_item["numero"],
+            os_item["cliente"],
+            os_item["aparelho"],
+            f"R$ {float(os_item['valor']):.2f}"
+        ])
+
+    tabela = Table(dados_tabela, colWidths=[80,150,150,80])
+    tabela.setStyle(TableStyle([
+        ('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
+        ('GRID',(0,0),(-1,-1),1,colors.black),
+        ('ALIGN',(3,1),(3,-1),'RIGHT'),
+        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold')
+    ]))
+
+    el.append(tabela)
     doc.build(el)
     return caminho
 
@@ -141,7 +177,6 @@ def nova():
 
     if request.method == "POST":
         numero = datetime.now().strftime("%Y%m%d%H%M")
-
         valor = float(request.form.get("valor") or 0)
         sinal = float(request.form.get("sinal") or 0)
         restante = valor - sinal
@@ -195,17 +230,43 @@ def historico():
 
     return render_template("historico.html", lista=lista)
 
-# ===== VISUALIZAR OS =====
+# ===== VER OS =====
 @app.route("/ver/<numero>")
 def ver(numero):
-    caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
-    return send_file(caminho)
+    return send_file(os.path.join(PASTA_PDF, f"OS_{numero}.pdf"))
 
 # ===== REIMPRIMIR =====
 @app.route("/reimprimir/<numero>")
 def reimprimir(numero):
-    caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
-    return send_file(caminho, as_attachment=True)
+    return send_file(os.path.join(PASTA_PDF, f"OS_{numero}.pdf"), as_attachment=True)
+
+# ===== RELATÓRIO =====
+@app.route("/relatorio")
+def relatorio():
+    if not session.get("logado"):
+        return redirect("/")
+
+    mes_atual = datetime.now().strftime("%m/%Y")
+    mes_nome = datetime.now().strftime("%m-%Y")
+
+    if not os.path.exists(ARQUIVO_DB):
+        lista = []
+    else:
+        with open(ARQUIVO_DB, "r") as f:
+            lista = json.load(f)
+
+    lista_mes = []
+    total_valor = 0
+    total_qtd = 0
+
+    for os_item in lista:
+        if mes_atual in os_item["data"]:
+            lista_mes.append(os_item)
+            total_qtd += 1
+            total_valor += float(os_item["valor"])
+
+    pdf = gerar_relatorio_pdf(lista_mes, mes_nome, total_valor, total_qtd)
+    return send_file(pdf, as_attachment=True)
 
 # ===== SAIR =====
 @app.route("/sair")
