@@ -12,12 +12,22 @@ from reportlab.lib import colors
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
-USUARIO = "pytty"
-SENHA = "diemfafa"
+# ===== USUÁRIOS =====
+USUARIOS = {
+    "pytty": {
+        "senha": "diemfafa",
+        "loja": "L&A CELL - Assistência Técnica",
+        "whatsapp": "(11) 98083-3734"
+    },
+    "adriano": {
+        "senha": "jesus",
+        "loja": "Millenium Solutions Atibaia Center",
+        "whatsapp": "(11) 99846-8349"
+    }
+}
 
 PASTA_PDF = "pdfs"
 ARQUIVO_DB = "os.json"
-
 os.makedirs(PASTA_PDF, exist_ok=True)
 
 # ===== SALVAR OS =====
@@ -55,7 +65,7 @@ def desenhar_padrao(padrao):
     return tabela
 
 # ===== PDF OS A4 =====
-def gerar_pdf(numero, dados):
+def gerar_pdf(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
 
@@ -72,8 +82,8 @@ def gerar_pdf(numero, dados):
         el.append(Paragraph(f"<b>{tipo}</b>", styles['Heading4']))
         el.append(Spacer(1,6))
 
-        el.append(Paragraph("L&A CELL - Assistência Técnica", styles['Heading3']))
-        el.append(Paragraph("WhatsApp: (11) 98083-3734", styles['Normal']))
+        el.append(Paragraph(loja, styles['Heading3']))
+        el.append(Paragraph(f"WhatsApp: {whatsapp}", styles['Normal']))
         el.append(Spacer(1,6))
 
         linhas = [
@@ -112,57 +122,20 @@ def gerar_pdf(numero, dados):
     doc.build(el)
     return caminho
 
-# ===== PDF RELATÓRIO =====
-def gerar_relatorio_pdf(lista, mes_nome, total_valor, total_qtd):
-    caminho = os.path.join(PASTA_PDF, f"RELATORIO_{mes_nome}.pdf")
-    styles = getSampleStyleSheet()
-
-    doc = SimpleDocTemplate(
-        caminho,
-        pagesize=A4,
-        rightMargin=30,leftMargin=30,
-        topMargin=30,bottomMargin=30
-    )
-
-    el = []
-
-    el.append(Paragraph("RELATÓRIO MENSAL DE ORDENS DE SERVIÇO", styles['Heading2']))
-    el.append(Spacer(1,8))
-    el.append(Paragraph(f"Mês: {mes_nome}", styles['Normal']))
-    el.append(Paragraph(f"Total de OS: {total_qtd}", styles['Normal']))
-    el.append(Paragraph(f"Faturamento Total: R$ {total_valor:.2f}", styles['Normal']))
-    el.append(Spacer(1,12))
-
-    dados_tabela = [["OS", "Cliente", "Aparelho", "Valor"]]
-
-    for os_item in lista:
-        dados_tabela.append([
-            os_item["numero"],
-            os_item["cliente"],
-            os_item["aparelho"],
-            f"R$ {float(os_item['valor']):.2f}"
-        ])
-
-    tabela = Table(dados_tabela, colWidths=[80,150,150,80])
-    tabela.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.lightgrey),
-        ('GRID',(0,0),(-1,-1),1,colors.black),
-        ('ALIGN',(3,1),(3,-1),'RIGHT'),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold')
-    ]))
-
-    el.append(tabela)
-    doc.build(el)
-    return caminho
-
 # ===== LOGIN =====
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        if request.form.get("usuario") == USUARIO and request.form.get("senha") == SENHA:
+        usuario = request.form.get("usuario")
+        senha = request.form.get("senha")
+
+        if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
             session["logado"] = True
+            session["usuario"] = usuario
             return redirect("/painel")
+
         return render_template("login.html", erro="Login inválido")
+
     return render_template("login.html")
 
 @app.route("/painel")
@@ -203,107 +176,15 @@ def nova():
         }
 
         salvar_os(dados)
-        pdf = gerar_pdf(numero, dados)
+
+        usuario = session["usuario"]
+        loja = USUARIOS[usuario]["loja"]
+        whatsapp = USUARIOS[usuario]["whatsapp"]
+
+        pdf = gerar_pdf(numero, dados, loja, whatsapp)
         return send_file(pdf, as_attachment=True)
 
     return render_template("nova_os.html")
-
-# ===== HISTÓRICO =====
-@app.route("/historico")
-def historico():
-    if not session.get("logado"):
-        return redirect("/")
-
-    busca = request.args.get("busca", "").lower()
-
-    if not os.path.exists(ARQUIVO_DB):
-        lista = []
-    else:
-        with open(ARQUIVO_DB, "r") as f:
-            lista = json.load(f)
-
-    if busca:
-        lista = [
-            os_item for os_item in lista
-            if busca in os_item["cliente"].lower()
-            or busca in os_item["aparelho"].lower()
-            or busca in os_item["numero"].lower()
-        ]
-
-    return render_template("historico.html", lista=lista)
-
-# ===== VER OS =====
-@app.route("/ver/<numero>")
-def ver(numero):
-    return send_file(os.path.join(PASTA_PDF, f"OS_{numero}.pdf"))
-
-# ===== REIMPRIMIR =====
-@app.route("/reimprimir/<numero>")
-def reimprimir(numero):
-    return send_file(os.path.join(PASTA_PDF, f"OS_{numero}.pdf"), as_attachment=True)
-
-# ===== RELATÓRIO PDF =====
-@app.route("/relatorio")
-def relatorio():
-    if not session.get("logado"):
-        return redirect("/")
-
-    mes_atual = datetime.now().strftime("%m/%Y")
-    mes_nome = datetime.now().strftime("%m-%Y")
-
-    if not os.path.exists(ARQUIVO_DB):
-        lista = []
-    else:
-        with open(ARQUIVO_DB, "r") as f:
-            lista = json.load(f)
-
-    lista_mes = []
-    total_valor = 0
-    total_qtd = 0
-
-    for os_item in lista:
-        if mes_atual in os_item["data"]:
-            lista_mes.append(os_item)
-            total_qtd += 1
-            total_valor += float(os_item["valor"])
-
-    pdf = gerar_relatorio_pdf(lista_mes, mes_nome, total_valor, total_qtd)
-    return send_file(pdf, as_attachment=True)
-
-# ===== GRÁFICO =====
-@app.route("/grafico")
-def grafico():
-    if not session.get("logado"):
-        return redirect("/")
-
-    if not os.path.exists(ARQUIVO_DB):
-        lista = []
-    else:
-        with open(ARQUIVO_DB, "r") as f:
-            lista = json.load(f)
-
-    ganhos = {}
-
-    for os_item in lista:
-        mes = os_item["data"][3:10]
-        valor = float(os_item["valor"])
-        ganhos[mes] = ganhos.get(mes, 0) + valor
-
-    meses = sorted(ganhos.keys())
-    valores = [ganhos[m] for m in meses]
-
-    plt.figure()
-    plt.bar(meses, valores)
-    plt.xlabel("Mês")
-    plt.ylabel("Faturamento (R$)")
-    plt.title("Ganhos por Mês")
-
-    caminho = os.path.join(PASTA_PDF, "grafico.png")
-    plt.tight_layout()
-    plt.savefig(caminho)
-    plt.close()
-
-    return send_file(caminho, as_attachment=True)
 
 # ===== SAIR =====
 @app.route("/sair")
