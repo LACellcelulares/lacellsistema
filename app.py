@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
+from flask import Flask, render_template, request, redirect, session, send_file
 import os
 import json
 from datetime import datetime
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
@@ -15,6 +15,7 @@ SENHA = "diemfafa"
 
 PASTA_PDF = "pdfs"
 ARQUIVO_DB = "os.json"
+LOGO_ZAP = "static/whatsapp.png"
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
@@ -53,7 +54,7 @@ def desenhar_padrao(padrao):
     ]))
     return tabela
 
-# ===== PDF 1 FOLHA A4 =====
+# ===== PDF A4 ÚNICO =====
 def gerar_pdf(numero, dados):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
@@ -72,12 +73,18 @@ def gerar_pdf(numero, dados):
         el.append(Spacer(1,6))
 
         el.append(Paragraph("L&A CELL - Assistência Técnica", styles['Heading3']))
+        el.append(Spacer(1,4))
+
+        # WhatsApp com ícone
+        if os.path.exists(LOGO_ZAP):
+            el.append(Image(LOGO_ZAP, width=12, height=12))
         el.append(Paragraph("WhatsApp: (11) 98083-3734", styles['Normal']))
         el.append(Spacer(1,6))
 
         linhas = [
             f"ORDEM DE SERVIÇO Nº {numero}",
             f"Data: {dados['data']}",
+            f"Data de Entrega: {dados['entrega']}",
             f"Cliente: {dados['cliente']}",
             f"Telefone: {dados['telefone']}",
             f"Aparelho: {dados['aparelho']}",
@@ -120,7 +127,6 @@ def login():
         return render_template("login.html", erro="Login inválido")
     return render_template("login.html")
 
-# ===== PAINEL =====
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -155,6 +161,7 @@ def nova():
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "senha_padrao": request.form.get("senha_padrao"),
+            "entrega": request.form.get("entrega"),
             "data": datetime.now().strftime("%d/%m/%Y %H:%M")
         }
 
@@ -164,7 +171,7 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ===== HISTÓRICO + BUSCA =====
+# ===== HISTÓRICO =====
 @app.route("/historico")
 def historico():
     if not session.get("logado"):
@@ -183,15 +190,22 @@ def historico():
             os_item for os_item in lista
             if busca in os_item["cliente"].lower()
             or busca in os_item["aparelho"].lower()
-            or busca in os_item["numero"]
+            or busca in os_item["numero"].lower()
         ]
 
     return render_template("historico.html", lista=lista)
 
+# ===== VISUALIZAR OS =====
+@app.route("/ver/<numero>")
+def ver(numero):
+    caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
+    return send_file(caminho)
+
 # ===== REIMPRIMIR =====
 @app.route("/reimprimir/<numero>")
 def reimprimir(numero):
-    return send_file(os.path.join(PASTA_PDF, f"OS_{numero}.pdf"), as_attachment=True)
+    caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
+    return send_file(caminho, as_attachment=True)
 
 # ===== SAIR =====
 @app.route("/sair")
