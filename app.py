@@ -42,58 +42,71 @@ def salvar_os(dados):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ===== PDF OS =====
+# ===== DESENHO SENHA PADRÃO 9 PONTOS =====
+def desenhar_padrao():
+    pontos = [["○","○","○"],
+              ["○","○","○"],
+              ["○","○","○"]]
+
+    tabela = Table(pontos, colWidths=22, rowHeights=22)
+    tabela.setStyle(TableStyle([
+        ('GRID',(0,0),(-1,-1),1,colors.black),
+        ('ALIGN',(0,0),(-1,-1),'CENTER')
+    ]))
+    return tabela
+
+# ===== PDF OS (1 FOLHA A4) =====
 def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
 
-    doc = SimpleDocTemplate(caminho, pagesize=A4,
-                            rightMargin=30,leftMargin=30,
-                            topMargin=30,bottomMargin=30)
+    doc = SimpleDocTemplate(
+        caminho,
+        pagesize=A4,
+        rightMargin=30,leftMargin=30,
+        topMargin=30,bottomMargin=30
+    )
 
     el = []
 
-    def bloco(tipo):
-        el.append(Paragraph(f"<b>{tipo}</b>", styles['Heading4']))
-        el.append(Spacer(1,6))
+    el.append(Paragraph(loja, styles['Heading2']))
+    el.append(Paragraph(f"WhatsApp: {whatsapp}", styles['Normal']))
+    el.append(Spacer(1,8))
 
-        el.append(Paragraph(loja, styles['Heading2']))
-        el.append(Paragraph(f"WhatsApp: {whatsapp}", styles['Normal']))
-        el.append(Spacer(1,6))
+    linhas = [
+        f"ORDEM DE SERVIÇO Nº {numero}",
+        f"Data: {dados['data']}",
+        f"Data de Entrega: {dados['entrega']}",
+        f"Cliente: {dados['cliente']}",
+        f"Telefone: {dados['telefone']}",
+        f"Aparelho: {dados['aparelho']}",
+        f"IMEI: {dados['imei']}    CPF/CNPJ: {dados['cpf']}",
+        f"Defeito: {dados['defeito']}",
+        f"Valor: R$ {dados['valor']:.2f}",
+        f"Forma de Pagamento: {dados['pagamento']}",
+        f"Sinal: R$ {dados['sinal']:.2f}",
+        f"Restante: R$ {dados['restante']:.2f}",
+        f"Garantia: {dados['garantia']}",
+        f"Senha Numérica: {dados['senha']}",
+    ]
 
-        linhas = [
-            f"ORDEM DE SERVIÇO Nº {numero}",
-            f"Data: {dados['data']}",
-            f"Data de Entrega: {dados['entrega']}",
-            f"Cliente: {dados['cliente']}",
-            f"Telefone: {dados['telefone']}",
-            f"Aparelho: {dados['aparelho']}",
-            f"IMEI: {dados['imei']}    CPF/CNPJ: {dados['cpf']}",
-            f"Defeito: {dados['defeito']}",
-            f"Valor: R$ {dados['valor']:.2f}",
-            f"Forma de Pagamento: {dados['pagamento']}",
-            f"Sinal: R$ {dados['sinal']:.2f}",
-            f"Restante: R$ {dados['restante']:.2f}",
-            f"Garantia: {dados['garantia']}",
-            f"Senha: {dados['senha']}",
-        ]
+    for linha in linhas:
+        el.append(Paragraph(linha, styles['Normal']))
 
-        for linha in linhas:
-            el.append(Paragraph(linha, styles['Normal']))
+    el.append(Spacer(1,10))
+    el.append(Paragraph("Senha Padrão (desenho):", styles['Normal']))
+    el.append(Spacer(1,6))
+    el.append(desenhar_padrao())
 
-        el.append(Spacer(1,12))
-        el.append(Paragraph("Assinatura: ____________________________________", styles['Normal']))
-        el.append(Spacer(1,12))
-        el.append(Paragraph("------------------------------------------------------------", styles['Normal']))
-        el.append(Spacer(1,12))
-
-    bloco("VIA DO CLIENTE")
-    bloco("VIA DA LOJA")
+    el.append(Spacer(1,18))
+    el.append(Paragraph("Assinatura do Cliente: ____________________________________", styles['Normal']))
+    el.append(Spacer(1,18))
+    el.append(Paragraph("Assinatura da Loja: _______________________________________", styles['Normal']))
 
     doc.build(el)
     return caminho
 
-# ===== PDF RELATÓRIO =====
+# ===== PDF RELATÓRIO (SEPARADO POR LOJA) =====
 def gerar_pdf_relatorio(lista, loja_nome, mes_ref):
     caminho = os.path.join(PASTA_PDF, f"RELATORIO_{loja_nome}_{mes_ref}.pdf")
     styles = getSampleStyleSheet()
@@ -101,11 +114,9 @@ def gerar_pdf_relatorio(lista, loja_nome, mes_ref):
     total_qtd = len(lista)
     total_valor = sum(float(o["valor"]) for o in lista)
 
-    doc = SimpleDocTemplate(caminho, pagesize=A4,
-                            rightMargin=30,leftMargin=30,
-                            topMargin=30,bottomMargin=30)
-
+    doc = SimpleDocTemplate(caminho, pagesize=A4)
     el = []
+
     el.append(Paragraph("RELATÓRIO MENSAL DE ORDENS DE SERVIÇO", styles['Heading2']))
     el.append(Spacer(1,8))
     el.append(Paragraph(f"Loja: {loja_nome}", styles['Normal']))
@@ -186,7 +197,6 @@ def nova():
             "restante": valor - sinal,
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
-            "senha_padrao": request.form.get("senha_padrao"),
             "entrega": request.form.get("entrega"),
             "data": datetime.now().strftime("%d/%m/%Y %H:%M")
         }
@@ -213,7 +223,7 @@ def historico():
 
     return render_template("historico.html", lista=lista)
 
-# ===== RELATÓRIO MENSAL (SÓ DA LOJA) =====
+# ===== RELATÓRIO (SÓ DA LOJA) =====
 @app.route("/relatorio")
 def relatorio():
     if not session.get("logado"):
@@ -221,15 +231,12 @@ def relatorio():
 
     usuario = session["usuario"]
     loja_nome = USUARIOS[usuario]["loja"]
-    mes_ref = datetime.now().strftime("%m/%Y")
+    mes_ref = datetime.now().strftime("%m-%Y")
 
     lista = carregar_os()
-    lista = [
-        o for o in lista
-        if o.get("loja") == usuario and mes_ref in o.get("data","")
-    ]
+    lista = [o for o in lista if o.get("loja") == usuario]
 
-    pdf = gerar_pdf_relatorio(lista, loja_nome, mes_ref.replace("/","-"))
+    pdf = gerar_pdf_relatorio(lista, loja_nome, mes_ref)
     return send_file(pdf, as_attachment=True)
 
 # ===== SAIR =====
