@@ -1,95 +1,11 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Painel</title>
+<h2>📊 Painel</h2>
 
-<style>
-body{
-    margin:0;
-    font-family:Arial, Helvetica, sans-serif;
-    background:#0f172a;
-    color:white;
-}
-.topo{
-    background:#111827;
-    padding:15px;
-    text-align:center;
-    font-size:20px;
-    font-weight:bold;
-    color:#22c55e;
-}
-.container{
-    padding:20px;
-    display:grid;
-    gap:15px;
-}
-.card{
-    background:#111827;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 0 10px rgba(0,0,0,0.3);
-}
-a{
-    text-decoration:none;
-}
-button{
-    width:100%;
-    padding:15px;
-    border:none;
-    border-radius:10px;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
-}
-.btn1{background:#22c55e;color:#0f172a;}
-.btn2{background:#3b82f6;color:white;}
-.btn3{background:#f59e0b;color:white;}
-.btn4{background:#ef4444;color:white;}
-button:hover{opacity:0.9;}
-</style>
-</head>
+OS no sistema: <b>{{ total_os }}</b><br>
+Faturamento total: <b>R$ {{ "%.2f"|format(total_valor) }}</b>
 
-<body>
+<hr>
 
-<div class="topo">
-L&A CELL — Sistema de OS
-</div>
-
-<div class="container">
-
-<div class="card">
-<a href="/nova">
-<button class="btn1">➕ Nova Ordem de Serviço</button>
-</a>
-</div>
-
-<div class="card">
-<a href="/historico">
-<button class="btn2">📂 Histórico de OS</button>
-</a>
-</div>
-
-<div class="card">
-<a href="/relatorio">
-<button class="btn3">📄 Baixar Relatório Mensal</button>
-</a>
-</div>
-
-<div class="card">
-<a href="/grafico">
-<button class="btn3">📊 Gráfico de Ganhos</button>
-</a>
-</div>
-
-<div class="card">
-<a href="/sair">
-<button class="btn4">🚪 Sair</button>
-</a>
-</div>
-
-</div>
-
-</body>
-</html>
+<a href="/nova">➕ Nova OS</a><br>
+<a href="/historico">📂 Histórico</a><br>
+<a href="/relatorio">📄 Relatório Mensal</a><br>
+<a href="/sair">🚪 Sair</a>
