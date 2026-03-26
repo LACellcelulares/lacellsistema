@@ -1,20 +1,26 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
-import pytz
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
 
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
+# ===== USUARIOS =====
 USUARIOS = {
-    "admin": {
-        "senha": "123",
-        "loja": "Minha Loja",
-        "whatsapp": "(11) 99999-9999"
+    "pytty": {
+        "senha": "diemfafa",
+        "loja": "L&A Cell Celulares",
+        "whatsapp": "(11)98083-3734"
+    },
+    "adriano": {
+        "senha": "jesus",
+        "loja": "MILLENNIUM SOLUTIONS ATIBAIA",
+        "whatsapp": "(11)99846-8349"
     }
 }
 
@@ -22,9 +28,8 @@ ARQUIVO_DB = "os.json"
 PASTA_PDF = "pdfs"
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-def agora_br():
-    fuso = pytz.timezone("America/Sao_Paulo")
-    return datetime.now(fuso)
+def agora():
+    return datetime.now().strftime("%d/%m/%Y %H:%M")
 
 def carregar_os():
     if not os.path.exists(ARQUIVO_DB):
@@ -41,7 +46,17 @@ def salvar_os(d):
     lista.append(d)
     salvar_lista(lista)
 
-# ================= PDF =================
+# ===== SENHA PADRAO =====
+def desenhar_padrao():
+    pontos = [["●"] * 3 for _ in range(3)]
+    t = Table(pontos, 18, 18)
+    t.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER')
+    ]))
+    return t
+
+# ===== PDF =====
 def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
@@ -73,6 +88,10 @@ def gerar_pdf_os(numero, dados, loja, whatsapp):
         for l in linhas:
             el.append(Paragraph(l, normal))
 
+        el.append(Spacer(1,10))
+        el.append(Paragraph("Senha padrão:", normal))
+        el.append(desenhar_padrao())
+
         el.append(Spacer(1,20))
 
     bloco("VIA DO CLIENTE")
@@ -82,8 +101,7 @@ def gerar_pdf_os(numero, dados, loja, whatsapp):
     doc.build(el)
     return caminho
 
-# ================= ROTAS =================
-
+# ===== LOGIN =====
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method=="POST":
@@ -97,6 +115,7 @@ def login():
 
     return render_template("login.html")
 
+# ===== PAINEL =====
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -108,13 +127,18 @@ def painel():
 
     return render_template("painel.html", total_os=total, total_valor=valor)
 
+# ===== NOVA OS =====
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
         return redirect("/")
 
     if request.method=="POST":
-        numero = agora_br().strftime("%Y%m%d%H%M%S")
+        u = session["usuario"]
+        loja = USUARIOS[u]["loja"]
+        whats = USUARIOS[u]["whatsapp"]
+
+        numero = datetime.now().strftime("%Y%m%d%H%M%S")
 
         valor = float(request.form.get("valor") or 0)
         sinal = float(request.form.get("sinal") or 0)
@@ -132,16 +156,17 @@ def nova():
             "frete": float(request.form.get("frete") or 0),
             "garantia": request.form.get("garantia") or "Sem garantia",
             "senha": request.form.get("senha"),
-            "data": agora_br().strftime("%d/%m/%Y %H:%M")
+            "data": agora()
         }
 
         salvar_os(d)
 
-        pdf = gerar_pdf_os(numero, d, "Minha Loja", "(11)99999")
+        pdf = gerar_pdf_os(numero, d, loja, whats)
         return send_file(pdf, as_attachment=True)
 
     return render_template("nova_os.html")
 
+# ===== HISTORICO =====
 @app.route("/historico")
 def historico():
     if not session.get("logado"):
@@ -150,17 +175,28 @@ def historico():
     lista = carregar_os()
     return render_template("historico.html", lista=lista)
 
+# ===== VER OS =====
 @app.route("/os/<numero>")
 def ver_os(numero):
+    if not session.get("logado"):
+        return redirect("/")
+
+    u = session["usuario"]
+    loja = USUARIOS[u]["loja"]
+    whats = USUARIOS[u]["whatsapp"]
+
     lista = carregar_os()
     o = next((x for x in lista if x["numero"]==numero), None)
 
-    pdf = gerar_pdf_os(numero, o, "Minha Loja", "(11)99999")
+    pdf = gerar_pdf_os(numero, o, loja, whats)
     return send_file(pdf)
 
 # ===== FINANCEIRO =====
 @app.route("/financeiro")
 def financeiro():
+    if not session.get("logado"):
+        return redirect("/")
+
     lista = carregar_os()
 
     total = sum(float(o["valor"]) for o in lista)
@@ -178,6 +214,9 @@ def financeiro():
 # ===== EDITAR =====
 @app.route("/editar/<numero>", methods=["GET","POST"])
 def editar(numero):
+    if not session.get("logado"):
+        return redirect("/")
+
     lista = carregar_os()
     o = next((x for x in lista if x["numero"]==numero), None)
 
@@ -194,13 +233,13 @@ def editar(numero):
 # ===== RELATORIO =====
 @app.route("/relatorio")
 def relatorio():
-    lista = carregar_os()
-    return str(len(lista))  # simples só pra não dar erro
+    return "Relatório funcionando"
 
 @app.route("/relatorio-dia")
 def relatorio_dia():
-    return "OK"
+    return "Relatório do dia funcionando"
 
+# ===== SAIR =====
 @app.route("/sair")
 def sair():
     session.clear()
