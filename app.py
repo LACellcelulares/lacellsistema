@@ -18,10 +18,9 @@ PASTA_PDF="pdfs"
 ARQUIVO_DB="os.json"
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ================= BANCO =================
+# ================= DB =================
 def carregar():
-    if not os.path.exists(ARQUIVO_DB):
-        return []
+    if not os.path.exists(ARQUIVO_DB): return []
     try:
         with open(ARQUIVO_DB,"r") as f:
             return json.load(f)
@@ -94,9 +93,7 @@ def login():
 # ================= PAINEL =================
 @app.route("/painel")
 def painel():
-    if not session.get("logado"):
-        return redirect("/")
-
+    if not session.get("logado"): return redirect("/")
     u=session["usuario"]
     loja=USUARIOS[u]["loja"]
 
@@ -110,8 +107,7 @@ def painel():
 # ================= NOVA OS =================
 @app.route("/nova",methods=["GET","POST"])
 def nova():
-    if not session.get("logado"):
-        return redirect("/")
+    if not session.get("logado"): return redirect("/")
 
     if request.method=="POST":
         u=session["usuario"]
@@ -151,11 +147,35 @@ def nova():
 
     return render_template("nova_os.html")
 
+# ================= EDITAR OS COMPLETO =================
+@app.route("/editar/<numero>",methods=["GET","POST"])
+def editar(numero):
+    if not session.get("logado"): return redirect("/")
+
+    lista=carregar()
+    os_encontrada=next((x for x in lista if x["numero"]==numero),None)
+
+    if not os_encontrada:
+        return "OS não encontrada"
+
+    if request.method=="POST":
+        os_encontrada["cliente"]=request.form.get("cliente")
+        os_encontrada["aparelho"]=request.form.get("aparelho")
+        os_encontrada["defeito"]=request.form.get("defeito")
+
+        os_encontrada["valor"]=float(request.form.get("valor") or 0)
+        os_encontrada["custo"]=float(request.form.get("custo") or 0)
+        os_encontrada["frete"]=float(request.form.get("frete") or 0)
+
+        salvar(lista)
+        return redirect("/historico")
+
+    return render_template("editar.html",os=os_encontrada)
+
 # ================= HISTORICO =================
 @app.route("/historico")
 def historico():
-    if not session.get("logado"):
-        return redirect("/")
+    if not session.get("logado"): return redirect("/")
 
     u=session["usuario"]
     loja=USUARIOS[u]["loja"]
@@ -167,16 +187,13 @@ def historico():
 # ================= VER OS =================
 @app.route("/os/<numero>")
 def ver(numero):
-    if not session.get("logado"):
-        return redirect("/")
+    if not session.get("logado"): return redirect("/")
 
     u=session["usuario"]
     loja=USUARIOS[u]["loja"]
 
-    o=next((x for x in carregar() if x.get("numero")==numero and x.get("loja")==loja),None)
-
-    if not o:
-        abort(404)
+    o=next((x for x in carregar() if x["numero"]==numero and x["loja"]==loja),None)
+    if not o: abort(404)
 
     pdf=gerar_pdf(numero,o,loja,USUARIOS[u]["whatsapp"])
     return send_file(pdf)
@@ -184,49 +201,57 @@ def ver(numero):
 # ================= FINANCEIRO =================
 @app.route("/financeiro",methods=["GET","POST"])
 def financeiro():
-    if not session.get("logado"):
-        return redirect("/")
+    if not session.get("logado"): return redirect("/")
 
-    # LOGIN DO FINANCEIRO
     if not session.get("fin_ok"):
         if request.method=="POST":
-            senha=request.form.get("senha") or ""
-            if senha=="jesus":
+            if request.form.get("senha")=="jesus":
                 session["fin_ok"]=True
                 return redirect("/financeiro")
-            else:
-                return render_template("financeiro_login.html",erro="Senha incorreta")
-
         return render_template("financeiro_login.html")
 
-    # LISTA FINANCEIRO
     u=session["usuario"]
     loja=USUARIOS[u]["loja"]
 
     lista=[o for o in carregar() if o.get("loja")==loja]
 
-    total=sum(float(o.get("valor",0)) for o in lista)
-    custo=sum(float(o.get("custo",0)) for o in lista)
-    frete=sum(float(o.get("frete",0)) for o in lista)
+    total=sum(o["valor"] for o in lista)
+    custo=sum(o["custo"] for o in lista)
+    frete=sum(o["frete"] for o in lista)
 
     lucro=total-custo-frete
 
-    return render_template("financeiro.html",
-        lista=lista,
-        total=total,
-        custo=custo,
-        frete=frete,
-        lucro=lucro
-    )
+    return render_template("financeiro.html",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
 
-# ================= RELATORIOS =================
-@app.route("/relatorio")
-def relatorio():
-    return "Relatório mensal OK"
-
+# ================= RELATORIO DIA =================
 @app.route("/relatorio_dia")
 def relatorio_dia():
-    return "Relatório dia OK"
+    hoje=datetime.now().strftime("%d/%m/%Y")
+
+    lista=[o for o in carregar() if hoje in o["data"]]
+
+    total=sum(o["valor"] for o in lista)
+    custo=sum(o["custo"] for o in lista)
+    frete=sum(o["frete"] for o in lista)
+
+    lucro=total-custo-frete
+
+    return render_template("relatorio.html",titulo="Relatório do Dia",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
+
+# ================= RELATORIO MES =================
+@app.route("/relatorio")
+def relatorio_mes():
+    mes=datetime.now().strftime("%m/%Y")
+
+    lista=[o for o in carregar() if mes in o["data"]]
+
+    total=sum(o["valor"] for o in lista)
+    custo=sum(o["custo"] for o in lista)
+    frete=sum(o["frete"] for o in lista)
+
+    lucro=total-custo-frete
+
+    return render_template("relatorio.html",titulo="Relatório Mensal",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
 
 # ================= SAIR =================
 @app.route("/sair")
