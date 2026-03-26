@@ -32,11 +32,11 @@ button{
 
 {% for os in lista %}
 <tr>
-<td>{{ os.id }}</td>
+<td>{{ os.numero }}</td>
 <td>{{ os.cliente }}</td>
 <td>
-<a href="/ver/{{ os.id }}"><button>Ver</button></a>
-<a href="/editar/{{ os.id }}"><button>Editar</button></a>
+<a href="/os/{{ os.numero }}" target="_blank"><button>Ver</button></a>
+<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
 </td>
 </tr>
 {% endfor %}
