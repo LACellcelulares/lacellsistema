@@ -1,26 +1,56 @@
 <!DOCTYPE html>
-<html>
-<body style="background:#0f172a;color:white;font-family:Arial;padding:20px">
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Financeiro</title>
+
+<style>
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    padding:20px;
+}
+.card{
+    background:#111827;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
+}
+.os{
+    background:#1f2937;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:8px;
+}
+</style>
+</head>
+
+<body>
 
 <h2>💰 Financeiro</h2>
 
-<p>Total: R$ {{ total }}</p>
-<p>Lucro: R$ {{ lucro }}</p>
-<p>Em aberto: R$ {{ aberto }}</p>
-
-<hr>
+<div class="card">
+Total: R$ {{ total }}<br>
+Custo: R$ {{ custo }}<br>
+Frete: R$ {{ frete }}<br>
+Lucro: R$ {{ lucro }}<br>
+Em aberto: R$ {{ aberto }}
+</div>
 
 {% for o in lista %}
-<div style="background:#1f2937;padding:10px;margin-bottom:10px">
-OS {{ o.numero }}<br>
-Cliente: {{ o.cliente }}<br>
-Valor: {{ o.valor }}<br>
-Lucro: {{ o.lucro }}<br>
+<div class="os">
+OS {{ o.numero }} - {{ o.aparelho }}<br>
+Valor: {{ o.valor }} |
+Custo: {{ o.custo }} |
+Frete: {{ o.frete }}<br>
 Aberto: {{ o.restante }}<br>
 
 <a href="/os/{{ o.numero }}" target="_blank">Ver OS</a>
 </div>
 {% endfor %}
+
+<a href="/painel">⬅ Voltar</a>
 
 </body>
 </html>
