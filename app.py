@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, send_file, abort
+from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -9,9 +9,6 @@ from reportlab.lib import colors
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
-# ===============================
-# USUÁRIOS
-# ===============================
 USUARIOS = {
     "pytty": {
         "senha": "diemfafa",
@@ -25,22 +22,11 @@ USUARIOS = {
     }
 }
 
-# ===============================
-# CONFIG
-# ===============================
 PASTA_PDF = "pdfs"
 ARQUIVO_DB = "os.json"
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ===============================
-# DRIVE DESATIVADO
-# ===============================
-def upload_drive(file_path, file_name):
-    pass
-
-# ===============================
-# BANCO
-# ===============================
+# ================= BANCO =================
 def carregar_os():
     if not os.path.exists(ARQUIVO_DB):
         return []
@@ -53,15 +39,12 @@ def salvar_os(d):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ===============================
-# PDF
-# ===============================
+# ================= PDF =================
 def desenhar_padrao():
     pontos = [["○"] * 3 for _ in range(3)]
     t = Table(pontos, 18, 18)
     t.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 1, colors.black),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER')
+        ('GRID', (0,0), (-1,-1), 1, colors.black)
     ]))
     return t
 
@@ -69,16 +52,14 @@ def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
     normal = styles["Normal"]
-    normal.fontSize = 9
-    h4 = styles["Heading4"]
 
     doc = SimpleDocTemplate(caminho, pagesize=A4)
-    elementos = []
+    el = []
 
     def bloco(titulo):
-        elementos.append(Paragraph(f"<b>{titulo}</b>", h4))
-        elementos.append(Paragraph(loja, normal))
-        elementos.append(Paragraph(f"WhatsApp: {whatsapp}", normal))
+        el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
+        el.append(Paragraph(loja, normal))
+        el.append(Paragraph(f"WhatsApp: {whatsapp}", normal))
 
         linhas = [
             f"OS Nº {numero}",
@@ -90,23 +71,20 @@ def gerar_pdf_os(numero, dados, loja, whatsapp):
         ]
 
         for l in linhas:
-            elementos.append(Paragraph(l, normal))
+            el.append(Paragraph(l, normal))
 
-        elementos.append(Spacer(1, 5))
-        elementos.append(Paragraph("Senha padrão:", normal))
-        elementos.append(desenhar_padrao())
-        elementos.append(Spacer(1, 5))
+        el.append(Spacer(1,5))
+        el.append(Paragraph("Senha padrão:", normal))
+        el.append(desenhar_padrao())
+        el.append(Spacer(1,10))
 
     bloco("VIA CLIENTE")
-    elementos.append(Spacer(1, 10))
     bloco("VIA LOJA")
 
-    doc.build(elementos)
+    doc.build(el)
     return caminho
 
-# ===============================
-# ROTAS
-# ===============================
+# ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -119,6 +97,7 @@ def login():
         return render_template("login.html", erro="Login inválido")
     return render_template("login.html")
 
+# ================= PAINEL =================
 @app.route("/painel")
 def painel():
     if not session.get("logado"): return redirect("/")
@@ -126,14 +105,13 @@ def painel():
     loja = USUARIOS[u]["loja"]
 
     lista = [o for o in carregar_os() if o["loja"] == loja]
+
     total = len(lista)
-    valor = sum(float(o["valor"]) for o in lista)
+    valor = sum(o["valor"] for o in lista)
 
     return render_template("painel.html", total_os=total, total_valor=valor)
 
-# ===============================
-# NOVA OS (COM FINANCEIRO)
-# ===============================
+# ================= NOVA OS =================
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"): return redirect("/")
@@ -145,8 +123,13 @@ def nova():
         n = datetime.now().strftime("%Y%m%d%H%M")
 
         valor = float(request.form.get("valor") or 0)
+        sinal = float(request.form.get("sinal") or 0)
         custo = float(request.form.get("custo") or 0)
-        lucro = valor - custo
+        frete = float(request.form.get("frete") or 0)
+
+        custo_total = custo + frete
+        lucro = valor - custo_total
+        restante = valor - sinal
 
         d = {
             "numero": n,
@@ -157,7 +140,11 @@ def nova():
             "aparelho": request.form.get("aparelho"),
             "defeito": request.form.get("defeito"),
             "valor": valor,
+            "sinal": sinal,
+            "restante": restante,
             "custo": custo,
+            "frete": frete,
+            "custo_total": custo_total,
             "lucro": lucro,
             "data": datetime.now().strftime("%d/%m/%Y")
         }
@@ -169,9 +156,23 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ===============================
-# HISTORICO
-# ===============================
+# ================= VER OS =================
+@app.route("/os/<numero>")
+def ver_os(numero):
+    if not session.get("logado"): return redirect("/")
+
+    u = session["usuario"]
+    loja = USUARIOS[u]["loja"]
+
+    o = next((x for x in carregar_os() if x["numero"] == numero and x["loja"] == loja), None)
+
+    if not o:
+        return "OS não encontrada"
+
+    pdf = gerar_pdf_os(numero, o, loja, USUARIOS[u]["whatsapp"])
+    return send_file(pdf)
+
+# ================= HISTORICO =================
 @app.route("/historico")
 def historico():
     if not session.get("logado"): return redirect("/")
@@ -182,16 +183,13 @@ def historico():
 
     return render_template("historico.html", lista=lista)
 
-# ===============================
-# FINANCEIRO (PROTEGIDO)
-# ===============================
+# ================= FINANCEIRO =================
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
     if not session.get("logado"): return redirect("/")
 
     if request.method == "POST":
-        senha = request.form.get("senha")
-        if senha == "jesus":
+        if request.form.get("senha") == "jesus":
             session["financeiro"] = True
         else:
             return render_template("financeiro_login.html", erro="Senha errada")
@@ -204,13 +202,12 @@ def financeiro():
 
     lista = [o for o in carregar_os() if o["loja"] == loja]
 
-    total_lucro = sum(o.get("lucro",0) for o in lista)
+    total_lucro = sum(o["lucro"] for o in lista)
+    total_aberto = sum(o["restante"] for o in lista)
 
-    return render_template("financeiro.html", lista=lista, lucro=total_lucro)
+    return render_template("financeiro.html", lista=lista, lucro=total_lucro, aberto=total_aberto)
 
-# ===============================
-# RELATORIO DIA
-# ===============================
+# ================= RELATORIO DIA =================
 @app.route("/relatorio_dia")
 def relatorio_dia():
     if not session.get("logado"): return redirect("/")
@@ -223,20 +220,29 @@ def relatorio_dia():
     lista = [o for o in carregar_os() if o["loja"] == loja and o["data"] == hoje]
 
     total = len(lista)
-    valor = sum(float(o["valor"]) for o in lista)
+    valor = sum(o["valor"] for o in lista)
 
     return render_template("relatorio_dia.html", total=total, valor=valor)
 
-# ===============================
-# SAIR
-# ===============================
+# ================= RELATORIO =================
+@app.route("/relatorio")
+def relatorio():
+    if not session.get("logado"): return redirect("/")
+
+    u = session["usuario"]
+    loja = USUARIOS[u]["loja"]
+
+    lista = [o for o in carregar_os() if o["loja"] == loja]
+
+    total = len(lista)
+    valor = sum(o["valor"] for o in lista)
+
+    return render_template("relatorio.html", qtd=total, total=valor)
+
 @app.route("/sair")
 def sair():
     session.clear()
     return redirect("/")
-
-# ===============================
-# RUN
-# ===============================
+    
 if __name__ == "__main__":
     app.run(debug=True)
