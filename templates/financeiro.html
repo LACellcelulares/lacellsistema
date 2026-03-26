@@ -1,15 +1,13 @@
 <h2>💰 Financeiro</h2>
 
-<p>Lucro Total: R$ {{ total }}</p>
+<p>Lucro total: R$ {{ total }}</p>
 
 {% for o in lista %}
-<div style="background:#1f2937;padding:10px;margin:10px;border-radius:8px;">
-Cliente: {{ o.cliente }}<br>
-Valor: {{ o.valor }}<br>
-Custo: {{ o.custo }}<br>
-Frete: {{ o.frete }}<br>
-<b>Lucro: {{ o.lucro }}</b>
-</div>
+<p>
+Cliente: {{ o.cliente }} |
+Valor: {{ o.valor }} |
+Lucro: {{ o.lucro }}
+</p>
 {% endfor %}
 
 <a href="/painel">Voltar</a>
