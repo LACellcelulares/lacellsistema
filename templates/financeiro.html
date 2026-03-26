@@ -1,13 +1,16 @@
-<h2>💰 Financeiro</h2>
-
-<p>Lucro total: R$ {{ total }}</p>
-
 {% for o in lista %}
-<p>
-Cliente: {{ o.cliente }} |
-Valor: {{ o.valor }} |
-Lucro: {{ o.lucro }}
-</p>
-{% endfor %}
+<div class="os-card">
 
-<a href="/painel">Voltar</a>
+<b>OS #{{ o.numero }}</b><br>
+Cliente: {{ o.cliente }}<br>
+Aparelho: {{ o.aparelho }}<br>
+
+Valor: R$ {{ o.valor }}<br>
+Custo+Frete: R$ {{ o.custo_total }}<br>
+Lucro: R$ {{ o.lucro }}<br>
+Em aberto: R$ {{ o.restante }}<br>
+
+<a href="/os/{{ o.numero }}" target="_blank">👁️ Ver OS</a>
+
+</div>
+{% endfor %}
