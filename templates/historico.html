@@ -2,130 +2,56 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Histórico de OS</title>
+<title>Histórico</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-    body{
-        margin:0;
-        background:#0f172a;
-        font-family:Arial, Helvetica, sans-serif;
-        color:white;
-        padding:15px;
-    }
-
-    h2{
-        color:#22c55e;
-        text-align:center;
-        margin-bottom:20px;
-    }
-
-    .box{
-        background:#111827;
-        padding:20px;
-        border-radius:12px;
-        max-width:500px;
-        margin:auto;
-        box-shadow:0 0 20px rgba(0,0,0,.35);
-    }
-
-    input{
-        width:100%;
-        padding:12px;
-        border:none;
-        margin-bottom:10px;
-        border-radius:8px;
-        background:#1f2937;
-        color:white;
-        font-size:15px;
-    }
-
-    button{
-        width:100%;
-        padding:12px;
-        border:none;
-        border-radius:8px;
-        background:#22c55e;
-        color:#0f172a;
-        font-weight:bold;
-        cursor:pointer;
-        font-size:15px;
-    }
-
-    .os-card{
-        background:#1f2937;
-        padding:15px;
-        border-radius:10px;
-        margin-bottom:15px;
-    }
-
-    a.btn{
-        display:inline-block;
-        padding:8px 12px;
-        margin-right:6px;
-        margin-top:10px;
-        border-radius:8px;
-        font-size:14px;
-        text-decoration:none;
-        font-weight:bold;
-        color:white;
-    }
-
-    .ver{ background:#0ea5e9; }
-    .print{ background:#a855f7; }
-    .zap{ background:#22c55e; color:#0f172a; }
-
-    hr{
-        border-color:#334155;
-    }
-
-    .voltar{
-        display:block;
-        text-align:center;
-        color:#22c55e;
-        margin-top:20px;
-        text-decoration:none;
-    }
-
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    padding:15px;
+}
+.box{
+    background:#111827;
+    padding:20px;
+    border-radius:12px;
+    max-width:500px;
+    margin:auto;
+}
+.os{
+    background:#1f2937;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:8px;
+}
+a{
+    color:#22c55e;
+}
 </style>
 </head>
 
 <body>
 
-<h2>📂 Histórico de OS</h2>
+<h2>📂 Histórico</h2>
 
 <div class="box">
 
-<form method="get">
-    <input name="q" placeholder="Buscar cliente, aparelho ou nº OS" value="{{ busca }}">
-    <button>🔎 Buscar</button>
-</form>
-
-<br>
-
 {% for o in lista %}
-<div class="os-card">
-
-<b>OS #{{ o.numero }}</b><br>
+<div class="os">
+<b>OS {{ o.numero }}</b><br>
 Cliente: {{ o.cliente }}<br>
 Aparelho: {{ o.aparelho }}<br>
 Valor: R$ {{ o.valor }}<br>
 
-<a href="/os/{{ o.numero }}" target="_blank" class="btn ver">👁️ Ver</a>
-
-<a href="/os/{{ o.numero }}?download=1" class="btn print">🖨️ Imprimir</a>
-
-<a target="_blank" class="btn zap"
-href="https://wa.me/55{{ o.telefone|replace('(','')|replace(')','')|replace('-','')|replace(' ','') }}">
-🟢 WhatsApp
-</a>
+<a href="/os/{{ o.numero }}" target="_blank">👁️ Ver / Imprimir</a>
 
 </div>
 {% endfor %}
 
 </div>
 
-<a href="/painel" class="voltar">⬅ Voltar</a>
+<a href="/painel">⬅ Voltar</a>
 
 </body>
 </html>
