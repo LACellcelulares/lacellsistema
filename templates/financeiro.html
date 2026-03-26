@@ -2,34 +2,23 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Financeiro</title>
 
 <style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    padding:15px;
-}
-
-h2{
-    text-align:center;
-    color:#22c55e;
-}
+body{background:#0f172a;color:white;font-family:Arial;padding:15px;}
+h2{text-align:center;color:#22c55e;}
 
 .card{
     background:#111827;
     padding:15px;
-    border-radius:10px;
     margin-bottom:10px;
+    border-radius:10px;
 }
 
 button{
     background:#22c55e;
     border:none;
-    padding:8px;
+    padding:6px;
     border-radius:6px;
-    cursor:pointer;
 }
 </style>
 </head>
@@ -40,13 +29,16 @@ button{
 
 {% for os in lista %}
 <div class="card">
-OS: {{ os.id }}<br>
-Cliente: {{ os.cliente }}<br>
-Valor: R$ {{ os.valor }}<br>
-Sinal: R$ {{ os.sinal }}<br>
-Restante: R$ {{ os.restante }}<br>
+<b>OS {{ os.id }}</b><br>
+{{ os.cliente }}<br>
 
-<a href="/ver/{{ os.id }}"><button>Ver OS</button></a>
+Valor: {{ os.valor }}<br>
+Custo: {{ os.custo }}<br>
+Frete: {{ os.frete }}<br>
+
+<b>Lucro: {{ os.valor - os.custo - os.frete }}</b><br>
+
+<a href="/editar/{{ os.id }}"><button>Editar</button></a>
 </div>
 {% endfor %}
 
