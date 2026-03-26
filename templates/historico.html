@@ -1,57 +1,8 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Histórico</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    padding:15px;
-}
-.box{
-    background:#111827;
-    padding:20px;
-    border-radius:12px;
-    max-width:500px;
-    margin:auto;
-}
-.os{
-    background:#1f2937;
-    padding:10px;
-    margin-bottom:10px;
-    border-radius:8px;
-}
-a{
-    color:#22c55e;
-}
-</style>
-</head>
-
-<body>
-
-<h2>📂 Histórico</h2>
-
-<div class="box">
+<h2>Histórico</h2>
 
 {% for o in lista %}
-<div class="os">
-<b>OS {{ o.numero }}</b><br>
-Cliente: {{ o.cliente }}<br>
-Aparelho: {{ o.aparelho }}<br>
-Valor: R$ {{ o.valor }}<br>
-
-<a href="/os/{{ o.numero }}" target="_blank">👁️ Ver / Imprimir</a>
-
+<div>
+OS {{ o.numero }} - {{ o.cliente }}
+<a href="/os/{{ o.numero }}">Ver</a>
 </div>
 {% endfor %}
-
-</div>
-
-<a href="/painel">⬅ Voltar</a>
-
-</body>
-</html>
