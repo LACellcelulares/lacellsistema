@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#0f172a;color:white;font-family:Arial;padding:20px;">
+
+<h2>Editar OS</h2>
+
+<form method="post">
+
+Cliente:
+<input name="cliente" value="{{ os.cliente }}"><br><br>
+
+Valor:
+<input name="valor" value="{{ os.valor }}"><br><br>
+
+Custo:
+<input name="custo" value="{{ os.custo }}"><br><br>
+
+Frete:
+<input name="frete" value="{{ os.frete }}"><br><br>
+
+<button>Salvar</button>
+
+</form>
+
+</body>
+</html>
