@@ -2,37 +2,19 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Histórico</title>
 
 <style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    padding:15px;
-}
+body{background:#0f172a;color:white;font-family:Arial;padding:15px;}
+h2{text-align:center;color:#22c55e;}
 
-h2{
-    text-align:center;
-    color:#22c55e;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th, td{
-    padding:10px;
-    border-bottom:1px solid #1f2937;
-}
+table{width:100%;border-collapse:collapse;}
+td,th{padding:10px;border-bottom:1px solid #1f2937;}
 
 button{
-    padding:6px 10px;
     background:#22c55e;
     border:none;
+    padding:6px;
     border-radius:6px;
-    cursor:pointer;
 }
 </style>
 </head>
@@ -45,7 +27,6 @@ button{
 <tr>
 <th>OS</th>
 <th>Cliente</th>
-<th>Aparelho</th>
 <th>Ação</th>
 </tr>
 
@@ -53,13 +34,12 @@ button{
 <tr>
 <td>{{ os.id }}</td>
 <td>{{ os.cliente }}</td>
-<td>{{ os.aparelho }}</td>
 <td>
 <a href="/ver/{{ os.id }}"><button>Ver</button></a>
+<a href="/editar/{{ os.id }}"><button>Editar</button></a>
 </td>
 </tr>
 {% endfor %}
-
 </table>
 
 </body>
