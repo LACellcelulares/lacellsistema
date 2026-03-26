@@ -41,14 +41,9 @@ button{
     border:none;
     border-radius:8px;
     font-weight:bold;
-    font-size:15px;
-    cursor:pointer;
     background:#22c55e;
     color:#0f172a;
-}
-
-button:hover{
-    opacity:.9;
+    cursor:pointer;
 }
 
 .sair{
@@ -65,7 +60,7 @@ button:hover{
 <div class="card">
 
 <div class="info">
-    OS no sistema: <b>{{ total_os }}</b><br>
+    OS: <b>{{ total_os }}</b><br>
     Faturamento: <b>R$ {{ "%.2f"|format(total_valor) }}</b>
 </div>
 
