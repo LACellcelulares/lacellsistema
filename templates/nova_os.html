@@ -60,17 +60,39 @@ button{
 
 <input name="defeito" placeholder="Defeito">
 
-<input name="valor" placeholder="Valor">
-<input name="sinal" placeholder="Sinal">
+<input name="valor" id="valor" placeholder="Valor">
+<input name="sinal" id="sinal" placeholder="Sinal">
 <input name="custo" placeholder="Custo">
 <input name="frete" placeholder="Frete">
 
 <input name="restante" id="restante" placeholder="Restante" readonly>
 
+<input name="pagamento" placeholder="Forma de pagamento">
+
+<select name="garantia">
+<option>Sem garantia</option>
+<option>30 dias</option>
+<option>60 dias</option>
+<option>90 dias</option>
+</select>
+
+<input name="senha" placeholder="Senha do aparelho">
+
 <button type="submit">Salvar</button>
 
 </form>
 </div>
+
+<script>
+function calc(){
+ let v=parseFloat(valor.value)||0
+ let s=parseFloat(sinal.value)||0
+ restante.value=(v-s).toFixed(2)
+}
+
+valor.oninput=calc
+sinal.oninput=calc
+</script>
 
 </body>
 </html>
