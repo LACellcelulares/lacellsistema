@@ -52,8 +52,13 @@ def gerar_pdf(n,d,loja,whats):
         dados=[
             f"OS Nº {n}",
             f"Data: {d.get('data','')}",
+            f"Entrega: {d.get('entrega','')}",
             f"Cliente: {d.get('cliente','')}",
+            f"Telefone: {d.get('telefone','')}",
+            f"CPF/CNPJ: {d.get('cpf','')}",
+            f"IMEI: {d.get('imei','')}",
             f"Aparelho: {d.get('aparelho','')}",
+            f"Defeito: {d.get('defeito','')}",
             f"Valor: R$ {d.get('valor',0)}",
             f"Pagamento: {d.get('pagamento','')}",
             f"Sinal: R$ {d.get('sinal',0)}",
@@ -126,6 +131,8 @@ def nova():
             "loja":loja,
             "cliente":request.form.get("cliente"),
             "telefone":request.form.get("telefone"),
+            "cpf":request.form.get("cpf"),
+            "imei":request.form.get("imei"),
             "aparelho":request.form.get("aparelho"),
             "defeito":request.form.get("defeito"),
             "valor":v,
@@ -136,6 +143,7 @@ def nova():
             "frete":f,
             "garantia":request.form.get("garantia"),
             "senha":request.form.get("senha"),
+            "entrega":request.form.get("entrega"),
             "data":datetime.now().strftime("%d/%m/%Y %H:%M")
         }
 
@@ -147,7 +155,7 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= EDITAR OS COMPLETO =================
+# ================= EDITAR =================
 @app.route("/editar/<numero>",methods=["GET","POST"])
 def editar(numero):
     if not session.get("logado"): return redirect("/")
@@ -160,12 +168,23 @@ def editar(numero):
 
     if request.method=="POST":
         os_encontrada["cliente"]=request.form.get("cliente")
+        os_encontrada["telefone"]=request.form.get("telefone")
+        os_encontrada["cpf"]=request.form.get("cpf")
+        os_encontrada["imei"]=request.form.get("imei")
         os_encontrada["aparelho"]=request.form.get("aparelho")
         os_encontrada["defeito"]=request.form.get("defeito")
 
         os_encontrada["valor"]=float(request.form.get("valor") or 0)
+        os_encontrada["sinal"]=float(request.form.get("sinal") or 0)
         os_encontrada["custo"]=float(request.form.get("custo") or 0)
         os_encontrada["frete"]=float(request.form.get("frete") or 0)
+
+        os_encontrada["restante"]=os_encontrada["valor"]-os_encontrada["sinal"]
+
+        os_encontrada["pagamento"]=request.form.get("pagamento")
+        os_encontrada["garantia"]=request.form.get("garantia")
+        os_encontrada["senha"]=request.form.get("senha")
+        os_encontrada["entrega"]=request.form.get("entrega")
 
         salvar(lista)
         return redirect("/historico")
@@ -176,7 +195,6 @@ def editar(numero):
 @app.route("/historico")
 def historico():
     if not session.get("logado"): return redirect("/")
-
     u=session["usuario"]
     loja=USUARIOS[u]["loja"]
 
@@ -184,7 +202,7 @@ def historico():
 
     return render_template("historico.html",lista=lista)
 
-# ================= VER OS =================
+# ================= VER =================
 @app.route("/os/<numero>")
 def ver(numero):
     if not session.get("logado"): return redirect("/")
@@ -218,7 +236,6 @@ def financeiro():
     total=sum(o["valor"] for o in lista)
     custo=sum(o["custo"] for o in lista)
     frete=sum(o["frete"] for o in lista)
-
     lucro=total-custo-frete
 
     return render_template("financeiro.html",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
@@ -233,7 +250,6 @@ def relatorio_dia():
     total=sum(o["valor"] for o in lista)
     custo=sum(o["custo"] for o in lista)
     frete=sum(o["frete"] for o in lista)
-
     lucro=total-custo-frete
 
     return render_template("relatorio.html",titulo="Relatório do Dia",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
@@ -248,7 +264,6 @@ def relatorio_mes():
     total=sum(o["valor"] for o in lista)
     custo=sum(o["custo"] for o in lista)
     frete=sum(o["frete"] for o in lista)
-
     lucro=total-custo-frete
 
     return render_template("relatorio.html",titulo="Relatório Mensal",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
