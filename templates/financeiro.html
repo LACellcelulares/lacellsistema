@@ -1,17 +1,54 @@
-<h2>Financeiro</h2>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Financeiro</title>
 
-Total: {{ total }} <br>
-Custo: {{ custo }} <br>
-Lucro: {{ lucro }} <br>
-Em aberto: {{ aberto }} <br><br>
+<style>
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    padding:15px;
+}
 
-{% for o in lista %}
-<div>
-OS {{ o.numero }} - {{ o.aparelho }}<br>
-Valor: {{ o.valor }} | Aberto: {{ o.restante }}
+h2{
+    text-align:center;
+    color:#22c55e;
+}
 
-<a href="/editar/{{ o.numero }}">Editar</a>
-<a href="/os/{{ o.numero }}">Ver OS</a>
+.card{
+    background:#111827;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+button{
+    background:#22c55e;
+    border:none;
+    padding:8px;
+    border-radius:6px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h2>💰 Financeiro</h2>
+
+{% for os in lista %}
+<div class="card">
+OS: {{ os.id }}<br>
+Cliente: {{ os.cliente }}<br>
+Valor: R$ {{ os.valor }}<br>
+Sinal: R$ {{ os.sinal }}<br>
+Restante: R$ {{ os.restante }}<br>
+
+<a href="/ver/{{ os.id }}"><button>Ver OS</button></a>
 </div>
-<hr>
 {% endfor %}
+
+</body>
+</html>
