@@ -14,19 +14,12 @@ from googleapiclient.http import MediaFileUpload
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
+# 🔒 senha financeiro
 SENHA_FINANCEIRO = "jesus"
 
 USUARIOS = {
-    "pytty": {
-        "senha": "diemfafa",
-        "loja": "L&A CELL",
-        "whatsapp": "(11) 98083-3734"
-    },
-    "adriano": {
-        "senha": "jesus",
-        "loja": "Millenium",
-        "whatsapp": "(11) 99846-8349"
-    }
+    "pytty": {"senha": "diemfafa", "loja": "L&A CELL", "whatsapp": "(11)980833734"},
+    "adriano": {"senha": "jesus", "loja": "Millenium", "whatsapp": "(11)998468349"}
 }
 
 PASTA_PDF = "pdfs"
@@ -49,7 +42,7 @@ def upload_drive(file_path, file_name):
         media = MediaFileUpload(file_path, mimetype='application/pdf')
         drive_service.files().create(body=file_metadata, media_body=media).execute()
     except:
-        pass  # evita quebrar se der erro
+        pass
 
 # ================= BANCO =================
 def carregar_os():
@@ -64,20 +57,59 @@ def salvar_os(d):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= PDF =================
+# ================= PDF ORIGINAL (SEU PADRÃO) =================
+def desenhar_padrao():
+    pontos = [["○"] * 3 for _ in range(3)]
+    t = Table(pontos, 18, 18)
+    t.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER')
+    ]))
+    return t
+
 def gerar_pdf_os(numero, dados, loja, whatsapp):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
     styles = getSampleStyleSheet()
+    normal = styles["Normal"]
+    h4 = styles["Heading4"]
+
     doc = SimpleDocTemplate(caminho, pagesize=A4)
-    el = []
+    elementos = []
 
-    el.append(Paragraph(f"<b>{loja}</b>", styles["Heading2"]))
-    el.append(Spacer(1,10))
+    def bloco(titulo):
+        elementos.append(Paragraph(f"<b>{titulo}</b>", h4))
+        elementos.append(Spacer(1, 4))
+        elementos.append(Paragraph(loja, normal))
+        elementos.append(Paragraph(f"WhatsApp: {whatsapp}", normal))
+        elementos.append(Spacer(1, 4))
 
-    for k,v in dados.items():
-        el.append(Paragraph(f"{k}: {v}", styles["Normal"]))
+        linhas = [
+            f"OS Nº {numero}",
+            f"Data: {dados['data']}",
+            f"Entrega: {dados['entrega']}",
+            f"Cliente: {dados['cliente']}",
+            f"Telefone: {dados['telefone']}",
+            f"Aparelho: {dados['aparelho']}",
+            f"Defeito: {dados['defeito']}",
+            f"Valor: R$ {dados['valor']:.2f}",
+            f"Sinal: R$ {dados['sinal']:.2f}",
+            f"Restante: R$ {dados['restante']:.2f}",
+            f"Garantia: {dados['garantia']}",
+            f"Senha: {dados['senha']}",
+        ]
 
-    doc.build(el)
+        for l in linhas:
+            elementos.append(Paragraph(l, normal))
+
+        elementos.append(Spacer(1, 6))
+        elementos.append(Paragraph("Senha padrão:", normal))
+        elementos.append(desenhar_padrao())
+
+    bloco("VIA DO CLIENTE")
+    elementos.append(Spacer(1, 10))
+    bloco("VIA DA LOJA")
+
+    doc.build(elementos)
     return caminho
 
 # ================= LOGIN =================
@@ -92,8 +124,6 @@ def login():
             session["usuario"] = u
             return redirect("/painel")
 
-        return render_template("login.html", erro="Login inválido")
-
     return render_template("login.html")
 
 # ================= PAINEL =================
@@ -102,7 +132,6 @@ def painel():
     if not session.get("logado"): return redirect("/")
 
     u = session["usuario"]
-
     lista = [o for o in carregar_os() if o["usuario"] == u]
 
     total = len(lista)
@@ -119,58 +148,43 @@ def nova():
         u = session["usuario"]
         loja = USUARIOS[u]["loja"]
 
-        numero = datetime.now().strftime("%Y%m%d%H%M")
-
-        valor = float(request.form.get("valor") or 0)
-        sinal = float(request.form.get("sinal") or 0)
+        n = datetime.now().strftime("%Y%m%d%H%M")
+        v = float(request.form.get("valor") or 0)
+        s = float(request.form.get("sinal") or 0)
 
         custo = float(request.form.get("custo") or 0)
         frete = float(request.form.get("frete") or 0)
 
-        lucro = valor - (custo + frete)
-
         d = {
-            "numero": numero,
+            "numero": n,
             "usuario": u,
             "loja": loja,
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
             "aparelho": request.form.get("aparelho"),
             "defeito": request.form.get("defeito"),
-            "valor": valor,
-            "sinal": sinal,
-            "restante": valor - sinal,
+            "valor": v,
+            "sinal": s,
+            "restante": v-s,
             "custo": custo,
             "frete": frete,
-            "lucro": lucro,
+            "lucro": v - (custo + frete),
+            "garantia": request.form.get("garantia"),
+            "senha": request.form.get("senha"),
+            "entrega": request.form.get("entrega"),
             "data": datetime.now().strftime("%d/%m/%Y")
         }
 
         salvar_os(d)
 
-        pdf = gerar_pdf_os(numero, d, loja, USUARIOS[u]["whatsapp"])
-        upload_drive(pdf, f"OS_{numero}.pdf")
+        pdf = gerar_pdf_os(n, d, loja, USUARIOS[u]["whatsapp"])
+        upload_drive(pdf, f"OS_{n}.pdf")
 
         return send_file(pdf, as_attachment=True)
 
     return render_template("nova_os.html")
 
-# ================= HISTORICO =================
-@app.route("/historico")
-def historico():
-    if not session.get("logado"): return redirect("/")
-
-    u = session["usuario"]
-    q = request.args.get("q","").lower()
-
-    lista = [o for o in carregar_os() if o["usuario"] == u]
-
-    if q:
-        lista = [o for o in lista if q in o["cliente"].lower()]
-
-    return render_template("historico.html", lista=lista, busca=q)
-
-# ================= FINANCEIRO =================
+# ================= FINANCEIRO (BLINDADO) =================
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
 
@@ -189,28 +203,6 @@ def financeiro():
     total = sum(float(o.get("lucro",0)) for o in lista)
 
     return render_template("financeiro.html", lista=lista, total=total)
-
-# ================= RELATORIO DIA =================
-@app.route("/relatorio_dia")
-def relatorio_dia():
-    u = session["usuario"]
-    hoje = datetime.now().strftime("%d/%m/%Y")
-
-    lista = [o for o in carregar_os() if o["usuario"] == u and o["data"] == hoje]
-
-    total = sum(float(o.get("valor",0)) for o in lista)
-
-    return render_template("relatorio_dia.html", lista=lista, total=total)
-
-# ================= RELATORIO =================
-@app.route("/relatorio")
-def relatorio():
-    u = session["usuario"]
-    lista = [o for o in carregar_os() if o["usuario"] == u]
-
-    total = sum(float(o.get("valor",0)) for o in lista)
-
-    return render_template("relatorio.html", qtd=len(lista), total=total)
 
 # ================= SAIR =================
 @app.route("/sair")
