@@ -1,12 +1,82 @@
-<h2>Painel</h2>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Painel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-OS: {{ total_os }} <br>
-Faturamento: {{ total_valor }}
+<style>
+body{
+    margin:0;
+    background:#0f172a;
+    font-family:Arial;
+    color:white;
+    padding:20px;
+}
 
-<br><br>
+h2{
+    text-align:center;
+    color:#22c55e;
+    margin-bottom:20px;
+}
 
-<a href="/nova">Nova OS</a><br>
-<a href="/historico">Histórico</a><br>
-<a href="/financeiro">Financeiro</a><br>
-<a href="/relatorio">Relatório</a><br>
-<a href="/sair">Sair</a>
+.card{
+    background:#111827;
+    padding:20px;
+    border-radius:12px;
+    max-width:500px;
+    margin:auto;
+    box-shadow:0 0 20px rgba(0,0,0,.4);
+}
+
+.info{
+    font-size:18px;
+    margin-bottom:20px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    margin:6px 0;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    font-size:15px;
+    cursor:pointer;
+    background:#22c55e;
+    color:#0f172a;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+.sair{
+    background:#dc2626;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📊 Painel</h2>
+
+<div class="card">
+
+<div class="info">
+    OS no sistema: <b>{{ total_os }}</b><br>
+    Faturamento: <b>R$ {{ "%.2f"|format(total_valor) }}</b>
+</div>
+
+<a href="/nova"><button>➕ Nova OS</button></a>
+<a href="/historico"><button>📂 Histórico</button></a>
+<a href="/financeiro"><button>💰 Financeiro</button></a>
+<a href="/relatorio"><button>📄 Relatório Mensal</button></a>
+<a href="/relatorio_dia"><button>📅 Relatório do Dia</button></a>
+<a href="/sair"><button class="sair">🚪 Sair</button></a>
+
+</div>
+
+</body>
+</html>
