@@ -67,7 +67,6 @@ a{
 
 <input name="defeito" placeholder="Defeito">
 
-<!-- FINANCEIRO -->
 <input name="valor" id="valor" placeholder="Valor">
 <input name="sinal" id="sinal" placeholder="Sinal">
 <input name="custo" id="custo" placeholder="Custo">
@@ -83,6 +82,7 @@ a{
     <option>Sem garantia</option>
     <option>30 dias</option>
     <option>60 dias</option>
+    <option>90 dias</option>
 </select>
 
 <input name="senha" placeholder="Senha do aparelho">
@@ -103,7 +103,7 @@ tel.oninput = e=>{
  e.target.value=v
 }
 
-// CALCULO
+// CALCULO AUTOMATICO
 function calc(){
  let v=parseFloat(valor.value)||0
  let s=parseFloat(sinal.value)||0
@@ -112,20 +112,6 @@ function calc(){
 
 valor.oninput=calc
 sinal.oninput=calc
-
-// MOEDA SIMPLES
-function moeda(campo){
- campo.oninput = ()=>{
-  let v = campo.value.replace(/\D/g,'')
-  v = (v/100).toFixed(2)
-  campo.value = v
- }
-}
-
-moeda(valor)
-moeda(sinal)
-moeda(custo)
-moeda(frete)
 
 </script>
 
