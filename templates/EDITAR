@@ -1,26 +1,34 @@
 <!DOCTYPE html>
-<html>
-<body style="background:#0f172a;color:white;font-family:Arial;padding:20px;">
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<style>
+body{background:#0f172a;color:white;font-family:Arial;padding:20px;}
+.box{background:#111827;padding:20px;border-radius:12px;width:400px;}
+input{width:100%;padding:10px;margin:6px 0;background:#1f2937;color:white;border:none;border-radius:8px;}
+button{width:100%;padding:12px;background:#22c55e;border:none;border-radius:8px;}
+</style>
+</head>
 
-<h2>Editar OS</h2>
+<body>
 
+<h2>✏️ Editar OS {{ os.numero }}</h2>
+
+<div class="box">
 <form method="post">
 
-Cliente:
-<input name="cliente" value="{{ os.cliente }}"><br><br>
+<input name="cliente" value="{{ os.cliente }}">
+<input name="aparelho" value="{{ os.aparelho }}">
+<input name="defeito" value="{{ os.defeito }}">
 
-Valor:
-<input name="valor" value="{{ os.valor }}"><br><br>
-
-Custo:
-<input name="custo" value="{{ os.custo }}"><br><br>
-
-Frete:
-<input name="frete" value="{{ os.frete }}"><br><br>
+<input name="valor" value="{{ os.valor }}">
+<input name="custo" value="{{ os.custo }}">
+<input name="frete" value="{{ os.frete }}">
 
 <button>Salvar</button>
 
 </form>
+</div>
 
 </body>
 </html>
