@@ -1,8 +1,66 @@
-<h2>Histórico</h2>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Histórico</title>
 
-{% for o in lista %}
-<div>
-OS {{ o.numero }} - {{ o.cliente }}
-<a href="/os/{{ o.numero }}">Ver</a>
-</div>
+<style>
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    padding:15px;
+}
+
+h2{
+    text-align:center;
+    color:#22c55e;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th, td{
+    padding:10px;
+    border-bottom:1px solid #1f2937;
+}
+
+button{
+    padding:6px 10px;
+    background:#22c55e;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📂 Histórico</h2>
+
+<table>
+<tr>
+<th>OS</th>
+<th>Cliente</th>
+<th>Aparelho</th>
+<th>Ação</th>
+</tr>
+
+{% for os in lista %}
+<tr>
+<td>{{ os.id }}</td>
+<td>{{ os.cliente }}</td>
+<td>{{ os.aparelho }}</td>
+<td>
+<a href="/ver/{{ os.id }}"><button>Ver</button></a>
+</td>
+</tr>
 {% endfor %}
+
+</table>
+
+</body>
+</html>
