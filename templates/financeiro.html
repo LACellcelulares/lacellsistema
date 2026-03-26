@@ -29,16 +29,16 @@ button{
 
 {% for os in lista %}
 <div class="card">
-<b>OS {{ os.id }}</b><br>
-{{ os.cliente }}<br>
+<b>OS {{ os.numero }}</b><br>
+{{ os.cliente }}<br><br>
 
-Valor: {{ os.valor }}<br>
-Custo: {{ os.custo }}<br>
-Frete: {{ os.frete }}<br>
+Valor: R$ {{ os.valor }}<br>
+Custo: R$ {{ os.custo or 0 }}<br>
+Frete: R$ {{ os.frete or 0 }}<br>
 
-<b>Lucro: {{ os.valor - os.custo - os.frete }}</b><br>
+<b>Lucro: R$ {{ (os.valor or 0) - (os.custo or 0) - (os.frete or 0) }}</b><br><br>
 
-<a href="/editar/{{ os.id }}"><button>Editar</button></a>
+<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
 </div>
 {% endfor %}
 
