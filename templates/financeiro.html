@@ -1,16 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#0f172a;color:white;font-family:Arial;padding:20px">
+
+<h2>💰 Financeiro</h2>
+
+<p>Total: R$ {{ total }}</p>
+<p>Lucro: R$ {{ lucro }}</p>
+<p>Em aberto: R$ {{ aberto }}</p>
+
+<hr>
+
 {% for o in lista %}
-<div class="os-card">
-
-<b>OS #{{ o.numero }}</b><br>
+<div style="background:#1f2937;padding:10px;margin-bottom:10px">
+OS {{ o.numero }}<br>
 Cliente: {{ o.cliente }}<br>
-Aparelho: {{ o.aparelho }}<br>
+Valor: {{ o.valor }}<br>
+Lucro: {{ o.lucro }}<br>
+Aberto: {{ o.restante }}<br>
 
-Valor: R$ {{ o.valor }}<br>
-Custo+Frete: R$ {{ o.custo_total }}<br>
-Lucro: R$ {{ o.lucro }}<br>
-Em aberto: R$ {{ o.restante }}<br>
-
-<a href="/os/{{ o.numero }}" target="_blank">👁️ Ver OS</a>
-
+<a href="/os/{{ o.numero }}" target="_blank">Ver OS</a>
 </div>
 {% endfor %}
+
+</body>
+</html>
