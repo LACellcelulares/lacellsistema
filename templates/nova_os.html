@@ -57,17 +57,12 @@
         cursor:pointer;
     }
 
-    button:hover{
-        opacity:.9;
-    }
-
     a{
         display:block;
         text-align:center;
         margin-top:20px;
         color:#22c55e;
         text-decoration:none;
-        font-size:16px;
     }
 </style>
 </head>
@@ -107,6 +102,13 @@
 <label>Restante:</label>
 <input name="restante" id="restante" readonly>
 
+<!-- 🔥 NOVO FINANCEIRO -->
+<label>Custo da peça:</label>
+<input name="custo">
+
+<label>Frete:</label>
+<input name="frete">
+
 <label>Pagamento:</label>
 <input name="pagamento">
 
@@ -125,12 +127,14 @@
 <input name="senha">
 
 <button type="submit">💾 Gerar OS</button>
+
 </form>
 </div>
 
 <a href="/painel">⬅ Voltar</a>
 
 <script>
+// telefone
 document.getElementById('tel').addEventListener('input', e=>{
  let v=e.target.value.replace(/\D/g,'').slice(0,11)
  if(v.length>6) v=v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1)$2-$3')
@@ -138,6 +142,7 @@ document.getElementById('tel').addEventListener('input', e=>{
  e.target.value=v
 })
 
+// cálculo restante
 function calc(){
  let v=parseFloat(valor.value)||0
  let s=parseFloat(sinal.value)||0
