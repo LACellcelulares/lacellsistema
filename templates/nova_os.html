@@ -1,37 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+    margin:0;
+    background:#0f172a;
+    font-family:Arial;
+    color:white;
+    padding:20px;
+}
+
+h2{
+    color:#22c55e;
+}
+
+.box{
+    background:#111827;
+    padding:20px;
+    border-radius:12px;
+    width:400px;
+}
+
+input, select{
+    width:100%;
+    padding:10px;
+    margin:6px 0;
+    border-radius:8px;
+    border:none;
+    background:#1f2937;
+    color:white;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    background:#22c55e;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🧾 Nova OS</h2>
+
+<div class="box">
+
 <form method="post">
 
 <input name="cliente" placeholder="Cliente" required>
-<input name="telefone" id="tel" placeholder="Telefone" required>
-<input name="aparelho" placeholder="Aparelho" required>
+<input name="telefone" placeholder="Telefone">
+<input name="aparelho" placeholder="Aparelho">
 
 <input name="defeito" placeholder="Defeito">
 
-<input name="valor" id="valor" placeholder="Valor">
-<input name="sinal" id="sinal" placeholder="Sinal">
+<input name="valor" placeholder="Valor">
+<input name="sinal" placeholder="Sinal">
 <input name="custo" placeholder="Custo">
 <input name="frete" placeholder="Frete">
 
 <input name="restante" id="restante" placeholder="Restante" readonly>
 
-<select name="garantia">
-<option>Sem garantia</option>
-<option>30 dias</option>
-<option>60 dias</option>
-<option>90 dias</option>
-</select>
-
-<input name="senha" placeholder="Senha">
-
-<button type="submit">Gerar OS</button>
+<button type="submit">Salvar</button>
 
 </form>
+</div>
 
-<script>
-function calc(){
- let v=parseFloat(valor.value)||0
- let s=parseFloat(sinal.value)||0
- restante.value=(v-s).toFixed(2)
-}
-valor.oninput=calc
-sinal.oninput=calc
-</script>
+</body>
+</html>
