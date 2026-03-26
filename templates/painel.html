@@ -1,59 +1,12 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Painel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<h2>Painel</h2>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+OS: {{ total_os }} <br>
+Faturamento: {{ total_valor }}
 
-<style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    padding:20px;
-}
-h2{
-    text-align:center;
-    color:#22c55e;
-}
-.card{
-    background:#111827;
-    padding:20px;
-    border-radius:12px;
-    margin-bottom:20px;
-}
-.btn-menu{
-    width:100%;
-    margin-bottom:10px;
-    background:#22c55e;
-    color:#0f172a;
-    font-weight:bold;
-}
-</style>
-</head>
+<br><br>
 
-<body>
-
-<h2>📊 Painel</h2>
-
-<div class="card">
-    <p>
-        OS no sistema: <b>{{ total_os }}</b><br>
-        Faturamento: <b>R$ {{ "%.2f"|format(total_valor) }}</b>
-    </p>
-</div>
-
-<a href="/nova"><button class="btn btn-menu">➕ Nova OS</button></a>
-<a href="/historico"><button class="btn btn-menu">📂 Histórico</button></a>
-<a href="/financeiro_login"><button class="btn btn-menu">💰 Financeiro</button></a>
-<a href="/relatorio"><button class="btn btn-menu">📄 Relatório Mensal</button></a>
-<a href="/relatorio_dia"><button class="btn btn-menu">📅 Relatório do Dia</button></a>
-
-<a href="/sair">
-<button class="btn btn-danger w-100">🚪 Sair</button>
-</a>
-
-</body>
-</html>
+<a href="/nova">Nova OS</a><br>
+<a href="/historico">Histórico</a><br>
+<a href="/financeiro">Financeiro</a><br>
+<a href="/relatorio">Relatório</a><br>
+<a href="/sair">Sair</a>
