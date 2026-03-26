@@ -1,0 +1,9 @@
+<h2>📅 Relatório do Dia</h2>
+
+<p>Total: R$ {{ total }}</p>
+
+{% for o in lista %}
+<p>{{ o.cliente }} - R$ {{ o.valor }}</p>
+{% endfor %}
+
+<a href="/painel">Voltar</a>
