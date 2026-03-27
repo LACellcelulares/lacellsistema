@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
 <meta charset="UTF-8">
 
@@ -15,14 +14,6 @@ h2{text-align:center;color:#22c55e;}
     border-radius:10px;
 }
 
-.total{
-    background:#020617;
-    padding:15px;
-    border-radius:10px;
-    margin-top:20px;
-    border:1px solid #22c55e;
-}
-
 button{
     background:#22c55e;
     border:none;
@@ -34,14 +25,12 @@ button{
 
 <body>
 
-<h2>💰 Financeiro (GERAL)</h2>
+<h2>💰 Financeiro</h2>
 
 {% for os in lista %}
 <div class="card">
 <b>OS {{ os.numero }}</b><br>
-{{ os.cliente }}<br>
-📅 {{ os.data }}<br>
-Loja: {{ os.loja }}<br><br>
+{{ os.cliente }}<br><br>
 
 Valor: R$ {{ os.valor }}<br>
 Custo: R$ {{ os.custo or 0 }}<br>
@@ -52,16 +41,6 @@ Frete: R$ {{ os.frete or 0 }}<br>
 <a href="/editar/{{ os.numero }}"><button>Editar</button></a>
 </div>
 {% endfor %}
-
-<div class="total">
-<h3>📊 TOTAL GERAL</h3>
-
-Valor Total: R$ {{ total }}<br>
-Custo Total: R$ {{ custo }}<br>
-Frete Total: R$ {{ frete }}<br>
-
-<b>Lucro Total: R$ {{ lucro }}</b>
-</div>
 
 </body>
 </html>
