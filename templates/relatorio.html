@@ -2,36 +2,23 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<style>
-body{background:#0f172a;color:white;font-family:Arial;padding:15px;}
-h2{text-align:center;color:#22c55e;}
 
-.card{
-    background:#111827;
-    padding:10px;
-    margin-bottom:8px;
-    border-radius:8px;
+<style>
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    padding:20px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>{{ titulo }}</h2>
+<h2>📆 Relatório Mensal</h2>
 
-{% for os in lista %}
-<div class="card">
-OS {{ os.numero }} - {{ os.cliente }}<br>
-Valor: {{ os.valor }}
-</div>
-{% endfor %}
-
-<hr>
-
-<b>Total: {{ total }}</b><br>
-Custo: {{ custo }}<br>
-Frete: {{ frete }}<br>
-Lucro: {{ lucro }}
+<h1>R$ {{ total }}</h1>
 
 </body>
 </html>
