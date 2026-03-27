@@ -122,7 +122,6 @@ def nova():
             lista=carregar()
             n=datetime.now().strftime("%Y%m%d%H%M%S")
 
-            # 🔥 CORREÇÃO AQUI (evita erro tela branca)
             v=float(request.form.get("valor") or 0)
             s=float(request.form.get("sinal") or 0)
             c=float(request.form.get("custo") or 0)
@@ -156,9 +155,70 @@ def nova():
             return send_file(pdf,as_attachment=True)
 
         except Exception as e:
-            return f"ERRO: {str(e)}"  # 🔥 mostra erro na tela
+            return f"ERRO: {str(e)}"
 
     return render_template("nova_os.html")
+
+# ================= EDITAR =================
+@app.route("/editar/<numero>",methods=["GET","POST"])
+def editar(numero):
+    if not session.get("logado"): return redirect("/")
+
+    lista=carregar()
+    os_encontrada=next((x for x in lista if x["numero"]==numero),None)
+
+    if not os_encontrada:
+        return "OS não encontrada"
+
+    if request.method=="POST":
+        os_encontrada["cliente"]=request.form.get("cliente")
+        os_encontrada["telefone"]=request.form.get("telefone")
+        os_encontrada["cpf"]=request.form.get("cpf")
+        os_encontrada["imei"]=request.form.get("imei")
+        os_encontrada["aparelho"]=request.form.get("aparelho")
+        os_encontrada["defeito"]=request.form.get("defeito")
+
+        os_encontrada["valor"]=float(request.form.get("valor") or 0)
+        os_encontrada["sinal"]=float(request.form.get("sinal") or 0)
+        os_encontrada["custo"]=float(request.form.get("custo") or 0)
+        os_encontrada["frete"]=float(request.form.get("frete") or 0)
+
+        os_encontrada["restante"]=os_encontrada["valor"]-os_encontrada["sinal"]
+
+        os_encontrada["pagamento"]=request.form.get("pagamento")
+        os_encontrada["garantia"]=request.form.get("garantia")
+        os_encontrada["senha"]=request.form.get("senha")
+        os_encontrada["entrega"]=request.form.get("entrega")
+
+        salvar(lista)
+        return redirect("/historico")
+
+    return render_template("editar.html",os=os_encontrada)
+
+# ================= HISTORICO =================
+@app.route("/historico")
+def historico():
+    if not session.get("logado"): return redirect("/")
+    u=session["usuario"]
+    loja=USUARIOS[u]["loja"]
+
+    lista=[o for o in carregar() if o.get("loja")==loja]
+
+    return render_template("historico.html",lista=lista)
+
+# ================= VER =================
+@app.route("/os/<numero>")
+def ver(numero):
+    if not session.get("logado"): return redirect("/")
+
+    u=session["usuario"]
+    loja=USUARIOS[u]["loja"]
+
+    o=next((x for x in carregar() if x["numero"]==numero and x["loja"]==loja),None)
+    if not o: abort(404)
+
+    pdf=gerar_pdf(numero,o,loja,USUARIOS[u]["whatsapp"])
+    return send_file(pdf)
 
 # ================= FINANCEIRO =================
 @app.route("/financeiro",methods=["GET","POST"])
@@ -172,7 +232,6 @@ def financeiro():
                 return redirect("/financeiro")
         return render_template("financeiro_login.html")
 
-    # 🔥 TODAS AS OS
     lista = carregar()
 
     total=sum(float(o.get("valor",0)) for o in lista)
