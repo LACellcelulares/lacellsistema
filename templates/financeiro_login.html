@@ -2,45 +2,49 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<title>Financeiro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body{
     background:#0f172a;
     color:white;
     font-family:Arial;
-    text-align:center;
-    padding:40px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
-
+.box{
+    background:#111827;
+    padding:30px;
+    border-radius:12px;
+}
 input{
+    width:100%;
     padding:10px;
-    border-radius:8px;
-    border:none;
-    margin:10px;
+    margin-bottom:10px;
 }
-
 button{
-    padding:10px 20px;
-    border:none;
-    border-radius:8px;
+    width:100%;
+    padding:10px;
     background:#22c55e;
+    border:none;
 }
 </style>
 </head>
 
 <body>
 
-<h2>🔒 Acesso Financeiro</h2>
+<div class="box">
+<h3>🔒 Financeiro</h3>
 
 <form method="post">
-<input type="password" name="senha" placeholder="Digite a senha">
-<br>
+<input type="password" name="senha" placeholder="Senha">
 <button>Entrar</button>
 </form>
 
-{% if erro %}
-<p style="color:red">{{ erro }}</p>
-{% endif %}
+</div>
 
 </body>
 </html>
