@@ -1,69 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
 <meta charset="UTF-8">
 
 <style>
-body{background:#0f172a;color:white;font-family:Arial;padding:15px;}
-h2{text-align:center;color:#22c55e;}
-
-.card{
-    background:#111827;
-    padding:15px;
-    margin-bottom:10px;
-    border-radius:10px;
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    padding:40px;
 }
 
-.total{
-    background:#020617;
-    padding:15px;
-    border-radius:10px;
-    margin-top:20px;
-    border:1px solid #22c55e;
+input{
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    margin:10px;
 }
 
 button{
-    background:#22c55e;
+    padding:10px 20px;
     border:none;
-    padding:6px;
-    border-radius:6px;
+    border-radius:8px;
+    background:#22c55e;
 }
 </style>
 </head>
 
 <body>
 
-<h2>💰 Financeiro (GERAL)</h2>
+<h2>🔒 Acesso Financeiro</h2>
 
-{% for os in lista %}
-<div class="card">
-<b>OS {{ os.numero }}</b><br>
-{{ os.cliente }}<br>
+<form method="post">
+<input type="password" name="senha" placeholder="Digite a senha">
+<br>
+<button>Entrar</button>
+</form>
 
-📅 <span style="color:#22c55e">{{ os.data }}</span><br>
-
-Loja: {{ os.loja }}<br><br>
-
-Valor: R$ {{ os.valor }}<br>
-Custo: R$ {{ os.custo or 0 }}<br>
-Frete: R$ {{ os.frete or 0 }}<br>
-
-<b>Lucro: R$ {{ (os.valor or 0) - (os.custo or 0) - (os.frete or 0) }}</b><br><br>
-
-<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
-</div>
-{% endfor %}
-
-<div class="total">
-<h3>📊 TOTAL GERAL</h3>
-
-Valor Total: R$ {{ total }}<br>
-Custo Total: R$ {{ custo }}<br>
-Frete Total: R$ {{ frete }}<br>
-
-<b>Lucro Total: R$ {{ lucro }}</b>
-</div>
+{% if erro %}
+<p style="color:red">{{ erro }}</p>
+{% endif %}
 
 </body>
 </html>
