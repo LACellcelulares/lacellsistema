@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, send_file, abort
-import os, json
+import os, json, shutil
 from datetime import datetime
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
@@ -20,16 +20,35 @@ os.makedirs(PASTA_PDF, exist_ok=True)
 
 # ================= DB =================
 def carregar():
-    if not os.path.exists(ARQUIVO_DB): return []
+    if not os.path.exists(ARQUIVO_DB):
+        return []
+
     try:
-        with open(ARQUIVO_DB,"r") as f:
+        with open(ARQUIVO_DB, "r") as f:
             return json.load(f)
-    except:
+
+    except Exception as e:
+        print("❌ ERRO AO LER JSON:", e)
+
+        # tenta recuperar backup
+        if os.path.exists(ARQUIVO_DB + ".bak"):
+            print("🔄 RECUPERANDO BACKUP...")
+            with open(ARQUIVO_DB + ".bak", "r") as f:
+                return json.load(f)
+
         return []
 
 def salvar(lista):
-    with open(ARQUIVO_DB,"w") as f:
-        json.dump(lista,f,indent=2)
+    try:
+        # backup automático
+        if os.path.exists(ARQUIVO_DB):
+            shutil.copy(ARQUIVO_DB, ARQUIVO_DB + ".bak")
+
+        with open(ARQUIVO_DB, "w") as f:
+            json.dump(lista, f, indent=2)
+
+    except Exception as e:
+        print("❌ ERRO AO SALVAR:", e)
 
 # ================= PDF =================
 def senha9():
@@ -240,39 +259,6 @@ def financeiro():
     lucro=total-custo-frete
 
     return render_template("financeiro.html",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
-
-# ================= RELATORIO DIA =================
-@app.route("/relatorio_dia")
-def relatorio_dia():
-    hoje = datetime.now().strftime("%d/%m/%Y")
-
-    lista = [o for o in carregar() if o.get("data","").startswith(hoje)]
-
-    total = sum(float(o.get("valor",0)) for o in lista)
-
-    return render_template("relatorio.html",
-                           titulo="📅 Relatório do Dia",
-                           lista=lista,
-                           total=total)
-
-# ================= RELATORIO MES =================
-@app.route("/relatorio")
-def relatorio_mes():
-    agora = datetime.now()
-    mes = agora.strftime("%m/%Y")
-
-    lista = []
-    for o in carregar():
-        data = o.get("data","")
-        if len(data) >= 7 and data[3:10] == mes:
-            lista.append(o)
-
-    total = sum(float(o.get("valor",0)) for o in lista)
-
-    return render_template("relatorio.html",
-                           titulo="📆 Relatório Mensal",
-                           lista=lista,
-                           total=total)
 
 # ================= SAIR =================
 @app.route("/sair")
