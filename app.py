@@ -18,6 +18,7 @@ PASTA_PDF="pdfs"
 ARQUIVO_DB="os.json"
 os.makedirs(PASTA_PDF, exist_ok=True)
 
+# ================= DB =================
 def carregar():
     if not os.path.exists(ARQUIVO_DB): return []
     try:
@@ -30,6 +31,7 @@ def salvar(lista):
     with open(ARQUIVO_DB,"w") as f:
         json.dump(lista,f,indent=2)
 
+# ================= PDF =================
 def senha9():
     t=Table([["○"]*3 for _ in range(3)],18,18)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
@@ -78,6 +80,7 @@ def gerar_pdf(n,d,loja,whats):
     doc.build(el)
     return caminho
 
+# ================= LOGIN =================
 @app.route("/",methods=["GET","POST"])
 def login():
     if request.method=="POST":
@@ -92,6 +95,7 @@ def login():
 
     return render_template("login.html")
 
+# ================= PAINEL =================
 @app.route("/painel")
 def painel():
     if not session.get("logado"): return redirect("/")
@@ -105,6 +109,58 @@ def painel():
 
     return render_template("painel.html",total_os=total,total_valor=valor)
 
+# ================= NOVA OS =================
+@app.route("/nova",methods=["GET","POST"])
+def nova():
+    if not session.get("logado"): return redirect("/")
+
+    if request.method=="POST":
+        try:
+            u=session["usuario"]
+            loja=USUARIOS[u]["loja"]
+
+            lista=carregar()
+            n=datetime.now().strftime("%Y%m%d%H%M%S")
+
+            # 🔥 CORREÇÃO AQUI (evita erro tela branca)
+            v=float(request.form.get("valor") or 0)
+            s=float(request.form.get("sinal") or 0)
+            c=float(request.form.get("custo") or 0)
+            f=float(request.form.get("frete") or 0)
+
+            d={
+                "numero":n,
+                "loja":loja,
+                "cliente":request.form.get("cliente") or "",
+                "telefone":request.form.get("telefone") or "",
+                "cpf":request.form.get("cpf") or "",
+                "imei":request.form.get("imei") or "",
+                "aparelho":request.form.get("aparelho") or "",
+                "defeito":request.form.get("defeito") or "",
+                "valor":v,
+                "pagamento":request.form.get("pagamento") or "",
+                "sinal":s,
+                "restante":v-s,
+                "custo":c,
+                "frete":f,
+                "garantia":request.form.get("garantia") or "",
+                "senha":request.form.get("senha") or "",
+                "entrega":request.form.get("entrega") or "",
+                "data":datetime.now().strftime("%d/%m/%Y %H:%M")
+            }
+
+            lista.append(d)
+            salvar(lista)
+
+            pdf=gerar_pdf(n,d,loja,USUARIOS[u]["whatsapp"])
+            return send_file(pdf,as_attachment=True)
+
+        except Exception as e:
+            return f"ERRO: {str(e)}"  # 🔥 mostra erro na tela
+
+    return render_template("nova_os.html")
+
+# ================= FINANCEIRO =================
 @app.route("/financeiro",methods=["GET","POST"])
 def financeiro():
     if not session.get("logado"): return redirect("/")
@@ -116,35 +172,33 @@ def financeiro():
                 return redirect("/financeiro")
         return render_template("financeiro_login.html")
 
+    # 🔥 TODAS AS OS
     lista = carregar()
 
-    total = sum(float(o.get("valor",0)) for o in lista)
-    custo = sum(float(o.get("custo",0)) for o in lista)
-    frete = sum(float(o.get("frete",0)) for o in lista)
-    lucro = total - custo - frete
+    total=sum(float(o.get("valor",0)) for o in lista)
+    custo=sum(float(o.get("custo",0)) for o in lista)
+    frete=sum(float(o.get("frete",0)) for o in lista)
+    lucro=total-custo-frete
 
     return render_template("financeiro.html",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
 
+# ================= RELATORIO DIA =================
 @app.route("/relatorio_dia")
 def relatorio_dia():
     hoje=datetime.now().strftime("%d/%m/%Y")
-
     lista=[o for o in carregar() if hoje in o["data"]]
-
     total=sum(float(o.get("valor",0)) for o in lista)
-
     return render_template("relatorio_dia.html", total=total)
 
+# ================= RELATORIO MES =================
 @app.route("/relatorio")
 def relatorio_mes():
     mes=datetime.now().strftime("%m/%Y")
-
     lista=[o for o in carregar() if mes in o["data"]]
-
     total=sum(float(o.get("valor",0)) for o in lista)
-
     return render_template("relatorio_mes.html", total=total)
 
+# ================= SAIR =================
 @app.route("/sair")
 def sair():
     session.clear()
