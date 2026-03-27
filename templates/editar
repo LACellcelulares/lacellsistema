@@ -1,278 +1,94 @@
-from flask import Flask, render_template, request, redirect, session, send_file, abort
-import os, json
-from datetime import datetime
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib import colors
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
 
-app = Flask(__name__)
-app.secret_key = "lacell_secret"
-
-USUARIOS = {
-    "pytty": {"senha":"diemfafa","loja":"L&A CELL Celulares","whatsapp":"(11)98083-3734"},
-    "adriano": {"senha":"jesus","loja":"MILLENNIUM SOLUTIONS ATIBAIA","whatsapp":"(11)99846-8349"}
+<style>
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    padding:20px;
 }
 
-PASTA_PDF="pdfs"
-ARQUIVO_DB="os.json"
-os.makedirs(PASTA_PDF, exist_ok=True)
+h2{
+    color:#22c55e;
+}
 
-# ================= DB =================
-def carregar():
-    if not os.path.exists(ARQUIVO_DB): return []
-    try:
-        with open(ARQUIVO_DB,"r") as f:
-            return json.load(f)
-    except:
-        return []
+.box{
+    background:#111827;
+    padding:20px;
+    border-radius:12px;
+    width:400px;
+}
 
-def salvar(lista):
-    with open(ARQUIVO_DB,"w") as f:
-        json.dump(lista,f,indent=2)
+input, select{
+    width:100%;
+    padding:10px;
+    margin:6px 0;
+    border-radius:8px;
+    border:none;
+    background:#1f2937;
+    color:white;
+}
 
-# ================= PDF =================
-def senha9():
-    t=Table([["○"]*3 for _ in range(3)],18,18)
-    t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
-    return t
+button{
+    width:100%;
+    padding:12px;
+    background:#22c55e;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    margin-top:10px;
+}
+</style>
+</head>
 
-def gerar_pdf(n,d,loja,whats):
-    caminho=f"{PASTA_PDF}/OS_{n}.pdf"
-    styles=getSampleStyleSheet()
-    doc=SimpleDocTemplate(caminho,pagesize=A4)
-    el=[]
+<body>
 
-    def bloco(t):
-        el.append(Paragraph(f"<b>{t}</b>",styles["Heading4"]))
-        el.append(Paragraph(loja,styles["Normal"]))
-        el.append(Paragraph(f"WhatsApp: {whats}",styles["Normal"]))
-        el.append(Spacer(1,5))
+<h2>✏️ Editar OS {{ os.numero }}</h2>
 
-        dados=[
-            f"OS Nº {n}",
-            f"Data: {d.get('data','')}",
-            f"Entrega: {d.get('entrega','')}",
-            f"Cliente: {d.get('cliente','')}",
-            f"Telefone: {d.get('telefone','')}",
-            f"CPF/CNPJ: {d.get('cpf','')}",
-            f"IMEI: {d.get('imei','')}",
-            f"Aparelho: {d.get('aparelho','')}",
-            f"Defeito: {d.get('defeito','')}",
-            f"Valor: R$ {d.get('valor',0)}",
-            f"Pagamento: {d.get('pagamento','')}",
-            f"Sinal: R$ {d.get('sinal',0)}",
-            f"Restante: R$ {d.get('restante',0)}",
-            f"Garantia: {d.get('garantia','')}",
-            f"Senha: {d.get('senha','')}"
-        ]
+<div class="box">
 
-        for x in dados:
-            el.append(Paragraph(x,styles["Normal"]))
+<form method="post">
 
-        el.append(Spacer(1,5))
-        el.append(senha9())
+<input name="cliente" value="{{ os.get('cliente','') }}" placeholder="Cliente">
 
-    bloco("VIA CLIENTE")
-    el.append(Spacer(1,15))
-    bloco("VIA LOJA")
+<input name="telefone" value="{{ os.get('telefone','') }}" placeholder="Telefone">
 
-    doc.build(el)
-    return caminho
+<input name="cpf" value="{{ os.get('cpf','') }}" placeholder="CPF/CNPJ">
 
-# ================= LOGIN =================
-@app.route("/",methods=["GET","POST"])
-def login():
-    if request.method=="POST":
-        u=(request.form.get("usuario") or "").lower()
-        s=request.form.get("senha") or ""
+<input name="imei" value="{{ os.get('imei','') }}" placeholder="IMEI">
 
-        if u in USUARIOS and USUARIOS[u]["senha"]==s:
-            session["logado"]=True
-            session["usuario"]=u
-            session["fin_ok"]=False
-            return redirect("/painel")
+<input name="aparelho" value="{{ os.get('aparelho','') }}" placeholder="Aparelho">
 
-    return render_template("login.html")
+<input name="defeito" value="{{ os.get('defeito','') }}" placeholder="Defeito">
 
-# ================= PAINEL =================
-@app.route("/painel")
-def painel():
-    if not session.get("logado"): return redirect("/")
-    u=session["usuario"]
-    loja=USUARIOS[u]["loja"]
+<input name="valor" value="{{ os.get('valor',0) }}" placeholder="Valor">
 
-    lista=[o for o in carregar() if o.get("loja")==loja]
+<input name="sinal" value="{{ os.get('sinal',0) }}" placeholder="Sinal">
 
-    total=len(lista)
-    valor=sum(float(o.get("valor",0)) for o in lista)
+<input name="custo" value="{{ os.get('custo',0) }}" placeholder="Custo">
 
-    return render_template("painel.html",total_os=total,total_valor=valor)
+<input name="frete" value="{{ os.get('frete',0) }}" placeholder="Frete">
 
-# ================= NOVA OS =================
-@app.route("/nova",methods=["GET","POST"])
-def nova():
-    if not session.get("logado"): return redirect("/")
+<input name="pagamento" value="{{ os.get('pagamento','') }}" placeholder="Pagamento">
 
-    if request.method=="POST":
-        u=session["usuario"]
-        loja=USUARIOS[u]["loja"]
+<input type="date" name="entrega" value="{{ os.get('entrega','') }}">
 
-        lista=carregar()
-        n=datetime.now().strftime("%Y%m%d%H%M%S")
+<select name="garantia">
+    <option {% if os.get('garantia')=="Sem garantia" %}selected{% endif %}>Sem garantia</option>
+    <option {% if os.get('garantia')=="30 dias" %}selected{% endif %}>30 dias</option>
+    <option {% if os.get('garantia')=="60 dias" %}selected{% endif %}>60 dias</option>
+    <option {% if os.get('garantia')=="90 dias" %}selected{% endif %}>90 dias</option>
+</select>
 
-        v=float(request.form.get("valor") or 0)
-        s=float(request.form.get("sinal") or 0)
-        c=float(request.form.get("custo") or 0)
-        f=float(request.form.get("frete") or 0)
+<input name="senha" value="{{ os.get('senha','') }}" placeholder="Senha aparelho">
 
-        d={
-            "numero":n,
-            "loja":loja,
-            "cliente":request.form.get("cliente"),
-            "telefone":request.form.get("telefone"),
-            "cpf":request.form.get("cpf"),
-            "imei":request.form.get("imei"),
-            "aparelho":request.form.get("aparelho"),
-            "defeito":request.form.get("defeito"),
-            "valor":v,
-            "pagamento":request.form.get("pagamento"),
-            "sinal":s,
-            "restante":v-s,
-            "custo":c,
-            "frete":f,
-            "garantia":request.form.get("garantia"),
-            "senha":request.form.get("senha"),
-            "entrega":request.form.get("entrega"),
-            "data":datetime.now().strftime("%d/%m/%Y %H:%M")
-        }
+<button type="submit">💾 Salvar Alterações</button>
 
-        lista.append(d)
-        salvar(lista)
+</form>
+</div>
 
-        pdf=gerar_pdf(n,d,loja,USUARIOS[u]["whatsapp"])
-        return send_file(pdf,as_attachment=True)
-
-    return render_template("nova_os.html")
-
-# ================= EDITAR =================
-@app.route("/editar/<numero>",methods=["GET","POST"])
-def editar(numero):
-    if not session.get("logado"): return redirect("/")
-
-    lista=carregar()
-    os_encontrada=next((x for x in lista if x["numero"]==numero),None)
-
-    if not os_encontrada:
-        return "OS não encontrada"
-
-    if request.method=="POST":
-        os_encontrada["cliente"]=request.form.get("cliente")
-        os_encontrada["telefone"]=request.form.get("telefone")
-        os_encontrada["cpf"]=request.form.get("cpf")
-        os_encontrada["imei"]=request.form.get("imei")
-        os_encontrada["aparelho"]=request.form.get("aparelho")
-        os_encontrada["defeito"]=request.form.get("defeito")
-
-        os_encontrada["valor"]=float(request.form.get("valor") or 0)
-        os_encontrada["sinal"]=float(request.form.get("sinal") or 0)
-        os_encontrada["custo"]=float(request.form.get("custo") or 0)
-        os_encontrada["frete"]=float(request.form.get("frete") or 0)
-
-        os_encontrada["restante"]=os_encontrada["valor"]-os_encontrada["sinal"]
-
-        os_encontrada["pagamento"]=request.form.get("pagamento")
-        os_encontrada["garantia"]=request.form.get("garantia")
-        os_encontrada["senha"]=request.form.get("senha")
-        os_encontrada["entrega"]=request.form.get("entrega")
-
-        salvar(lista)
-        return redirect("/historico")
-
-    return render_template("editar.html",os=os_encontrada)
-
-# ================= HISTORICO =================
-@app.route("/historico")
-def historico():
-    if not session.get("logado"): return redirect("/")
-    u=session["usuario"]
-    loja=USUARIOS[u]["loja"]
-
-    lista=[o for o in carregar() if o.get("loja")==loja]
-
-    return render_template("historico.html",lista=lista)
-
-# ================= VER =================
-@app.route("/os/<numero>")
-def ver(numero):
-    if not session.get("logado"): return redirect("/")
-
-    u=session["usuario"]
-    loja=USUARIOS[u]["loja"]
-
-    o=next((x for x in carregar() if x["numero"]==numero and x["loja"]==loja),None)
-    if not o: abort(404)
-
-    pdf=gerar_pdf(numero,o,loja,USUARIOS[u]["whatsapp"])
-    return send_file(pdf)
-
-# ================= FINANCEIRO =================
-@app.route("/financeiro",methods=["GET","POST"])
-def financeiro():
-    if not session.get("logado"): return redirect("/")
-
-    if not session.get("fin_ok"):
-        if request.method=="POST":
-            if request.form.get("senha")=="jesus":
-                session["fin_ok"]=True
-                return redirect("/financeiro")
-        return render_template("financeiro_login.html")
-
-    u=session["usuario"]
-    loja=USUARIOS[u]["loja"]
-
-    lista=[o for o in carregar() if o.get("loja")==loja]
-
-    total=sum(o["valor"] for o in lista)
-    custo=sum(o["custo"] for o in lista)
-    frete=sum(o["frete"] for o in lista)
-    lucro=total-custo-frete
-
-    return render_template("financeiro.html",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
-
-# ================= RELATORIO DIA =================
-@app.route("/relatorio_dia")
-def relatorio_dia():
-    hoje=datetime.now().strftime("%d/%m/%Y")
-
-    lista=[o for o in carregar() if hoje in o["data"]]
-
-    total=sum(o["valor"] for o in lista)
-    custo=sum(o["custo"] for o in lista)
-    frete=sum(o["frete"] for o in lista)
-    lucro=total-custo-frete
-
-    return render_template("relatorio.html",titulo="Relatório do Dia",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
-
-# ================= RELATORIO MES =================
-@app.route("/relatorio")
-def relatorio_mes():
-    mes=datetime.now().strftime("%m/%Y")
-
-    lista=[o for o in carregar() if mes in o["data"]]
-
-    total=sum(o["valor"] for o in lista)
-    custo=sum(o["custo"] for o in lista)
-    frete=sum(o["frete"] for o in lista)
-    lucro=total-custo-frete
-
-    return render_template("relatorio.html",titulo="Relatório Mensal",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
-
-# ================= SAIR =================
-@app.route("/sair")
-def sair():
-    session.clear()
-    return redirect("/")
-
-if __name__=="__main__":
-    app.run(debug=True)
+</body>
+</html>
