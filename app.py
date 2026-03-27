@@ -244,18 +244,32 @@ def financeiro():
 # ================= RELATORIO DIA =================
 @app.route("/relatorio_dia")
 def relatorio_dia():
-    hoje=datetime.now().strftime("%d/%m/%Y")
-    lista=[o for o in carregar() if hoje in o["data"]]
-    total=sum(float(o.get("valor",0)) for o in lista)
-    return render_template("relatorio_dia.html", total=total)
+    hoje = datetime.now().strftime("%d/%m/%Y")
+
+    lista = []
+    for o in carregar():
+        if o.get("data","").startswith(hoje):
+            lista.append(o)
+
+    total = sum(float(o.get("valor",0)) for o in lista)
+
+    return render_template("relatorio_dia.html", lista=lista, total=total)
 
 # ================= RELATORIO MES =================
 @app.route("/relatorio")
 def relatorio_mes():
-    mes=datetime.now().strftime("%m/%Y")
-    lista=[o for o in carregar() if mes in o["data"]]
-    total=sum(float(o.get("valor",0)) for o in lista)
-    return render_template("relatorio_mes.html", total=total)
+    agora = datetime.now()
+    mes = agora.strftime("%m/%Y")
+
+    lista = []
+    for o in carregar():
+        data = o.get("data","")
+        if len(data) >= 7 and data[3:10] == mes:
+            lista.append(o)
+
+    total = sum(float(o.get("valor",0)) for o in lista)
+
+    return render_template("relatorio_mes.html", lista=lista, total=total)
 
 # ================= SAIR =================
 @app.route("/sair")
