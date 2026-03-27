@@ -26,29 +26,22 @@ def carregar():
     try:
         with open(ARQUIVO_DB, "r") as f:
             return json.load(f)
-
-    except Exception as e:
-        print("❌ ERRO AO LER JSON:", e)
-
+    except:
         # tenta recuperar backup
         if os.path.exists(ARQUIVO_DB + ".bak"):
-            print("🔄 RECUPERANDO BACKUP...")
             with open(ARQUIVO_DB + ".bak", "r") as f:
                 return json.load(f)
-
         return []
 
 def salvar(lista):
     try:
-        # backup automático
         if os.path.exists(ARQUIVO_DB):
             shutil.copy(ARQUIVO_DB, ARQUIVO_DB + ".bak")
 
         with open(ARQUIVO_DB, "w") as f:
             json.dump(lista, f, indent=2)
-
     except Exception as e:
-        print("❌ ERRO AO SALVAR:", e)
+        print("ERRO AO SALVAR:", e)
 
 # ================= PDF =================
 def senha9():
@@ -204,11 +197,6 @@ def editar(numero):
 
         os_encontrada["restante"]=os_encontrada["valor"]-os_encontrada["sinal"]
 
-        os_encontrada["pagamento"]=request.form.get("pagamento")
-        os_encontrada["garantia"]=request.form.get("garantia")
-        os_encontrada["senha"]=request.form.get("senha")
-        os_encontrada["entrega"]=request.form.get("entrega")
-
         salvar(lista)
         return redirect("/historico")
 
@@ -242,7 +230,8 @@ def ver(numero):
 # ================= FINANCEIRO =================
 @app.route("/financeiro",methods=["GET","POST"])
 def financeiro():
-    if not session.get("logado"): return redirect("/")
+    if not session.get("logado"):
+        return redirect("/")
 
     if not session.get("fin_ok"):
         if request.method=="POST":
@@ -253,12 +242,17 @@ def financeiro():
 
     lista = carregar()
 
-    total=sum(float(o.get("valor",0)) for o in lista)
-    custo=sum(float(o.get("custo",0)) for o in lista)
-    frete=sum(float(o.get("frete",0)) for o in lista)
-    lucro=total-custo-frete
+    total = sum(float(o.get("valor",0)) for o in lista)
+    custo = sum(float(o.get("custo",0)) for o in lista)
+    frete = sum(float(o.get("frete",0)) for o in lista)
+    lucro = total - custo - frete
 
-    return render_template("financeiro.html",lista=lista,total=total,custo=custo,frete=frete,lucro=lucro)
+    return render_template("financeiro.html",
+                           lista=lista,
+                           total=total,
+                           custo=custo,
+                           frete=frete,
+                           lucro=lucro)
 
 # ================= SAIR =================
 @app.route("/sair")
