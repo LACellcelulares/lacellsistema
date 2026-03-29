@@ -1,99 +1,231 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
+from flask import Flask, render_template, request, redirect, session, send_file
+import os, json
+from datetime import datetime
 
-<style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    padding:20px;
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+
+app = Flask(__name__)
+app.secret_key = "lacell_secret"
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
+PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
+
+os.makedirs(PASTA_PDF, exist_ok=True)
+
+# ✅ USUARIOS CERTOS
+USUARIOS = {
+    "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
+    "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
 
-h2{
-    color:#22c55e;
-    text-align:center;
-}
+# ================= DB =================
+def carregar():
+    if not os.path.exists(ARQUIVO_DB):
+        return []
+    try:
+        with open(ARQUIVO_DB, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
-input{
-    padding:10px;
-    width:100%;
-    margin-bottom:15px;
-    border-radius:8px;
-    border:none;
-}
+def salvar(lista):
+    with open(ARQUIVO_DB, "w") as f:
+        json.dump(lista, f, indent=2)
 
-table{
-    width:100%;
-    border-collapse:collapse;
-}
+# ================= SENHA DESENHO =================
+def senha9():
+    t = Table([["○"]*3 for _ in range(3)], 20, 20)
+    t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
+    return t
 
-td,th{
-    padding:10px;
-    border-bottom:1px solid #1f2937;
-}
+# ================= PDF =================
+def gerar_pdf(numero, d):
+    caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
-button{
-    background:#22c55e;
-    border:none;
-    padding:6px;
-    border-radius:6px;
-}
-</style>
+    doc = SimpleDocTemplate(caminho, pagesize=A4)
+    styles = getSampleStyleSheet()
+    el = []
 
-<script>
-function buscar(){
-    let input = document.getElementById("busca").value.toLowerCase()
-    let linhas = document.querySelectorAll("tbody tr")
+    def bloco(titulo):
+        el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading3"]))
+        el.append(Paragraph(d.get("loja",""), styles["Normal"]))
+        el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
+        el.append(Spacer(1,10))
 
-    linhas.forEach(l => {
-        let texto = l.innerText.toLowerCase()
-        l.style.display = texto.includes(input) ? "" : "none"
-    })
-}
-</script>
+        dados = [
+            f"OS Nº {numero}",
+            f"Data: {d.get('data','')}",
+            f"Cliente: {d.get('cliente','')}",
+            f"Telefone: {d.get('telefone','')}",
+            f"Aparelho: {d.get('aparelho','')}",
+            f"Defeito: {d.get('defeito','')}",
+            f"Valor: R$ {d.get('valor',0)}",
+            f"Sinal: R$ {d.get('sinal',0)}",
+            f"Restante: R$ {d.get('restante',0)}",
+            f"Senha: {d.get('senha','')}",
+        ]
 
-</head>
+        for x in dados:
+            el.append(Paragraph(x, styles["Normal"]))
 
-<body>
+        el.append(Spacer(1,10))
+        el.append(Paragraph("Desenho da senha:", styles["Normal"]))
+        el.append(senha9())
+        el.append(Spacer(1,20))
 
-<h2>📂 Histórico</h2>
+    bloco("VIA CLIENTE")
+    bloco("VIA LOJA")
 
-<input id="busca" onkeyup="buscar()" placeholder="🔍 Buscar cliente, aparelho, telefone...">
+    doc.build(el)
+    return caminho
 
-<table>
-<thead>
-<tr>
-<th>OS</th>
-<th>Cliente</th>
-<th>Aparelho</th>
-<th>Telefone</th>
-<th>Data</th>
-<th>Valor</th>
-<th>Ação</th>
-</tr>
-</thead>
+# ================= LOGIN =================
+@app.route("/", methods=["GET","POST"])
+def login():
+    if request.method == "POST":
+        usuario = (request.form.get("usuario") or "").lower()
+        senha = request.form.get("senha") or ""
 
-<tbody>
-{% for os in lista %}
-<tr>
-<td>{{ os.numero }}</td>
-<td>{{ os.cliente or '-' }}</td>
-<td>{{ os.aparelho or '-' }}</td>
-<td>{{ os.telefone or '-' }}</td>
-<td>{{ os.data or '-' }}</td>
-<td>R$ {{ os.valor or 0 }}</td>
-<td>
-<a href="/os/{{ os.numero }}" target="_blank">
-<button>Ver</button>
-</a>
-</td>
-</tr>
-{% endfor %}
-</tbody>
+        if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
+            session["logado"] = True
+            session["usuario"] = usuario
+            session["fin_ok"] = False
+            return redirect("/painel")
 
-</table>
+    return render_template("login.html")
 
-</body>
-</html>
+# ================= PAINEL =================
+@app.route("/painel")
+def painel():
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    return render_template("painel.html", total_os=len(lista))
+
+# ================= NOVA =================
+@app.route("/nova", methods=["GET","POST"])
+def nova():
+    if not session.get("logado"):
+        return redirect("/")
+
+    if request.method == "POST":
+        lista = carregar()
+        n = datetime.now().strftime("%Y%m%d%H%M%S")
+
+        v = float(request.form.get("valor") or 0)
+        s = float(request.form.get("sinal") or 0)
+
+        usuario = session["usuario"]
+
+        d = {
+            "numero": n,
+            "cliente": request.form.get("cliente"),
+            "telefone": request.form.get("telefone"),
+            "aparelho": request.form.get("aparelho"),
+            "defeito": request.form.get("defeito"),
+            "valor": v,
+            "sinal": s,
+            "restante": v - s,
+            "custo": float(request.form.get("custo") or 0),
+            "frete": float(request.form.get("frete") or 0),
+            "senha": request.form.get("senha"),
+            "status": "aberto",
+            "data": datetime.now().strftime("%Y-%m-%d"),
+
+            # 🔥 ESSA LINHA RESOLVE O BUG DA LOJA
+            "loja": USUARIOS[usuario]["loja"],
+            "whats": USUARIOS[usuario]["whats"]
+        }
+
+        lista.append(d)
+        salvar(lista)
+
+        pdf = gerar_pdf(n, d)
+        return send_file(pdf, as_attachment=True)
+
+    return render_template("nova_os.html")
+
+# ================= HISTORICO =================
+@app.route("/historico")
+def historico():
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    return render_template("historico.html", lista=lista)
+
+# ================= FINANCEIRO =================
+@app.route("/financeiro", methods=["GET","POST"])
+def financeiro():
+    if not session.get("logado"):
+        return redirect("/")
+
+    if not session.get("fin_ok"):
+        if request.method == "POST":
+            if request.form.get("senha") == "jesus":
+                session["fin_ok"] = True
+                return redirect("/financeiro")
+        return render_template("financeiro_login.html")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    # 🔥 CORREÇÃO AQUI
+    if request.args.get("aberto") == "1":
+        lista = [o for o in lista if float(o.get("restante",0)) > 0]
+
+    total = sum(float(o.get("valor",0)) for o in lista)
+    custo = sum(float(o.get("custo",0)) for o in lista)
+    frete = sum(float(o.get("frete",0)) for o in lista)
+    lucro = total - custo - frete
+
+    return render_template("financeiro.html",
+        lista=lista,
+        total=total,
+        custo=custo,
+        frete=frete,
+        lucro=lucro
+    )
+
+# ================= PAGAR =================
+@app.route("/pagar/<numero>")
+def pagar(numero):
+    lista = carregar()
+    for o in lista:
+        if o["numero"] == numero:
+            o["status"] = "pago"
+            o["restante"] = 0
+    salvar(lista)
+    return redirect("/financeiro")
+
+# ================= CANCELAR =================
+@app.route("/cancelar/<numero>")
+def cancelar(numero):
+    lista = [o for o in carregar() if o["numero"] != numero]
+    salvar(lista)
+    return redirect("/financeiro")
+
+# ================= SAIR =================
+@app.route("/sair")
+def sair():
+    session.clear()
+    return redirect("/")
+
+# ================= RUN =================
+if __name__ == "__main__":
+    app.run(debug=True)
