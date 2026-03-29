@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{
@@ -12,13 +12,18 @@ body{
     color:white;
     padding:20px;
 }
+
 h2{color:#22c55e;}
+
 .box{
     background:#111827;
-    padding:20px;
+    padding:15px;
     border-radius:12px;
-    width:420px;
+    width:100%;
+    max-width:500px;
+    margin:auto;
 }
+
 input, select{
     width:100%;
     padding:10px;
@@ -28,6 +33,7 @@ input, select{
     background:#1f2937;
     color:white;
 }
+
 button{
     width:100%;
     padding:12px;
@@ -48,12 +54,9 @@ button{
 <form method="post">
 
 <input name="cliente" placeholder="Cliente" required>
-
 <input name="telefone" id="telefone" placeholder="Telefone">
-
 <input name="cpf" placeholder="CPF / CNPJ">
 <input name="imei" placeholder="IMEI">
-
 <input name="aparelho" placeholder="Aparelho">
 <input name="defeito" placeholder="Defeito">
 
@@ -61,11 +64,9 @@ button{
 <input name="sinal" id="sinal" placeholder="Sinal">
 <input name="custo" placeholder="Custo">
 <input name="frete" placeholder="Frete">
-
 <input name="restante" id="restante" placeholder="Restante" readonly>
 
 <input name="pagamento" placeholder="Forma de pagamento">
-
 <input type="date" name="entrega">
 
 <select name="garantia">
@@ -83,7 +84,6 @@ button{
 </div>
 
 <script>
-// calcular restante
 function calc(){
  let v=parseFloat(valor.value)||0
  let s=parseFloat(sinal.value)||0
@@ -92,18 +92,14 @@ function calc(){
 valor.oninput=calc
 sinal.oninput=calc
 
-// mascara telefone
 document.getElementById("telefone").addEventListener("input", function(e){
     let v = e.target.value.replace(/\D/g,"")
-
     if(v.length > 11) v = v.slice(0,11)
-
     if(v.length > 6){
         v = `(${v.slice(0,2)})${v.slice(2,7)}-${v.slice(7)}`
     }else if(v.length > 2){
         v = `(${v.slice(0,2)})${v.slice(2)}`
     }
-
     e.target.value = v
 })
 </script>
