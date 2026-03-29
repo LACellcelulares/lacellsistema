@@ -3,7 +3,8 @@ import os, json
 from datetime import datetime
 
 # PDF
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 
@@ -33,36 +34,71 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ===== PDF =====
+# ===== PDF PROFISSIONAL =====
 def gerar_pdf(os_data):
-    try:
-        pasta = os.path.join(BASE_DIR, "pdfs")
-        os.makedirs(pasta, exist_ok=True)
 
-        caminho = os.path.join(pasta, f"{os_data['numero']}.pdf")
+    pasta = os.path.join(BASE_DIR, "pdfs")
+    os.makedirs(pasta, exist_ok=True)
 
-        doc = SimpleDocTemplate(caminho, pagesize=A4)
-        styles = getSampleStyleSheet()
+    caminho = os.path.join(pasta, f"{os_data['numero']}.pdf")
 
-        c = []
-        c.append(Paragraph("ORDEM DE SERVIÇO - L&A CELL", styles['Title']))
-        c.append(Spacer(1, 10))
+    doc = SimpleDocTemplate(caminho, pagesize=A4)
+    styles = getSampleStyleSheet()
 
-        c.append(Paragraph(f"OS: {os_data['numero']}", styles['Normal']))
-        c.append(Paragraph(f"Cliente: {os_data['cliente']}", styles['Normal']))
-        c.append(Paragraph(f"Telefone: {os_data['telefone']}", styles['Normal']))
-        c.append(Paragraph(f"Aparelho: {os_data['aparelho']}", styles['Normal']))
-        c.append(Paragraph(f"Defeito: {os_data['defeito']}", styles['Normal']))
-        c.append(Paragraph(f"Valor: R$ {os_data['valor']}", styles['Normal']))
-        c.append(Paragraph(f"Sinal: R$ {os_data['sinal']}", styles['Normal']))
-        c.append(Paragraph(f"Restante: R$ {os_data['restante']}", styles['Normal']))
+    elementos = []
 
-        doc.build(c)
+    # TÍTULO
+    elementos.append(Paragraph("L&A CELL - ASSISTÊNCIA TÉCNICA", styles['Title']))
+    elementos.append(Spacer(1, 10))
 
-        print("PDF OK:", caminho)
+    elementos.append(Paragraph(f"<b>OS Nº:</b> {os_data['numero']}", styles['Normal']))
+    elementos.append(Paragraph(f"<b>Data:</b> {os_data['data']}", styles['Normal']))
+    elementos.append(Spacer(1, 10))
 
-    except Exception as e:
-        print("ERRO PDF:", e)
+    # CLIENTE
+    tabela_cliente = Table([
+        ["Cliente", os_data.get("cliente","")],
+        ["Telefone", os_data.get("telefone","")],
+        ["CPF/CNPJ", os_data.get("cpf","")],
+    ])
+
+    # APARELHO
+    tabela_aparelho = Table([
+        ["Aparelho", os_data.get("aparelho","")],
+        ["IMEI", os_data.get("imei","")],
+        ["Senha", os_data.get("senha","")],
+    ])
+
+    # SERVIÇO
+    tabela_servico = Table([
+        ["Defeito", os_data.get("defeito","")],
+        ["Garantia", os_data.get("garantia","")],
+        ["Previsão", os_data.get("entrega","")],
+    ])
+
+    # FINANCEIRO
+    tabela_valores = Table([
+        ["Valor", f"R$ {os_data.get('valor',0)}"],
+        ["Sinal", f"R$ {os_data.get('sinal',0)}"],
+        ["Restante", f"R$ {os_data.get('restante',0)}"],
+        ["Pagamento", os_data.get("pagamento","")],
+    ])
+
+    estilo = TableStyle([
+        ("GRID", (0,0), (-1,-1), 1, colors.black),
+        ("BACKGROUND", (0,0), (0,-1), colors.lightgrey),
+    ])
+
+    for t in [tabela_cliente, tabela_aparelho, tabela_servico, tabela_valores]:
+        t.setStyle(estilo)
+        elementos.append(t)
+        elementos.append(Spacer(1, 10))
+
+    elementos.append(Spacer(1, 20))
+    elementos.append(Paragraph("______________________________", styles['Normal']))
+    elementos.append(Paragraph("Assinatura do Cliente", styles['Normal']))
+
+    doc.build(elementos)
 
 # ===== LOGIN =====
 @app.route("/", methods=["GET","POST"])
@@ -114,6 +150,8 @@ def nova():
             "numero": numero,
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
+            "cpf": request.form.get("cpf"),
+            "imei": request.form.get("imei"),
             "aparelho": request.form.get("aparelho"),
             "defeito": request.form.get("defeito"),
             "valor": valor,
@@ -121,6 +159,10 @@ def nova():
             "restante": valor - sinal,
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
+            "pagamento": request.form.get("pagamento"),
+            "entrega": request.form.get("entrega"),
+            "garantia": request.form.get("garantia"),
+            "senha": request.form.get("senha"),
             "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "loja": loja
         }
@@ -160,6 +202,7 @@ def ver_pdf(numero):
 # ===== EDITAR =====
 @app.route("/editar/<numero>", methods=["GET","POST"])
 def editar(numero):
+
     lista = carregar()
     os_edit = next((o for o in lista if o["numero"] == numero), None)
 
@@ -167,8 +210,11 @@ def editar(numero):
         return "OS não encontrada"
 
     if request.method == "POST":
+
         os_edit["cliente"] = request.form.get("cliente")
         os_edit["telefone"] = request.form.get("telefone")
+        os_edit["cpf"] = request.form.get("cpf")
+        os_edit["imei"] = request.form.get("imei")
         os_edit["aparelho"] = request.form.get("aparelho")
         os_edit["defeito"] = request.form.get("defeito")
 
@@ -176,7 +222,16 @@ def editar(numero):
         os_edit["sinal"] = float(request.form.get("sinal") or 0)
         os_edit["restante"] = os_edit["valor"] - os_edit["sinal"]
 
+        os_edit["custo"] = float(request.form.get("custo") or 0)
+        os_edit["frete"] = float(request.form.get("frete") or 0)
+
+        os_edit["pagamento"] = request.form.get("pagamento")
+        os_edit["entrega"] = request.form.get("entrega")
+        os_edit["garantia"] = request.form.get("garantia")
+        os_edit["senha"] = request.form.get("senha")
+
         salvar(lista)
+
         return redirect("/financeiro")
 
     return render_template("editar.html", os=os_edit)
@@ -184,20 +239,27 @@ def editar(numero):
 # ===== PAGAR =====
 @app.route("/pagar/<numero>")
 def pagar(numero):
+
     lista = carregar()
+
     for o in lista:
         if o["numero"] == numero:
             o["sinal"] = o["valor"]
             o["restante"] = 0
+
     salvar(lista)
+
     return redirect("/financeiro")
 
 # ===== EXCLUIR =====
 @app.route("/cancelar/<numero>")
 def cancelar(numero):
+
     lista = carregar()
     lista = [o for o in lista if o["numero"] != numero]
+
     salvar(lista)
+
     return redirect("/financeiro")
 
 # ===== FINANCEIRO =====
@@ -241,5 +303,6 @@ def sair():
     session.clear()
     return redirect("/")
 
+# ===== START =====
 if __name__ == "__main__":
     app.run(debug=True)
