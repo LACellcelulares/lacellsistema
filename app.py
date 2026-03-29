@@ -166,39 +166,6 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= VER =================
-@app.route("/os/<numero>")
-def ver(numero):
-    if not session.get("logado"):
-        return redirect("/")
-
-    lista = carregar()
-    o = next((x for x in lista if x["numero"] == numero), None)
-
-    if not o:
-        return "OS não encontrada"
-
-    pdf = gerar_pdf(numero, o)
-    return send_file(pdf)
-
-# ================= HISTORICO =================
-@app.route("/historico")
-def historico():
-    if not session.get("logado"):
-        return redirect("/")
-
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
-
-    busca = request.args.get("busca","").lower()
-
-    lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
-
-    return render_template("historico.html", lista=lista)
-
 # ================= FINANCEIRO =================
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
@@ -217,8 +184,9 @@ def financeiro():
 
     lista = [o for o in carregar() if o.get("loja") == loja]
 
+    # 🔥 FILTRO CORRETO
     if request.args.get("aberto") == "1":
-        lista = [o for o in lista if o.get("status") != "pago"]
+        lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
     total = sum(float(o.get("valor",0)) for o in lista)
     custo = sum(float(o.get("custo",0)) for o in lista)
@@ -240,6 +208,7 @@ def pagar(numero):
     for o in lista:
         if o["numero"] == numero:
             o["status"] = "pago"
+            o["restante"] = 0  # 🔥 zera restante
     salvar(lista)
     return redirect("/financeiro")
 
