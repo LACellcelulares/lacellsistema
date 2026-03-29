@@ -41,50 +41,45 @@ def gerar_pdf(numero, d):
     doc = SimpleDocTemplate(
         caminho,
         pagesize=A4,
-        rightMargin=20,
-        leftMargin=20,
-        topMargin=20,
-        bottomMargin=20
+        rightMargin=15,
+        leftMargin=15,
+        topMargin=15,
+        bottomMargin=15
     )
 
     styles = getSampleStyleSheet()
 
-    normal = ParagraphStyle(name="normal", fontSize=9, leading=11)
-    bold = ParagraphStyle(name="bold", fontSize=9, leading=11)
+    normal = ParagraphStyle(name="normal", fontSize=8, leading=9)
+    titulo = ParagraphStyle(name="titulo", fontSize=10, leading=11)
 
     el = []
 
-    def linha(label, valor):
+    def linha(l1, v1, l2, v2):
         return [
-            Paragraph(f"<b>{label}</b>", normal),
-            Paragraph(str(valor or ""), normal)
+            Paragraph(f"<b>{l1}</b>", normal),
+            Paragraph(str(v1 or ""), normal),
+            Paragraph(f"<b>{l2}</b>", normal),
+            Paragraph(str(v2 or ""), normal),
         ]
 
     def bloco(titulo_txt):
-        el.append(Paragraph(f"<b>{titulo_txt}</b>", styles["Heading3"]))
+        el.append(Paragraph(f"<b>{titulo_txt}</b>", titulo))
         el.append(Paragraph(f"<b>{d.get('loja')}</b>", normal))
         el.append(Paragraph(f"WhatsApp: {d.get('whats')}", normal))
-        el.append(Spacer(1,6))
+        el.append(Spacer(1,4))
 
-        tabela = [
-            linha("OS Nº:", numero),
-            linha("Data:", d.get("data")),
-            linha("Cliente:", d.get("cliente")),
-            linha("Telefone:", d.get("telefone")),
-            linha("CPF/CNPJ:", d.get("cpf")),
-            linha("IMEI:", d.get("imei")),
-            linha("Aparelho:", d.get("aparelho")),
-            linha("Defeito:", d.get("defeito")),
-            linha("Valor:", f"R$ {d.get('valor')}"),
-            linha("Pagamento:", d.get("pagamento")),
-            linha("Sinal:", f"R$ {d.get('sinal')}"),
-            linha("Restante:", f"R$ {d.get('restante')}"),
-            linha("Entrega:", d.get("entrega")),
-            linha("Garantia:", d.get("garantia")),
-            linha("Senha:", d.get("senha")),
+        dados = [
+            linha("OS Nº:", numero, "Data:", d.get("data")),
+            linha("Cliente:", d.get("cliente"), "Telefone:", d.get("telefone")),
+            linha("CPF/CNPJ:", d.get("cpf"), "IMEI:", d.get("imei")),
+            linha("Aparelho:", d.get("aparelho"), "Defeito:", d.get("defeito")),
+            linha("Valor:", f"R$ {d.get('valor')}", "Pagamento:", d.get("pagamento")),
+            linha("Sinal:", f"R$ {d.get('sinal')}", "Restante:", f"R$ {d.get('restante')}"),
+            linha("Entrega:", d.get("entrega"), "Garantia:", d.get("garantia")),
+            linha("Senha:", d.get("senha"), "", ""),
         ]
 
-        t = Table(tabela, colWidths=[120, 300])
+        t = Table(dados, colWidths=[60, 110, 60, 110])
         t.setStyle(TableStyle([
             ("GRID", (0,0), (-1,-1), 0.3, colors.black),
             ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
@@ -92,16 +87,18 @@ def gerar_pdf(numero, d):
 
         el.append(t)
 
-        el.append(Spacer(1,8))
+        el.append(Spacer(1,5))
         el.append(Paragraph("<b>Senha de desenho:</b>", normal))
-        el.append(Table([["■"]*3 for _ in range(3)], 15, 15))
+        el.append(Table([["■"]*3 for _ in range(3)], 10, 10))
 
-        el.append(Spacer(1,10))
-        el.append(Paragraph("<b>Assinatura:</b> ____________________________", normal))
-        el.append(Spacer(1,15))
+        el.append(Spacer(1,6))
+        el.append(Paragraph("<b>Ass:</b> ____________________", normal))
+        el.append(Spacer(1,8))
 
     bloco("VIA CLIENTE")
-    el.append(Paragraph("------------------------------------------", normal))
+
+    el.append(Paragraph("----------------------------------------------", normal))
+
     bloco("VIA LOJA")
 
     doc.build(el)
