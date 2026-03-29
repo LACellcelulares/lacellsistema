@@ -1,64 +1,25 @@
-<h2>💰 Financeiro</h2>
+<link rel="stylesheet" href="/static/style.css">
 
-<div class="topo">
-<a href="/financeiro"><button>Todos</button></a>
-<a href="/financeiro?aberto=1"><button>Em aberto</button></a>
-
-<form method="get" style="display:inline;">
-<input name="busca" placeholder="Buscar cliente ou OS">
-<button>Buscar</button>
-</form>
-</div>
+<h2>Financeiro</h2>
 
 <table>
 <tr>
-<th>OS</th>
-<th>Cliente</th>
-<th>Data</th>
-<th>Valor</th>
-<th>Custo</th>
-<th>Frete</th>
-<th>Restante</th>
-<th>Status</th>
-<th>Ação</th>
+<th>OS</th><th>Cliente</th><th>Valor</th><th>Status</th><th>Ação</th>
 </tr>
 
-{% for os in lista %}
+{% for o in lista %}
 <tr>
-
-<td>{{ os.numero }}</td>
-<td>{{ os.cliente }}</td>
-<td>{{ os.data }}</td>
-
-<td>R$ {{ os.valor }}</td>
-<td>R$ {{ os.custo or 0 }}</td>
-<td>R$ {{ os.frete or 0 }}</td>
-<td>R$ {{ os.restante }}</td>
-
+<td>{{ o.numero }}</td>
+<td>{{ o.cliente }}</td>
+<td>R$ {{ o.valor }}</td>
+<td>{% if o.restante == 0 %}PAGO{% else %}ABERTO{% endif %}</td>
 <td>
-{% if os.restante == 0 %}
-<span class="pago_txt">PAGO</span>
-{% else %}
-<span class="aberto">EM ABERTO</span>
-{% endif %}
+<a href="/editar/{{ o.numero }}">Editar</a>
+<a href="/pagar/{{ o.numero }}">Pagar</a>
+<a href="/cancelar/{{ o.numero }}">Excluir</a>
 </td>
-
-<td>
-<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
-<a href="/pagar/{{ os.numero }}"><button class="pago">Pagar</button></a>
-<a href="/cancelar/{{ os.numero }}"><button class="cancelar">Cancelar</button></a>
-</td>
-
 </tr>
 {% endfor %}
 </table>
 
-<div class="total">
-<h3>📊 TOTAL</h3>
-
-Valor Total: R$ {{ total }}<br>
-Custo Total: R$ {{ custo }}<br>
-Frete Total: R$ {{ frete }}<br>
-
-<b>Lucro Total: R$ {{ lucro }}</b>
-</div>
+<h3>Lucro: R$ {{ lucro }}</h3>
