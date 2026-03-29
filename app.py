@@ -12,6 +12,12 @@ app.secret_key = "lacell_secret"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
 
+# ================= USUARIOS =================
+USUARIOS = {
+    "adriano": "jesus",
+    "pytty": "diemfafa"
+}
+
 # ================= DB =================
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
@@ -46,19 +52,24 @@ def gerar_pdf(numero, dados):
     doc.build(el)
     return caminho
 
-# ================= LOGIN =================
+# ================= LOGIN (CORRIGIDO) =================
 @app.route("/", methods=["GET","POST"])
 def login():
-    if request.method == "POST":
-        usuario = request.form.get("usuario")
-        senha = request.form.get("senha")
+    erro = None
 
-        if usuario == "adriano" and senha == "jesus":
+    if request.method == "POST":
+        usuario = (request.form.get("usuario") or "").strip().lower()
+        senha = (request.form.get("senha") or "").strip()
+
+        if usuario in USUARIOS and USUARIOS[usuario] == senha:
             session["logado"] = True
+            session["usuario"] = usuario
             session["fin_ok"] = False
             return redirect("/painel")
+        else:
+            erro = "Usuário ou senha inválidos"
 
-    return render_template("login.html")
+    return render_template("login.html", erro=erro)
 
 # ================= PAINEL =================
 @app.route("/painel")
@@ -184,24 +195,8 @@ def financeiro():
 
     lista = carregar()
 
-    # filtro aberto
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if o.get("status") != "pago"]
-
-    # filtro data
-    data_inicio = request.args.get("data_inicio")
-    data_fim = request.args.get("data_fim")
-
-    if data_inicio and data_fim:
-        filtrada = []
-        for o in lista:
-            try:
-                d = datetime.strptime(o.get("data"), "%Y-%m-%d")
-                if data_inicio <= d.strftime("%Y-%m-%d") <= data_fim:
-                    filtrada.append(o)
-            except:
-                pass
-        lista = filtrada
 
     total = sum(float(o.get("valor",0)) for o in lista)
     custo = sum(float(o.get("custo",0)) for o in lista)
