@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, session, send_file, abort
 import os, json, shutil
 from datetime import datetime
+
+# PDF
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -110,7 +112,6 @@ def login():
         if u in USUARIOS and USUARIOS[u]["senha"] == s:
             session["logado"] = True
             session["usuario"] = u
-            session["fin_ok"] = False
             return redirect("/painel")
 
     return render_template("login.html")
@@ -173,46 +174,15 @@ def nova():
 
             pdf = gerar_pdf(n, d, loja, USUARIOS[u]["whatsapp"])
 
-            if pdf:
+            if pdf and os.path.exists(pdf):
                 return send_file(pdf, as_attachment=True)
 
-            return "Erro ao gerar PDF"
+            return "OS criada com sucesso (PDF não gerado)"
 
         except Exception as e:
             return f"ERRO: {str(e)}"
 
     return render_template("nova_os.html")
-
-# ================= EDITAR =================
-@app.route("/editar/<numero>", methods=["GET","POST"])
-def editar(numero):
-    if not session.get("logado"):
-        return redirect("/")
-
-    lista = carregar()
-    os_encontrada = next((x for x in lista if x["numero"] == numero), None)
-
-    if not os_encontrada:
-        return "OS não encontrada"
-
-    if request.method == "POST":
-        os_encontrada.update({
-            "cliente": request.form.get("cliente"),
-            "telefone": request.form.get("telefone"),
-            "cpf": request.form.get("cpf"),
-            "imei": request.form.get("imei"),
-            "aparelho": request.form.get("aparelho"),
-            "defeito": request.form.get("defeito"),
-            "valor": float(request.form.get("valor") or 0),
-            "sinal": float(request.form.get("sinal") or 0)
-        })
-
-        os_encontrada["restante"] = os_encontrada["valor"] - os_encontrada["sinal"]
-
-        salvar(lista)
-        return redirect("/historico")
-
-    return render_template("editar.html", os=os_encontrada)
 
 # ================= HISTORICO =================
 @app.route("/historico")
@@ -232,3 +202,8 @@ def historico():
 def sair():
     session.clear()
     return redirect("/")
+
+# ================= RAILWAY =================
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
