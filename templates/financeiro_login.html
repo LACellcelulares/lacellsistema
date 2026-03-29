@@ -18,38 +18,17 @@ body{
     background:#111827;
     padding:30px;
     border-radius:12px;
-    width:280px;
-    box-shadow:0 0 20px rgba(0,0,0,.4);
-}
-h3{
-    text-align:center;
-    color:#22c55e;
 }
 input{
     width:100%;
     padding:10px;
     margin-bottom:10px;
-    border-radius:6px;
-    border:none;
-    background:#1f2937;
-    color:white;
 }
 button{
     width:100%;
     padding:10px;
     background:#22c55e;
     border:none;
-    border-radius:6px;
-    font-weight:bold;
-    cursor:pointer;
-}
-button:hover{
-    opacity:.9;
-}
-.erro{
-    color:#ef4444;
-    text-align:center;
-    margin-top:10px;
 }
 </style>
 </head>
@@ -59,14 +38,10 @@ button:hover{
 <div class="box">
 <h3>🔒 Financeiro</h3>
 
-<form method="POST">
-<input type="password" name="senha" placeholder="Digite a senha" required>
+<form method="post">
+<input type="password" name="senha" placeholder="Senha">
 <button>Entrar</button>
 </form>
-
-{% if erro %}
-<div class="erro">{{ erro }}</div>
-{% endif %}
 
 </div>
 
