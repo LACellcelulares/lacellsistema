@@ -51,7 +51,7 @@ Restante: R$ {{ os.restante or 0 }}<br>
 <b>Lucro: R$ {{ (os.valor or 0) - (os.custo or 0) - (os.frete or 0) }}</b><br><br>
 
 Status:
-{% if os.get("pago") %}
+{% if os.get("status") == "pago" %}
 <span style="color:#22c55e">PAGO</span>
 {% else %}
 <span style="color:#facc15">EM ABERTO</span>
