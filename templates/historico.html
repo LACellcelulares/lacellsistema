@@ -23,6 +23,7 @@ button{
     border:none;
     padding:6px;
     border-radius:6px;
+    margin:2px;
 }
 </style>
 </head>
@@ -54,11 +55,17 @@ button{
 <td>{{ os.telefone or '-' }}</td>
 <td>{{ os.data }}</td>
 <td>R$ {{ os.valor }}</td>
+
 <td>
 <a href="/os/{{ os.numero }}" target="_blank">
 <button>Ver</button>
 </a>
+
+<a href="/editar/{{ os.numero }}">
+<button>Editar</button>
+</a>
 </td>
+
 </tr>
 {% endfor %}
 
