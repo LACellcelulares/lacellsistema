@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 
@@ -11,11 +11,14 @@ app.secret_key = "lacell_secret"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
+PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
+
+os.makedirs(PASTA_PDF, exist_ok=True)
 
 # ================= USUARIOS =================
 USUARIOS = {
-    "adriano": "jesus",
-    "pytty": "diemfafa"
+    "adriano": {"senha": "jesus", "loja": "L&A CELL", "whats": "(11)98083-3734"},
+    "pytty": {"senha": "diemfafa", "loja": "MILLENNIUM", "whats": "(11)99846-8349"}
 }
 
 # ================= DB =================
@@ -32,27 +35,46 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= PDF =================
-def gerar_pdf(numero, dados):
-    caminho = os.path.join(BASE_DIR, f"OS_{numero}.pdf")
+# ================= PDF COMPLETO =================
+def gerar_pdf(numero, d, loja, whats):
+    caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
     doc = SimpleDocTemplate(caminho, pagesize=A4)
     styles = getSampleStyleSheet()
     el = []
 
-    el.append(Paragraph(f"<b>OS Nº {numero}</b>", styles["Title"]))
-    el.append(Paragraph(f"Cliente: {dados.get('cliente','')}", styles["Normal"]))
-    el.append(Paragraph(f"Telefone: {dados.get('telefone','')}", styles["Normal"]))
-    el.append(Paragraph(f"Aparelho: {dados.get('aparelho','')}", styles["Normal"]))
-    el.append(Paragraph(f"Valor: R$ {dados.get('valor',0)}", styles["Normal"]))
-    el.append(Paragraph(f"Sinal: R$ {dados.get('sinal',0)}", styles["Normal"]))
-    el.append(Paragraph(f"Restante: R$ {dados.get('restante',0)}", styles["Normal"]))
-    el.append(Paragraph(f"Data: {dados.get('data','')}", styles["Normal"]))
+    def bloco(titulo):
+        el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading3"]))
+        el.append(Paragraph(loja, styles["Normal"]))
+        el.append(Paragraph(f"WhatsApp: {whats}", styles["Normal"]))
+        el.append(Spacer(1,10))
+
+        dados = [
+            f"OS Nº {numero}",
+            f"Data: {d.get('data','')}",
+            f"Cliente: {d.get('cliente','')}",
+            f"Telefone: {d.get('telefone','')}",
+            f"Aparelho: {d.get('aparelho','')}",
+            f"Defeito: {d.get('defeito','')}",
+            f"Valor: R$ {d.get('valor',0)}",
+            f"Sinal: R$ {d.get('sinal',0)}",
+            f"Restante: R$ {d.get('restante',0)}",
+            f"Pagamento: {d.get('pagamento','')}",
+            f"Garantia: {d.get('garantia','')}",
+        ]
+
+        for x in dados:
+            el.append(Paragraph(x, styles["Normal"]))
+
+        el.append(Spacer(1,20))
+
+    bloco("VIA CLIENTE")
+    bloco("VIA LOJA")
 
     doc.build(el)
     return caminho
 
-# ================= LOGIN (CORRIGIDO) =================
+# ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
     erro = None
@@ -61,13 +83,13 @@ def login():
         usuario = (request.form.get("usuario") or "").strip().lower()
         senha = (request.form.get("senha") or "").strip()
 
-        if usuario in USUARIOS and USUARIOS[usuario] == senha:
+        if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
             session["logado"] = True
             session["usuario"] = usuario
             session["fin_ok"] = False
             return redirect("/painel")
         else:
-            erro = "Usuário ou senha inválidos"
+            erro = "Login inválido"
 
     return render_template("login.html", erro=erro)
 
@@ -76,6 +98,7 @@ def login():
 def painel():
     if not session.get("logado"):
         return redirect("/")
+
     lista = carregar()
     return render_template("painel.html", total_os=len(lista))
 
@@ -92,29 +115,34 @@ def nova():
         v = float(request.form.get("valor") or 0)
         s = float(request.form.get("sinal") or 0)
 
-        nova_os = {
+        usuario = session["usuario"]
+
+        d = {
             "numero": n,
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
             "aparelho": request.form.get("aparelho"),
+            "defeito": request.form.get("defeito"),
             "valor": v,
             "sinal": s,
             "restante": v - s,
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
+            "pagamento": request.form.get("pagamento"),
+            "garantia": request.form.get("garantia"),
             "status": "aberto",
             "data": datetime.now().strftime("%Y-%m-%d")
         }
 
-        lista.append(nova_os)
+        lista.append(d)
         salvar(lista)
 
-        pdf = gerar_pdf(n, nova_os)
+        pdf = gerar_pdf(n, d, USUARIOS[usuario]["loja"], USUARIOS[usuario]["whats"])
         return send_file(pdf, as_attachment=True)
 
     return render_template("nova_os.html")
 
-# ================= VER PDF =================
+# ================= VER =================
 @app.route("/os/<numero>")
 def ver(numero):
     if not session.get("logado"):
@@ -126,7 +154,9 @@ def ver(numero):
     if not o:
         return "OS não encontrada"
 
-    pdf = gerar_pdf(numero, o)
+    usuario = session["usuario"]
+
+    pdf = gerar_pdf(numero, o, USUARIOS[usuario]["loja"], USUARIOS[usuario]["whats"])
     return send_file(pdf)
 
 # ================= EDITAR =================
@@ -136,13 +166,13 @@ def editar(numero):
         return redirect("/")
 
     lista = carregar()
-    os_encontrada = next((x for x in lista if x["numero"] == numero), None)
+    o = next((x for x in lista if x["numero"] == numero), None)
 
-    if not os_encontrada:
+    if not o:
         return "OS não encontrada"
 
     if request.method == "POST":
-        os_encontrada.update({
+        o.update({
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
             "aparelho": request.form.get("aparelho"),
@@ -152,12 +182,12 @@ def editar(numero):
             "frete": float(request.form.get("frete") or 0),
         })
 
-        os_encontrada["restante"] = os_encontrada["valor"] - os_encontrada["sinal"]
+        o["restante"] = o["valor"] - o["sinal"]
 
         salvar(lista)
         return redirect("/financeiro")
 
-    return render_template("editar.html", os=os_encontrada)
+    return render_template("editar.html", os=o)
 
 # ================= HISTORICO =================
 @app.route("/historico")
@@ -169,14 +199,7 @@ def historico():
     lista = carregar()
 
     if busca:
-        lista = [
-            o for o in lista
-            if busca in (
-                str(o.get("cliente","")).lower() +
-                str(o.get("aparelho","")).lower() +
-                str(o.get("telefone","")).lower()
-            )
-        ]
+        lista = [o for o in lista if busca in str(o).lower()]
 
     return render_template("historico.html", lista=lista)
 
