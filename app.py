@@ -201,6 +201,7 @@ def financeiro():
     if not session.get("logado"):
         return redirect("/")
 
+    # 🔒 TELA DE SENHA
     if not session.get("fin_ok"):
         if request.method == "POST":
             if request.form.get("senha") == "jesus":
@@ -221,14 +222,15 @@ def financeiro():
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
-    # 🔥 LUCRO CORRETO (só pagos)
-    pagos = [o for o in lista if o.get("status") == "pago"]
+    total = sum(float(o.get("valor",0)) for o in lista)
+    custo = sum(float(o.get("custo",0)) for o in lista)
+    frete = sum(float(o.get("frete",0)) for o in lista)
 
-    total = sum(float(o.get("valor",0)) for o in pagos)
-    custo = sum(float(o.get("custo",0)) for o in pagos)
-    frete = sum(float(o.get("frete",0)) for o in pagos)
-
-    lucro = total - custo - frete
+    # 🔥 lucro só do que já recebeu
+    lucro = sum(
+        (float(o.get("valor",0)) - float(o.get("custo",0)) - float(o.get("frete",0)))
+        for o in lista if float(o.get("restante",0)) == 0
+    )
 
     return render_template("financeiro.html",
         lista=lista,
@@ -262,5 +264,6 @@ def sair():
     session.clear()
     return redirect("/")
 
+# ================= RUN =================
 if __name__ == "__main__":
     app.run(debug=True)
