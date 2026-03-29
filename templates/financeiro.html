@@ -1,167 +1,258 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Financeiro</title>
+from flask import Flask, render_template, request, redirect, session
+import os, json
+from datetime import datetime
 
-<style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    margin:0;
-    padding:20px;
+app = Flask(__name__)
+app.secret_key = "lacell_secret"
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
+
+# ===== USUÁRIOS =====
+USUARIOS = {
+    "pytty": {"senha": "diemfafa", "loja": "L&A CELL"},
+    "adriano": {"senha": "jesus", "loja": "MILLENNIUM"}
 }
 
-h2{
-    color:#22c55e;
-    text-align:center;
-}
+# ===== BANCO JSON =====
+def carregar():
+    if not os.path.exists(ARQUIVO_DB):
+        return []
+    try:
+        with open(ARQUIVO_DB, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
-.topo{
-    margin-bottom:15px;
-    text-align:center;
-}
+def salvar(lista):
+    with open(ARQUIVO_DB, "w") as f:
+        json.dump(lista, f, indent=2)
 
-input{
-    padding:8px;
-    border-radius:6px;
-    border:none;
-    background:#1f2937;
-    color:white;
-}
+# ================= LOGIN =================
+@app.route("/", methods=["GET","POST"])
+def login():
+    erro = None
 
-button{
-    padding:8px 12px;
-    background:#22c55e;
-    border:none;
-    border-radius:6px;
-    color:#0f172a;
-    font-weight:bold;
-    cursor:pointer;
-}
+    if request.method == "POST":
+        usuario = (request.form.get("usuario") or "").lower()
+        senha = request.form.get("senha") or ""
 
-button:hover{
-    opacity:.9;
-}
+        if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
+            session["logado"] = True
+            session["usuario"] = usuario
+            return redirect("/painel")
+        else:
+            erro = "Usuário ou senha inválidos"
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-}
+    return render_template("login.html", erro=erro)
 
-th{
-    background:#111827;
-    padding:10px;
-}
+# ================= PAINEL =================
+@app.route("/painel")
+def painel():
+    if not session.get("logado"):
+        return redirect("/")
 
-td{
-    padding:10px;
-    border-bottom:1px solid #1f2937;
-}
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
 
-tr:hover{
-    background:#1f2937;
-}
+    lista = [o for o in carregar() if o.get("loja") == loja]
 
-.pago_txt{
-    color:#22c55e;
-    font-weight:bold;
-}
+    return render_template("painel.html", total_os=len(lista))
 
-.aberto{
-    color:#f59e0b;
-    font-weight:bold;
-}
+# ================= NOVA OS =================
+@app.route("/nova", methods=["GET","POST"])
+def nova():
+    if not session.get("logado"):
+        return redirect("/")
 
-.cancelar{
-    background:#dc2626;
-    color:white;
-}
+    if request.method == "POST":
 
-.pago{
-    background:#22c55e;
-    color:#0f172a;
-}
+        lista = carregar()
+        numero = datetime.now().strftime("%Y%m%d%H%M%S")
 
-.total{
-    margin-top:20px;
-    background:#111827;
-    padding:15px;
-    border-radius:10px;
-}
-</style>
-</head>
+        valor = float(request.form.get("valor") or 0)
+        sinal = float(request.form.get("sinal") or 0)
 
-<body>
+        usuario = session["usuario"]
 
-<h2>💰 Financeiro</h2>
+        d = {
+            "numero": numero,
+            "cliente": request.form.get("cliente"),
+            "telefone": request.form.get("telefone"),
+            "cpf": request.form.get("cpf"),
+            "imei": request.form.get("imei"),
+            "aparelho": request.form.get("aparelho"),
+            "defeito": request.form.get("defeito"),
+            "valor": valor,
+            "sinal": sinal,
+            "restante": valor - sinal,
+            "custo": float(request.form.get("custo") or 0),
+            "frete": float(request.form.get("frete") or 0),
+            "pagamento": request.form.get("pagamento"),
+            "entrega": request.form.get("entrega"),
+            "garantia": request.form.get("garantia"),
+            "senha": request.form.get("senha"),
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "loja": USUARIOS[usuario]["loja"]
+        }
 
-<div class="topo">
+        lista.append(d)
+        salvar(lista)
 
-<a href="/financeiro"><button>Todos</button></a>
-<a href="/financeiro?aberto=1"><button>Em aberto</button></a>
+        return redirect("/historico")
 
-<form method="get" style="display:inline;">
-<input name="busca" placeholder="Buscar cliente ou OS">
-<button>Buscar</button>
-</form>
+    return render_template("nova_os.html")
 
-</div>
+# ================= HISTÓRICO =================
+@app.route("/historico")
+def historico():
+    if not session.get("logado"):
+        return redirect("/")
 
-<table>
-<tr>
-<th>OS</th>
-<th>Cliente</th>
-<th>Data</th>
-<th>Valor</th>
-<th>Custo</th>
-<th>Frete</th>
-<th>Restante</th>
-<th>Status</th>
-<th>Ação</th>
-</tr>
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
 
-{% for os in lista %}
-<tr>
+    lista = [o for o in carregar() if o.get("loja") == loja]
 
-<td>{{ os.numero }}</td>
-<td>{{ os.cliente }}</td>
-<td>{{ os.data }}</td>
+    busca = (request.args.get("busca") or "").lower()
 
-<td>R$ {{ os.valor }}</td>
-<td>R$ {{ os.custo or 0 }}</td>
-<td>R$ {{ os.frete or 0 }}</td>
-<td>R$ {{ os.restante }}</td>
+    if busca:
+        lista = [
+            o for o in lista
+            if busca in str(o.get("cliente","")).lower()
+            or busca in str(o.get("aparelho","")).lower()
+            or busca in str(o.get("telefone","")).lower()
+            or busca in str(o.get("numero",""))
+        ]
 
-<td>
-{% if os.restante == 0 %}
-<span class="pago_txt">PAGO</span>
-{% else %}
-<span class="aberto">EM ABERTO</span>
-{% endif %}
-</td>
+    lista = sorted(lista, key=lambda x: x.get("data",""), reverse=True)
 
-<td>
-<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
-<a href="/pagar/{{ os.numero }}"><button class="pago">Pagar</button></a>
-<a href="/cancelar/{{ os.numero }}"><button class="cancelar">Excluir</button></a>
-</td>
+    return render_template("historico.html", lista=lista)
 
-</tr>
-{% endfor %}
-</table>
+# ================= FINANCEIRO =================
+@app.route("/financeiro", methods=["GET","POST"])
+def financeiro():
 
-<div class="total">
-<h3>📊 TOTAL</h3>
+    if not session.get("logado"):
+        return redirect("/")
 
-Valor Total: R$ {{ total }}<br>
-Custo Total: R$ {{ custo }}<br>
-Frete Total: R$ {{ frete }}<br>
+    # 🔒 SEMPRE pede senha se não tiver sessão
+    if not session.get("financeiro"):
 
-<b>Lucro Total: R$ {{ lucro }}</b>
-</div>
+        if request.method == "POST":
+            if request.form.get("senha") == "jesus":
+                session["financeiro"] = True
+                return redirect("/financeiro")
+            else:
+                return render_template("financeiro_login.html", erro="Senha incorreta")
 
-</body>
-</html>
+        return render_template("financeiro_login.html")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    busca = (request.args.get("busca") or "").lower()
+    aberto = request.args.get("aberto")
+
+    if busca:
+        lista = [
+            o for o in lista
+            if busca in str(o.get("cliente","")).lower()
+            or busca in str(o.get("numero",""))
+        ]
+
+    if aberto:
+        lista = [o for o in lista if float(o.get("restante",0)) > 0]
+
+    # 🔥 LUCRO REAL (SÓ PAGOS)
+    pagos = [o for o in lista if float(o.get("restante",0)) == 0]
+
+    total = sum(float(o.get("valor",0)) for o in pagos)
+    custo = sum(float(o.get("custo",0)) for o in pagos)
+    frete = sum(float(o.get("frete",0)) for o in pagos)
+
+    lucro = total - (custo + frete)
+
+    return render_template("financeiro.html",
+        lista=lista,
+        total=round(total,2),
+        custo=round(custo,2),
+        frete=round(frete,2),
+        lucro=round(lucro,2)
+    )
+
+# ================= EDITAR =================
+@app.route("/editar/<numero>", methods=["GET","POST"])
+def editar(numero):
+
+    lista = carregar()
+    os_edit = next((o for o in lista if o["numero"] == numero), None)
+
+    if not os_edit:
+        return "OS não encontrada"
+
+    if request.method == "POST":
+
+        os_edit["cliente"] = request.form.get("cliente")
+        os_edit["telefone"] = request.form.get("telefone")
+        os_edit["cpf"] = request.form.get("cpf")
+        os_edit["imei"] = request.form.get("imei")
+        os_edit["aparelho"] = request.form.get("aparelho")
+        os_edit["defeito"] = request.form.get("defeito")
+
+        os_edit["valor"] = float(request.form.get("valor") or 0)
+        os_edit["sinal"] = float(request.form.get("sinal") or 0)
+
+        os_edit["custo"] = float(request.form.get("custo") or 0)
+        os_edit["frete"] = float(request.form.get("frete") or 0)
+
+        os_edit["restante"] = os_edit["valor"] - os_edit["sinal"]
+
+        os_edit["pagamento"] = request.form.get("pagamento")
+        os_edit["entrega"] = request.form.get("entrega")
+        os_edit["garantia"] = request.form.get("garantia")
+        os_edit["senha"] = request.form.get("senha")
+
+        salvar(lista)
+
+        return redirect("/financeiro")
+
+    return render_template("editar.html", os=os_edit)
+
+# ================= PAGAR =================
+@app.route("/pagar/<numero>")
+def pagar(numero):
+
+    lista = carregar()
+
+    for o in lista:
+        if o["numero"] == numero:
+            o["sinal"] = o["valor"]
+            o["restante"] = 0
+
+    salvar(lista)
+
+    return redirect("/financeiro")
+
+# ================= EXCLUIR =================
+@app.route("/cancelar/<numero>")
+def cancelar(numero):
+
+    lista = carregar()
+    lista = [o for o in lista if o["numero"] != numero]
+
+    salvar(lista)
+
+    return redirect("/financeiro")
+
+# ================= SAIR =================
+@app.route("/sair")
+def sair():
+    session.clear()
+    return redirect("/")
+
+# ================= START =================
+if __name__ == "__main__":
+    app.run(debug=True)
