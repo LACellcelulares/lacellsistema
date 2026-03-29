@@ -16,13 +16,11 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ================= USUARIOS =================
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
 
-# ================= DB =================
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
         return []
@@ -36,16 +34,13 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= SENHA DESENHO =================
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 20, 20)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# ================= PDF =================
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
-
     doc = SimpleDocTemplate(caminho, pagesize=A4)
     styles = getSampleStyleSheet()
     el = []
@@ -88,7 +83,6 @@ def gerar_pdf(numero, d):
     doc.build(el)
     return caminho
 
-# ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -103,7 +97,6 @@ def login():
 
     return render_template("login.html")
 
-# ================= PAINEL =================
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -113,10 +106,8 @@ def painel():
     loja = USUARIOS[usuario]["loja"]
 
     lista = [o for o in carregar() if o.get("loja") == loja]
-
     return render_template("painel.html", total_os=len(lista))
 
-# ================= NOVA =================
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
@@ -162,7 +153,6 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= VER PDF =================
 @app.route("/os/<numero>")
 def ver(numero):
     if not session.get("logado"):
@@ -177,7 +167,6 @@ def ver(numero):
     pdf = gerar_pdf(numero, o)
     return send_file(pdf)
 
-# ================= HISTORICO =================
 @app.route("/historico")
 def historico():
     if not session.get("logado"):
@@ -187,7 +176,6 @@ def historico():
     loja = USUARIOS[usuario]["loja"]
 
     busca = (request.args.get("busca") or "").lower()
-
     lista = [o for o in carregar() if o.get("loja") == loja]
 
     if busca:
@@ -195,7 +183,6 @@ def historico():
 
     return render_template("historico.html", lista=lista)
 
-# ================= FINANCEIRO =================
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
     if not session.get("logado"):
@@ -212,7 +199,6 @@ def financeiro():
     loja = USUARIOS[usuario]["loja"]
 
     busca = (request.args.get("busca") or "").lower()
-
     lista = [o for o in carregar() if o.get("loja") == loja]
 
     if busca:
@@ -221,22 +207,53 @@ def financeiro():
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
-    # 🔥 LUCRO CORRETO (só recebido)
     total = sum(float(o.get("valor",0)) - float(o.get("restante",0)) for o in lista)
-
     custo = sum(float(o.get("custo",0)) for o in lista)
     frete = sum(float(o.get("frete",0)) for o in lista)
     lucro = total - custo - frete
+
+    # 🔥 LUCRO POR DIA
+    lucro_por_dia = {}
+    for o in lista:
+        recebido = float(o.get("valor",0)) - float(o.get("restante",0))
+        data = o.get("data")
+
+        lucro_os = recebido - float(o.get("custo",0)) - float(o.get("frete",0))
+
+        if data not in lucro_por_dia:
+            lucro_por_dia[data] = 0
+
+        lucro_por_dia[data] += lucro_os
 
     return render_template("financeiro.html",
         lista=lista,
         total=total,
         custo=custo,
         frete=frete,
-        lucro=lucro
+        lucro=lucro,
+        lucro_por_dia=lucro_por_dia
     )
 
-# ================= PAGAR =================
+# RECEBER PARCIAL
+@app.route("/receber/<numero>", methods=["POST"])
+def receber(numero):
+    lista = carregar()
+    valor_recebido = float(request.form.get("valor") or 0)
+
+    for o in lista:
+        if o["numero"] == numero:
+            restante = float(o.get("restante", 0))
+            restante -= valor_recebido
+
+            if restante <= 0:
+                o["restante"] = 0
+                o["status"] = "pago"
+            else:
+                o["restante"] = restante
+
+    salvar(lista)
+    return redirect("/financeiro")
+
 @app.route("/pagar/<numero>")
 def pagar(numero):
     lista = carregar()
@@ -247,14 +264,12 @@ def pagar(numero):
     salvar(lista)
     return redirect("/financeiro")
 
-# ================= CANCELAR =================
 @app.route("/cancelar/<numero>")
 def cancelar(numero):
     lista = [o for o in carregar() if o["numero"] != numero]
     salvar(lista)
     return redirect("/financeiro")
 
-# ================= EDITAR =================
 @app.route("/editar/<numero>", methods=["GET","POST"])
 def editar(numero):
     if not session.get("logado"):
@@ -294,7 +309,6 @@ def editar(numero):
 
     return render_template("editar.html", os=os_edit)
 
-# ================= SAIR =================
 @app.route("/sair")
 def sair():
     session.clear()
