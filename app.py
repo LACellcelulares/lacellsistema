@@ -60,16 +60,13 @@ def gerar_pdf(n, d, loja, whats):
             f"Entrega: {d.get('entrega','')}",
             f"Cliente: {d.get('cliente','')}",
             f"Telefone: {d.get('telefone','')}",
-            f"CPF/CNPJ: {d.get('cpf','')}",
-            f"IMEI: {d.get('imei','')}",
             f"Aparelho: {d.get('aparelho','')}",
             f"Defeito: {d.get('defeito','')}",
             f"Valor: R$ {d.get('valor',0)}",
-            f"Pagamento: {d.get('pagamento','')}",
             f"Sinal: R$ {d.get('sinal',0)}",
             f"Restante: R$ {d.get('restante',0)}",
-            f"Garantia: {d.get('garantia','')}",
-            f"Senha: {d.get('senha','')}"
+            f"Pagamento: {d.get('pagamento','')}",
+            f"Garantia: {d.get('garantia','')}"
         ]
 
         for x in dados:
@@ -134,8 +131,6 @@ def nova():
             "loja": USUARIOS[session["usuario"]]["loja"],
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
-            "cpf": request.form.get("cpf"),
-            "imei": request.form.get("imei"),
             "aparelho": request.form.get("aparelho"),
             "defeito": request.form.get("defeito"),
             "valor": v,
@@ -145,8 +140,8 @@ def nova():
             "frete": float(request.form.get("frete") or 0),
             "pagamento": request.form.get("pagamento"),
             "garantia": request.form.get("garantia"),
-            "senha": request.form.get("senha"),
             "entrega": request.form.get("entrega"),
+            "status": "aberto",
             "data": datetime.now().strftime("%d/%m/%Y %H:%M")
         }
 
@@ -213,6 +208,23 @@ def financeiro():
         frete=frete,
         lucro=lucro
     )
+
+# ================= MARCAR PAGO =================
+@app.route("/pagar/<numero>")
+def pagar(numero):
+    lista = carregar()
+    for o in lista:
+        if o["numero"] == numero:
+            o["status"] = "pago"
+    salvar(lista)
+    return redirect("/financeiro")
+
+# ================= CANCELAR OS =================
+@app.route("/cancelar/<numero>")
+def cancelar(numero):
+    lista = [o for o in carregar() if o["numero"] != numero]
+    salvar(lista)
+    return redirect("/financeiro")
 
 # ================= SAIR =================
 @app.route("/sair")
