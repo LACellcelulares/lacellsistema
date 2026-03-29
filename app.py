@@ -16,7 +16,7 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ✅ USUARIOS CERTOS
+# ================= USUARIOS =================
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
@@ -36,7 +36,7 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= SENHA DESENHO =================
+# ================= DESENHO SENHA =================
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 20, 20)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
@@ -86,17 +86,21 @@ def gerar_pdf(numero, d):
 # ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
+    erro = None
+
     if request.method == "POST":
-        usuario = (request.form.get("usuario") or "").lower()
-        senha = request.form.get("senha") or ""
+        usuario = (request.form.get("usuario") or "").lower().strip()
+        senha = (request.form.get("senha") or "").strip()
 
         if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
             session["logado"] = True
             session["usuario"] = usuario
             session["fin_ok"] = False
             return redirect("/painel")
+        else:
+            erro = "Login inválido"
 
-    return render_template("login.html")
+    return render_template("login.html", erro=erro)
 
 # ================= PAINEL =================
 @app.route("/painel")
@@ -141,7 +145,7 @@ def nova():
             "status": "aberto",
             "data": datetime.now().strftime("%Y-%m-%d"),
 
-            # 🔥 ESSA LINHA RESOLVE O BUG DA LOJA
+            # 🔥 salva a loja corretamente
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
@@ -154,6 +158,21 @@ def nova():
 
     return render_template("nova_os.html")
 
+# ================= VER PDF =================
+@app.route("/os/<numero>")
+def ver(numero):
+    if not session.get("logado"):
+        return redirect("/")
+
+    lista = carregar()
+    o = next((x for x in lista if x["numero"] == numero), None)
+
+    if not o:
+        return "OS não encontrada"
+
+    pdf = gerar_pdf(numero, o)
+    return send_file(pdf)
+
 # ================= HISTORICO =================
 @app.route("/historico")
 def historico():
@@ -163,7 +182,20 @@ def historico():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
+    busca = request.args.get("busca","").lower()
+
     lista = [o for o in carregar() if o.get("loja") == loja]
+
+    if busca:
+        lista = [
+            o for o in lista
+            if busca in (
+                str(o.get("cliente","")).lower() +
+                str(o.get("aparelho","")).lower() +
+                str(o.get("telefone","")).lower() +
+                str(o.get("numero",""))
+            )
+        ]
 
     return render_template("historico.html", lista=lista)
 
@@ -185,7 +217,7 @@ def financeiro():
 
     lista = [o for o in carregar() if o.get("loja") == loja]
 
-    # 🔥 CORREÇÃO AQUI
+    # 🔥 mostra só quem tem valor pendente
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
