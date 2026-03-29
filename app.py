@@ -33,27 +33,36 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ===== GERAR PDF =====
+# ===== PDF =====
 def gerar_pdf(os_data):
+    try:
+        pasta = os.path.join(BASE_DIR, "pdfs")
+        os.makedirs(pasta, exist_ok=True)
 
-    pasta = os.path.join(BASE_DIR, "pdfs")
-    os.makedirs(pasta, exist_ok=True)
+        caminho = os.path.join(pasta, f"{os_data['numero']}.pdf")
 
-    caminho = os.path.join(pasta, f"{os_data['numero']}.pdf")
+        doc = SimpleDocTemplate(caminho, pagesize=A4)
+        styles = getSampleStyleSheet()
 
-    doc = SimpleDocTemplate(caminho, pagesize=A4)
-    styles = getSampleStyleSheet()
+        c = []
+        c.append(Paragraph("ORDEM DE SERVIÇO - L&A CELL", styles['Title']))
+        c.append(Spacer(1, 10))
 
-    conteudo = []
+        c.append(Paragraph(f"OS: {os_data['numero']}", styles['Normal']))
+        c.append(Paragraph(f"Cliente: {os_data['cliente']}", styles['Normal']))
+        c.append(Paragraph(f"Telefone: {os_data['telefone']}", styles['Normal']))
+        c.append(Paragraph(f"Aparelho: {os_data['aparelho']}", styles['Normal']))
+        c.append(Paragraph(f"Defeito: {os_data['defeito']}", styles['Normal']))
+        c.append(Paragraph(f"Valor: R$ {os_data['valor']}", styles['Normal']))
+        c.append(Paragraph(f"Sinal: R$ {os_data['sinal']}", styles['Normal']))
+        c.append(Paragraph(f"Restante: R$ {os_data['restante']}", styles['Normal']))
 
-    conteudo.append(Paragraph("ORDEM DE SERVIÇO - L&A CELL", styles['Title']))
-    conteudo.append(Spacer(1, 10))
+        doc.build(c)
 
-    for campo, valor in os_data.items():
-        conteudo.append(Paragraph(f"<b>{campo.upper()}:</b> {valor}", styles['Normal']))
-        conteudo.append(Spacer(1, 5))
+        print("PDF OK:", caminho)
 
-    doc.build(conteudo)
+    except Exception as e:
+        print("ERRO PDF:", e)
 
 # ===== LOGIN =====
 @app.route("/", methods=["GET","POST"])
@@ -61,15 +70,16 @@ def login():
     erro = None
 
     if request.method == "POST":
-        usuario = (request.form.get("usuario") or "").lower()
-        senha = request.form.get("senha") or ""
+        u = (request.form.get("usuario") or "").lower()
+        s = request.form.get("senha") or ""
 
-        if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
+        if u in USUARIOS and USUARIOS[u]["senha"] == s:
             session["logado"] = True
-            session["usuario"] = usuario
+            session["usuario"] = u
+            session.pop("financeiro", None)
             return redirect("/painel")
         else:
-            erro = "Usuário ou senha inválidos"
+            erro = "Login inválido"
 
     return render_template("login.html", erro=erro)
 
@@ -79,9 +89,7 @@ def painel():
     if not session.get("logado"):
         return redirect("/")
 
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
-
+    loja = USUARIOS[session["usuario"]]["loja"]
     lista = [o for o in carregar() if o.get("loja") == loja]
 
     return render_template("painel.html", total_os=len(lista))
@@ -100,14 +108,12 @@ def nova():
         valor = float(request.form.get("valor") or 0)
         sinal = float(request.form.get("sinal") or 0)
 
-        usuario = session["usuario"]
+        loja = USUARIOS[session["usuario"]]["loja"]
 
         d = {
             "numero": numero,
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
-            "cpf": request.form.get("cpf"),
-            "imei": request.form.get("imei"),
             "aparelho": request.form.get("aparelho"),
             "defeito": request.form.get("defeito"),
             "valor": valor,
@@ -115,19 +121,14 @@ def nova():
             "restante": valor - sinal,
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
-            "pagamento": request.form.get("pagamento"),
-            "entrega": request.form.get("entrega"),
-            "garantia": request.form.get("garantia"),
-            "senha": request.form.get("senha"),
             "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "loja": USUARIOS[usuario]["loja"]
+            "loja": loja
         }
 
         lista.append(d)
         salvar(lista)
 
-        # 🔥 GERA PDF AUTOMÁTICO
-        gerar_pdf(d)
+        gerar_pdf(d)  # 🔥 gera PDF
 
         return redirect("/historico")
 
@@ -139,36 +140,65 @@ def historico():
     if not session.get("logado"):
         return redirect("/")
 
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
-
+    loja = USUARIOS[session["usuario"]]["loja"]
     lista = [o for o in carregar() if o.get("loja") == loja]
-
-    busca = (request.args.get("busca") or "").lower()
-
-    if busca:
-        lista = [
-            o for o in lista
-            if busca in str(o.get("cliente","")).lower()
-            or busca in str(o.get("aparelho","")).lower()
-            or busca in str(o.get("telefone","")).lower()
-            or busca in str(o.get("numero",""))
-        ]
 
     lista = sorted(lista, key=lambda x: x.get("data",""), reverse=True)
 
     return render_template("historico.html", lista=lista)
 
-# ===== ABRIR PDF =====
+# ===== VER PDF =====
 @app.route("/ver_pdf/<numero>")
 def ver_pdf(numero):
-
     caminho = os.path.join(BASE_DIR, "pdfs", f"{numero}.pdf")
 
     if not os.path.exists(caminho):
-        return "PDF não encontrado"
+        return f"PDF não encontrado: {numero}"
 
     return send_file(caminho)
+
+# ===== EDITAR =====
+@app.route("/editar/<numero>", methods=["GET","POST"])
+def editar(numero):
+    lista = carregar()
+    os_edit = next((o for o in lista if o["numero"] == numero), None)
+
+    if not os_edit:
+        return "OS não encontrada"
+
+    if request.method == "POST":
+        os_edit["cliente"] = request.form.get("cliente")
+        os_edit["telefone"] = request.form.get("telefone")
+        os_edit["aparelho"] = request.form.get("aparelho")
+        os_edit["defeito"] = request.form.get("defeito")
+
+        os_edit["valor"] = float(request.form.get("valor") or 0)
+        os_edit["sinal"] = float(request.form.get("sinal") or 0)
+        os_edit["restante"] = os_edit["valor"] - os_edit["sinal"]
+
+        salvar(lista)
+        return redirect("/financeiro")
+
+    return render_template("editar.html", os=os_edit)
+
+# ===== PAGAR =====
+@app.route("/pagar/<numero>")
+def pagar(numero):
+    lista = carregar()
+    for o in lista:
+        if o["numero"] == numero:
+            o["sinal"] = o["valor"]
+            o["restante"] = 0
+    salvar(lista)
+    return redirect("/financeiro")
+
+# ===== EXCLUIR =====
+@app.route("/cancelar/<numero>")
+def cancelar(numero):
+    lista = carregar()
+    lista = [o for o in lista if o["numero"] != numero]
+    salvar(lista)
+    return redirect("/financeiro")
 
 # ===== FINANCEIRO =====
 @app.route("/financeiro", methods=["GET","POST"])
@@ -177,20 +207,16 @@ def financeiro():
     if not session.get("logado"):
         return redirect("/")
 
-    if not session.get("financeiro"):
-
+    if "financeiro" not in session:
         if request.method == "POST":
             if request.form.get("senha") == "jesus":
                 session["financeiro"] = True
                 return redirect("/financeiro")
             else:
-                return render_template("financeiro_login.html", erro="Senha incorreta")
-
+                return render_template("financeiro_login.html", erro="Senha errada")
         return render_template("financeiro_login.html")
 
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
-
+    loja = USUARIOS[session["usuario"]]["loja"]
     lista = [o for o in carregar() if o.get("loja") == loja]
 
     pagos = [o for o in lista if float(o.get("restante",0)) == 0]
@@ -209,38 +235,11 @@ def financeiro():
         lucro=round(lucro,2)
     )
 
-# ===== PAGAR =====
-@app.route("/pagar/<numero>")
-def pagar(numero):
-
-    lista = carregar()
-
-    for o in lista:
-        if o["numero"] == numero:
-            o["sinal"] = o["valor"]
-            o["restante"] = 0
-
-    salvar(lista)
-
-    return redirect("/financeiro")
-
-# ===== EXCLUIR =====
-@app.route("/cancelar/<numero>")
-def cancelar(numero):
-
-    lista = carregar()
-    lista = [o for o in lista if o["numero"] != numero]
-
-    salvar(lista)
-
-    return redirect("/financeiro")
-
 # ===== SAIR =====
 @app.route("/sair")
 def sair():
     session.clear()
     return redirect("/")
 
-# ===== START =====
 if __name__ == "__main__":
     app.run(debug=True)
