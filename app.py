@@ -1,6 +1,11 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
+
+# PDF
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
 
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
@@ -14,7 +19,7 @@ USUARIOS = {
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM"}
 }
 
-# ===== BANCO JSON =====
+# ===== BANCO =====
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
         return []
@@ -28,7 +33,29 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= LOGIN =================
+# ===== GERAR PDF =====
+def gerar_pdf(os_data):
+
+    pasta = os.path.join(BASE_DIR, "pdfs")
+    os.makedirs(pasta, exist_ok=True)
+
+    caminho = os.path.join(pasta, f"{os_data['numero']}.pdf")
+
+    doc = SimpleDocTemplate(caminho, pagesize=A4)
+    styles = getSampleStyleSheet()
+
+    conteudo = []
+
+    conteudo.append(Paragraph("ORDEM DE SERVIÇO - L&A CELL", styles['Title']))
+    conteudo.append(Spacer(1, 10))
+
+    for campo, valor in os_data.items():
+        conteudo.append(Paragraph(f"<b>{campo.upper()}:</b> {valor}", styles['Normal']))
+        conteudo.append(Spacer(1, 5))
+
+    doc.build(conteudo)
+
+# ===== LOGIN =====
 @app.route("/", methods=["GET","POST"])
 def login():
     erro = None
@@ -46,7 +73,7 @@ def login():
 
     return render_template("login.html", erro=erro)
 
-# ================= PAINEL =================
+# ===== PAINEL =====
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -59,7 +86,7 @@ def painel():
 
     return render_template("painel.html", total_os=len(lista))
 
-# ================= NOVA OS =================
+# ===== NOVA OS =====
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
@@ -99,11 +126,14 @@ def nova():
         lista.append(d)
         salvar(lista)
 
+        # 🔥 GERA PDF AUTOMÁTICO
+        gerar_pdf(d)
+
         return redirect("/historico")
 
     return render_template("nova_os.html")
 
-# ================= HISTÓRICO =================
+# ===== HISTÓRICO =====
 @app.route("/historico")
 def historico():
     if not session.get("logado"):
@@ -129,21 +159,33 @@ def historico():
 
     return render_template("historico.html", lista=lista)
 
-# ================= FINANCEIRO =================
+# ===== ABRIR PDF =====
+@app.route("/ver_pdf/<numero>")
+def ver_pdf(numero):
+
+    caminho = os.path.join(BASE_DIR, "pdfs", f"{numero}.pdf")
+
+    if not os.path.exists(caminho):
+        return "PDF não encontrado"
+
+    return send_file(caminho)
+
+# ===== FINANCEIRO =====
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
 
     if not session.get("logado"):
         return redirect("/")
 
-    # login financeiro
-    if request.method == "POST":
-        if request.form.get("senha") == "jesus":
-            session["financeiro"] = True
-        else:
-            return render_template("financeiro_login.html", erro="Senha incorreta")
-
     if not session.get("financeiro"):
+
+        if request.method == "POST":
+            if request.form.get("senha") == "jesus":
+                session["financeiro"] = True
+                return redirect("/financeiro")
+            else:
+                return render_template("financeiro_login.html", erro="Senha incorreta")
+
         return render_template("financeiro_login.html")
 
     usuario = session["usuario"]
@@ -151,22 +193,11 @@ def financeiro():
 
     lista = [o for o in carregar() if o.get("loja") == loja]
 
-    busca = (request.args.get("busca") or "").lower()
-    aberto = request.args.get("aberto")
+    pagos = [o for o in lista if float(o.get("restante",0)) == 0]
 
-    if busca:
-        lista = [
-            o for o in lista
-            if busca in str(o.get("cliente","")).lower()
-            or busca in str(o.get("numero",""))
-        ]
-
-    if aberto:
-        lista = [o for o in lista if float(o.get("restante",0)) > 0]
-
-    total = sum(float(o.get("valor",0)) for o in lista)
-    custo = sum(float(o.get("custo",0)) for o in lista)
-    frete = sum(float(o.get("frete",0)) for o in lista)
+    total = sum(float(o.get("valor",0)) for o in pagos)
+    custo = sum(float(o.get("custo",0)) for o in pagos)
+    frete = sum(float(o.get("frete",0)) for o in pagos)
 
     lucro = total - (custo + frete)
 
@@ -178,45 +209,7 @@ def financeiro():
         lucro=round(lucro,2)
     )
 
-# ================= EDITAR =================
-@app.route("/editar/<numero>", methods=["GET","POST"])
-def editar(numero):
-
-    lista = carregar()
-    os_edit = next((o for o in lista if o["numero"] == numero), None)
-
-    if not os_edit:
-        return "OS não encontrada"
-
-    if request.method == "POST":
-
-        os_edit["cliente"] = request.form.get("cliente")
-        os_edit["telefone"] = request.form.get("telefone")
-        os_edit["cpf"] = request.form.get("cpf")
-        os_edit["imei"] = request.form.get("imei")
-        os_edit["aparelho"] = request.form.get("aparelho")
-        os_edit["defeito"] = request.form.get("defeito")
-
-        os_edit["valor"] = float(request.form.get("valor") or 0)
-        os_edit["sinal"] = float(request.form.get("sinal") or 0)
-
-        os_edit["custo"] = float(request.form.get("custo") or 0)
-        os_edit["frete"] = float(request.form.get("frete") or 0)
-
-        os_edit["restante"] = os_edit["valor"] - os_edit["sinal"]
-
-        os_edit["pagamento"] = request.form.get("pagamento")
-        os_edit["entrega"] = request.form.get("entrega")
-        os_edit["garantia"] = request.form.get("garantia")
-        os_edit["senha"] = request.form.get("senha")
-
-        salvar(lista)
-
-        return redirect("/financeiro")
-
-    return render_template("editar.html", os=os_edit)
-
-# ================= PAGAR =================
+# ===== PAGAR =====
 @app.route("/pagar/<numero>")
 def pagar(numero):
 
@@ -231,7 +224,7 @@ def pagar(numero):
 
     return redirect("/financeiro")
 
-# ================= EXCLUIR =================
+# ===== EXCLUIR =====
 @app.route("/cancelar/<numero>")
 def cancelar(numero):
 
@@ -242,12 +235,12 @@ def cancelar(numero):
 
     return redirect("/financeiro")
 
-# ================= SAIR =================
+# ===== SAIR =====
 @app.route("/sair")
 def sair():
     session.clear()
     return redirect("/")
 
-# ================= START =================
+# ===== START =====
 if __name__ == "__main__":
     app.run(debug=True)
