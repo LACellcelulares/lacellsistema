@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, send_file, abort
 import os, json, shutil
 from datetime import datetime
-
-# PDF
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -174,10 +172,10 @@ def nova():
 
             pdf = gerar_pdf(n, d, loja, USUARIOS[u]["whatsapp"])
 
-            if pdf and os.path.exists(pdf):
+            if pdf:
                 return send_file(pdf, as_attachment=True)
 
-            return "OS criada com sucesso (PDF não gerado)"
+            return "Erro ao gerar PDF"
 
         except Exception as e:
             return f"ERRO: {str(e)}"
@@ -203,7 +201,7 @@ def sair():
     session.clear()
     return redirect("/")
 
-# ================= RAILWAY =================
+# ================= RAILWAY FIX (IMPORTANTE) =================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
