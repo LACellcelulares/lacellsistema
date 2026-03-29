@@ -37,11 +37,11 @@ button{
 {% for os in lista %}
 <tr>
 <td>{{ os.numero }}</td>
-<td>{{ os.cliente }}</td>
-<td>{{ os.aparelho }}</td>
-<td>{{ os.telefone }}</td>
-<td>{{ os.data }}</td>
-<td>R$ {{ os.valor }}</td>
+<td>{{ os.cliente or '-' }}</td>
+<td>{{ os.aparelho or '-' }}</td>
+<td>{{ os.telefone or '-' }}</td>
+<td>{{ os.data or '-' }}</td>
+<td>R$ {{ os.valor or 0 }}</td>
 <td>
 <a href="/os/{{ os.numero }}" target="_blank">
 <button>Ver</button>
