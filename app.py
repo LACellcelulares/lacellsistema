@@ -2,9 +2,10 @@ from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
 
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
@@ -35,7 +36,15 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= PDF COMPLETO =================
+# ================= DESENHO SENHA =================
+def senha9():
+    t = Table([["○"]*3 for _ in range(3)], 20, 20)
+    t.setStyle(TableStyle([
+        ('GRID',(0,0),(-1,-1),1,colors.black)
+    ]))
+    return t
+
+# ================= PDF =================
 def gerar_pdf(numero, d, loja, whats):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -61,11 +70,16 @@ def gerar_pdf(numero, d, loja, whats):
             f"Restante: R$ {d.get('restante',0)}",
             f"Pagamento: {d.get('pagamento','')}",
             f"Garantia: {d.get('garantia','')}",
+            f"Senha: {d.get('senha','')}",
         ]
 
         for x in dados:
             el.append(Paragraph(x, styles["Normal"]))
 
+        el.append(Spacer(1,10))
+        el.append(Paragraph("Desenho da senha:", styles["Normal"]))
+        el.append(Spacer(1,5))
+        el.append(senha9())
         el.append(Spacer(1,20))
 
     bloco("VIA CLIENTE")
@@ -130,6 +144,7 @@ def nova():
             "frete": float(request.form.get("frete") or 0),
             "pagamento": request.form.get("pagamento"),
             "garantia": request.form.get("garantia"),
+            "senha": request.form.get("senha"),
             "status": "aberto",
             "data": datetime.now().strftime("%Y-%m-%d")
         }
@@ -180,6 +195,7 @@ def editar(numero):
             "sinal": float(request.form.get("sinal") or 0),
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
+            "senha": request.form.get("senha"),
         })
 
         o["restante"] = o["valor"] - o["sinal"]
