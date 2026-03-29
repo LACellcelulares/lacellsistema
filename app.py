@@ -13,8 +13,11 @@ ARQUIVO = os.path.join(BASE_DIR, "os.json")
 def carregar():
     if not os.path.exists(ARQUIVO):
         return []
-    with open(ARQUIVO, "r") as f:
-        return json.load(f)
+    try:
+        with open(ARQUIVO, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
 def salvar(lista):
     with open(ARQUIVO, "w") as f:
@@ -24,9 +27,13 @@ def salvar(lista):
 # ================== PDF ==================
 def gerar_pdf(os_data):
 
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
+    try:
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet
+    except:
+        print("ERRO: precisa instalar reportlab")
+        return
 
     pasta = os.path.join(BASE_DIR, "pdfs")
     os.makedirs(pasta, exist_ok=True)
@@ -59,10 +66,8 @@ def gerar_pdf(os_data):
         ]
 
     elementos += bloco("VIA DO CLIENTE - L&A CELL")
-
     elementos.append(Paragraph("-----------------------------------------------------", styles['Normal']))
     elementos.append(Spacer(1, 10))
-
     elementos += bloco("VIA DA LOJA - L&A CELL")
 
     doc.build(elementos)
@@ -81,25 +86,28 @@ def salvar_os():
 
     numero = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    os_data = {
-        "numero": numero,
-        "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
-        "cliente": request.form.get("cliente"),
-        "telefone": request.form.get("telefone"),
-        "aparelho": request.form.get("aparelho"),
-        "imei": request.form.get("imei"),
-        "defeito": request.form.get("defeito"),
-        "senha": request.form.get("senha"),
-        "valor": float(request.form.get("valor") or 0),
-        "custo": float(request.form.get("custo") or 0),
-        "frete": float(request.form.get("frete") or 0),
-        "sinal": float(request.form.get("sinal") or 0),
-        "restante": float(request.form.get("restante") or 0),
-        "pagamento": request.form.get("pagamento"),
-        "garantia": request.form.get("garantia"),
-        "entrega": request.form.get("entrega"),
-        "status": "EM ABERTO"
-    }
+    try:
+        os_data = {
+            "numero": numero,
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "cliente": request.form.get("cliente",""),
+            "telefone": request.form.get("telefone",""),
+            "aparelho": request.form.get("aparelho",""),
+            "imei": request.form.get("imei",""),
+            "defeito": request.form.get("defeito",""),
+            "senha": request.form.get("senha",""),
+            "valor": float(request.form.get("valor") or 0),
+            "custo": float(request.form.get("custo") or 0),
+            "frete": float(request.form.get("frete") or 0),
+            "sinal": float(request.form.get("sinal") or 0),
+            "restante": float(request.form.get("restante") or 0),
+            "pagamento": request.form.get("pagamento",""),
+            "garantia": request.form.get("garantia",""),
+            "entrega": request.form.get("entrega",""),
+            "status": "EM ABERTO"
+        }
+    except Exception as e:
+        return f"Erro ao salvar OS: {e}"
 
     lista.append(os_data)
     salvar(lista)
@@ -118,6 +126,10 @@ def historico():
 @app.route("/ver/<numero>")
 def ver(numero):
     caminho = os.path.join(BASE_DIR, "pdfs", f"{numero}.pdf")
+
+    if not os.path.exists(caminho):
+        return "PDF não encontrado"
+
     return send_file(caminho)
 
 
@@ -135,9 +147,16 @@ def editar(numero):
 
     os_data = next((x for x in lista if x["numero"] == numero), None)
 
+    if not os_data:
+        return "OS não encontrada"
+
     if request.method == "POST":
-        os_data["cliente"] = request.form.get("cliente")
-        os_data["valor"] = float(request.form.get("valor") or 0)
+        try:
+            os_data["cliente"] = request.form.get("cliente","")
+            os_data["valor"] = float(request.form.get("valor") or 0)
+        except:
+            pass
+
         salvar(lista)
         return redirect("/historico")
 
@@ -158,9 +177,11 @@ def financeiro():
 
     lista = carregar()
 
-    total = sum(x["valor"] for x in lista if x["status"] == "PAGO")
-    custo = sum(x["custo"] for x in lista if x["status"] == "PAGO")
-    frete = sum(x["frete"] for x in lista if x["status"] == "PAGO")
+    pagos = [x for x in lista if x.get("status") == "PAGO"]
+
+    total = sum(x.get("valor",0) for x in pagos)
+    custo = sum(x.get("custo",0) for x in pagos)
+    frete = sum(x.get("frete",0) for x in pagos)
 
     lucro = total - custo - frete
 
@@ -175,9 +196,11 @@ def financeiro():
 @app.route("/pagar/<numero>")
 def pagar(numero):
     lista = carregar()
+
     for x in lista:
         if x["numero"] == numero:
             x["status"] = "PAGO"
+
     salvar(lista)
     return redirect("/financeiro")
 
