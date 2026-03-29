@@ -36,7 +36,7 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= DESENHO SENHA =================
+# ================= SENHA DESENHO =================
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 20, 20)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
@@ -61,11 +61,16 @@ def gerar_pdf(numero, d):
             f"Data: {d.get('data','')}",
             f"Cliente: {d.get('cliente','')}",
             f"Telefone: {d.get('telefone','')}",
+            f"CPF/CNPJ: {d.get('cpf','')}",
+            f"IMEI: {d.get('imei','')}",
             f"Aparelho: {d.get('aparelho','')}",
             f"Defeito: {d.get('defeito','')}",
             f"Valor: R$ {d.get('valor',0)}",
             f"Sinal: R$ {d.get('sinal',0)}",
             f"Restante: R$ {d.get('restante',0)}",
+            f"Pagamento: {d.get('pagamento','')}",
+            f"Entrega: {d.get('entrega','')}",
+            f"Garantia: {d.get('garantia','')}",
             f"Senha: {d.get('senha','')}",
         ]
 
@@ -86,21 +91,17 @@ def gerar_pdf(numero, d):
 # ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
-    erro = None
-
     if request.method == "POST":
-        usuario = (request.form.get("usuario") or "").lower().strip()
-        senha = (request.form.get("senha") or "").strip()
+        usuario = (request.form.get("usuario") or "").lower()
+        senha = request.form.get("senha") or ""
 
         if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
             session["logado"] = True
             session["usuario"] = usuario
             session["fin_ok"] = False
             return redirect("/painel")
-        else:
-            erro = "Login inválido"
 
-    return render_template("login.html", erro=erro)
+    return render_template("login.html")
 
 # ================= PAINEL =================
 @app.route("/painel")
@@ -134,6 +135,8 @@ def nova():
             "numero": n,
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
+            "cpf": request.form.get("cpf"),
+            "imei": request.form.get("imei"),
             "aparelho": request.form.get("aparelho"),
             "defeito": request.form.get("defeito"),
             "valor": v,
@@ -141,11 +144,12 @@ def nova():
             "restante": v - s,
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
+            "pagamento": request.form.get("pagamento"),
+            "entrega": request.form.get("entrega"),
+            "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "aberto",
             "data": datetime.now().strftime("%Y-%m-%d"),
-
-            # 🔥 salva a loja corretamente
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
@@ -182,20 +186,12 @@ def historico():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
-    busca = request.args.get("busca","").lower()
+    busca = (request.args.get("busca") or "").lower()
 
     lista = [o for o in carregar() if o.get("loja") == loja]
 
     if busca:
-        lista = [
-            o for o in lista
-            if busca in (
-                str(o.get("cliente","")).lower() +
-                str(o.get("aparelho","")).lower() +
-                str(o.get("telefone","")).lower() +
-                str(o.get("numero",""))
-            )
-        ]
+        lista = [o for o in lista if busca in str(o).lower()]
 
     return render_template("historico.html", lista=lista)
 
@@ -215,9 +211,13 @@ def financeiro():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
+    busca = (request.args.get("busca") or "").lower()
+
     lista = [o for o in carregar() if o.get("loja") == loja]
 
-    # 🔥 mostra só quem tem valor pendente
+    if busca:
+        lista = [o for o in lista if busca in str(o).lower()]
+
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
@@ -258,6 +258,5 @@ def sair():
     session.clear()
     return redirect("/")
 
-# ================= RUN =================
 if __name__ == "__main__":
     app.run(debug=True)
