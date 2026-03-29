@@ -16,7 +16,7 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ================= USUARIOS =================
+# ✅ USUARIOS CERTOS
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
@@ -36,12 +36,10 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= DESENHO SENHA =================
+# ================= SENHA DESENHO =================
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 20, 20)
-    t.setStyle(TableStyle([
-        ('GRID',(0,0),(-1,-1),1,colors.black)
-    ]))
+    t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
 # ================= PDF =================
@@ -52,13 +50,10 @@ def gerar_pdf(numero, d):
     styles = getSampleStyleSheet()
     el = []
 
-    loja = d.get("loja")
-    whats = d.get("whats")
-
     def bloco(titulo):
         el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading3"]))
-        el.append(Paragraph(loja, styles["Normal"]))
-        el.append(Paragraph(f"WhatsApp: {whats}", styles["Normal"]))
+        el.append(Paragraph(d.get("loja",""), styles["Normal"]))
+        el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
         el.append(Spacer(1,10))
 
         dados = [
@@ -71,8 +66,6 @@ def gerar_pdf(numero, d):
             f"Valor: R$ {d.get('valor',0)}",
             f"Sinal: R$ {d.get('sinal',0)}",
             f"Restante: R$ {d.get('restante',0)}",
-            f"Pagamento: {d.get('pagamento','')}",
-            f"Garantia: {d.get('garantia','')}",
             f"Senha: {d.get('senha','')}",
         ]
 
@@ -81,7 +74,6 @@ def gerar_pdf(numero, d):
 
         el.append(Spacer(1,10))
         el.append(Paragraph("Desenho da senha:", styles["Normal"]))
-        el.append(Spacer(1,5))
         el.append(senha9())
         el.append(Spacer(1,20))
 
@@ -94,8 +86,6 @@ def gerar_pdf(numero, d):
 # ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
-    erro = None
-
     if request.method == "POST":
         usuario = (request.form.get("usuario") or "").lower()
         senha = request.form.get("senha") or ""
@@ -105,10 +95,8 @@ def login():
             session["usuario"] = usuario
             session["fin_ok"] = False
             return redirect("/painel")
-        else:
-            erro = "Login inválido"
 
-    return render_template("login.html", erro=erro)
+    return render_template("login.html")
 
 # ================= PAINEL =================
 @app.route("/painel")
@@ -149,11 +137,11 @@ def nova():
             "restante": v - s,
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
-            "pagamento": request.form.get("pagamento"),
-            "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "aberto",
             "data": datetime.now().strftime("%Y-%m-%d"),
+
+            # 🔥 ESSA LINHA RESOLVE O BUG DA LOJA
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
@@ -165,6 +153,19 @@ def nova():
         return send_file(pdf, as_attachment=True)
 
     return render_template("nova_os.html")
+
+# ================= HISTORICO =================
+@app.route("/historico")
+def historico():
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    return render_template("historico.html", lista=lista)
 
 # ================= FINANCEIRO =================
 @app.route("/financeiro", methods=["GET","POST"])
@@ -184,7 +185,7 @@ def financeiro():
 
     lista = [o for o in carregar() if o.get("loja") == loja]
 
-    # 🔥 FILTRO CORRETO
+    # 🔥 CORREÇÃO AQUI
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
@@ -208,7 +209,7 @@ def pagar(numero):
     for o in lista:
         if o["numero"] == numero:
             o["status"] = "pago"
-            o["restante"] = 0  # 🔥 zera restante
+            o["restante"] = 0
     salvar(lista)
     return redirect("/financeiro")
 
@@ -227,5 +228,4 @@ def sair():
 
 # ================= RUN =================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
