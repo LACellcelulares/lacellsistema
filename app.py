@@ -36,13 +36,23 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= SENHA DESENHO =================
+# ================= DESENHO SENHA =================
 def senha9():
-    t = Table([["○"]*3 for _ in range(3)], 20, 20)
-    t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
+    t = Table([["○"]*3 for _ in range(3)], 18, 18)
+    t.setStyle(TableStyle([
+        ('GRID',(0,0),(-1,-1),1,colors.black)
+    ]))
     return t
 
-# ================= PDF COMPLETO =================
+# ================= LINHA CORTE =================
+def linha_corte():
+    t = Table([["- - - - - - - - - - - - - - - - - - - - - - -"]])
+    t.setStyle(TableStyle([
+        ('ALIGN',(0,0),(-1,-1),'CENTER')
+    ]))
+    return t
+
+# ================= PDF =================
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -50,42 +60,51 @@ def gerar_pdf(numero, d):
     styles = getSampleStyleSheet()
     el = []
 
-    def bloco(titulo):
-        el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading3"]))
-        el.append(Paragraph(d.get("loja",""), styles["Normal"]))
-        el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
-        el.append(Spacer(1,10))
+    def bloco():
+        el.append(Paragraph(f"<b>{d.get('loja')}</b>", styles["Normal"]))
+        el.append(Paragraph(f"WhatsApp: {d.get('whats')}", styles["Normal"]))
+        el.append(Spacer(1,6))
 
         dados = [
-            f"OS Nº {numero}",
-            f"Data: {d.get('data','')}",
-            f"Cliente: {d.get('cliente','')}",
-            f"Telefone: {d.get('telefone','')}",
-            f"CPF/CNPJ: {d.get('cpf','')}",
-            f"IMEI: {d.get('imei','')}",
-            f"Aparelho: {d.get('aparelho','')}",
-            f"Defeito: {d.get('defeito','')}",
-            f"Valor: R$ {d.get('valor',0)}",
-            f"Sinal: R$ {d.get('sinal',0)}",
-            f"Restante: R$ {d.get('restante',0)}",
-            f"Custo: R$ {d.get('custo',0)}",
-            f"Frete: R$ {d.get('frete',0)}",
-            f"Pagamento: {d.get('pagamento','')}",
-            f"Entrega: {d.get('entrega','')}",
-            f"Garantia: {d.get('garantia','')}",
-            f"Senha: {d.get('senha','')}",
+            f"OS Nº: {numero}",
+            f"Data: {d.get('data')}",
+            f"Cliente: {d.get('cliente')}",
+            f"Telefone: {d.get('telefone')}",
+            f"CPF/CNPJ: {d.get('cpf')}",
+            f"IMEI: {d.get('imei')}",
+            f"Aparelho: {d.get('aparelho')}",
+            f"Defeito: {d.get('defeito')}",
+            f"Valor: R$ {d.get('valor')}",
+            f"Sinal: R$ {d.get('sinal')}",
+            f"Restante: R$ {d.get('restante')}",
+            f"Pagamento: {d.get('pagamento')}",
+            f"Entrega: {d.get('entrega')}",
+            f"Garantia: {d.get('garantia')}",
+            f"Senha: {d.get('senha')}",
         ]
 
         for x in dados:
             el.append(Paragraph(x, styles["Normal"]))
 
-        el.append(Spacer(1,10))
+        el.append(Spacer(1,5))
         el.append(Paragraph("Desenho da senha:", styles["Normal"]))
         el.append(senha9())
-        el.append(Spacer(1,20))
 
-    bloco("VIA CLIENTE")
-    bloco("VIA LOJA")
+        el.append(Spacer(1,15))
+        el.append(Paragraph("Assinatura do cliente: ___________________________", styles["Normal"]))
+        el.append(Spacer(1,15))
+
+    # VIA CLIENTE
+    el.append(Paragraph("<b>VIA CLIENTE</b>", styles["Heading3"]))
+    bloco()
+
+    # LINHA CORTE
+    el.append(linha_corte())
+    el.append(Spacer(1,10))
+
+    # VIA LOJA
+    el.append(Paragraph("<b>VIA LOJA</b>", styles["Heading3"]))
+    bloco()
 
     doc.build(el)
     return caminho
@@ -114,7 +133,6 @@ def painel():
     loja = USUARIOS[usuario]["loja"]
 
     lista = [o for o in carregar() if o.get("loja") == loja]
-
     return render_template("painel.html", total_os=len(lista))
 
 # ================= NOVA =================
@@ -166,9 +184,6 @@ def nova():
 # ================= VER PDF =================
 @app.route("/os/<numero>")
 def ver(numero):
-    if not session.get("logado"):
-        return redirect("/")
-
     lista = carregar()
     o = next((x for x in lista if x["numero"] == numero), None)
 
@@ -219,11 +234,9 @@ def financeiro():
     custo = sum(float(o.get("custo",0)) for o in lista)
     frete = sum(float(o.get("frete",0)) for o in lista)
 
-    # ✅ lucro só do que foi pago
-    lucro = sum(
-        float(o.get("valor",0)) - float(o.get("custo",0)) - float(o.get("frete",0))
-        for o in lista if float(o.get("restante",0)) == 0
-    )
+    # 🔥 CORREÇÃO DO LUCRO (só dinheiro recebido)
+    recebido = sum(float(o.get("valor",0)) - float(o.get("restante",0)) for o in lista)
+    lucro = recebido - custo - frete
 
     return render_template("financeiro.html",
         lista=lista,
@@ -257,6 +270,5 @@ def sair():
     session.clear()
     return redirect("/")
 
-# ================= RUN =================
 if __name__ == "__main__":
     app.run(debug=True)
