@@ -1,26 +1,68 @@
-# ================= HISTORICO =================
-@app.route("/historico")
-def historico():
-    if not session.get("logado"):
-        return redirect("/")
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
 
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
+<style>
+body{background:#0f172a;color:white;font-family:Arial;padding:15px;}
+h2{text-align:center;color:#22c55e;}
 
-    busca = request.args.get("busca","").lower()
+input{
+    padding:8px;
+    border-radius:6px;
+    border:none;
+    margin-bottom:10px;
+    width:100%;
+}
 
-    lista = [o for o in carregar() if o.get("loja") == loja]
+table{width:100%;border-collapse:collapse;}
+td,th{padding:10px;border-bottom:1px solid #1f2937;}
 
-    # 🔎 busca funcionando
-    if busca:
-        lista = [
-            o for o in lista
-            if busca in (
-                str(o.get("cliente","")).lower() +
-                str(o.get("aparelho","")).lower() +
-                str(o.get("telefone","")).lower() +
-                str(o.get("numero",""))
-            )
-        ]
+button{
+    background:#22c55e;
+    border:none;
+    padding:6px;
+    border-radius:6px;
+}
+</style>
+</head>
 
-    return render_template("historico.html", lista=lista)
+<body>
+
+<h2>📂 Histórico</h2>
+
+<form method="get">
+<input name="busca" placeholder="Buscar cliente, aparelho, telefone ou OS">
+</form>
+
+<table>
+<tr>
+<th>OS</th>
+<th>Cliente</th>
+<th>Aparelho</th>
+<th>Telefone</th>
+<th>Data</th>
+<th>Valor</th>
+<th>Ação</th>
+</tr>
+
+{% for os in lista %}
+<tr>
+<td>{{ os.numero }}</td>
+<td>{{ os.cliente or '-' }}</td>
+<td>{{ os.aparelho or '-' }}</td>
+<td>{{ os.telefone or '-' }}</td>
+<td>{{ os.data }}</td>
+<td>R$ {{ os.valor }}</td>
+<td>
+<a href="/os/{{ os.numero }}" target="_blank">
+<button>Ver</button>
+</a>
+</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>
