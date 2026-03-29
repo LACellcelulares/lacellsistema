@@ -8,6 +8,12 @@ app.secret_key = "lacell_secret"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
 
+# ================= USUARIOS =================
+USUARIOS = {
+    "pytty": {"senha":"diemfafa"},
+    "adriano": {"senha":"jesus"}
+}
+
 # ================= DB =================
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
@@ -26,10 +32,17 @@ def salvar(lista):
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        if request.form.get("usuario") == "adriano" and request.form.get("senha") == "jesus":
+        u = (request.form.get("usuario") or "").lower()
+        s = request.form.get("senha") or ""
+
+        if u in USUARIOS and USUARIOS[u]["senha"] == s:
             session["logado"] = True
+            session["usuario"] = u
             session["fin_ok"] = False
             return redirect("/painel")
+
+        return render_template("login.html", erro="Usuário ou senha inválidos")
+
     return render_template("login.html")
 
 # ================= PAINEL =================
@@ -64,7 +77,7 @@ def nova():
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
             "status": "aberto",
-            "data": datetime.now().strftime("%Y-%m-%d")  # 🔥 formato certo p/ filtro
+            "data": datetime.now().strftime("%Y-%m-%d")
         })
 
         salvar(lista)
@@ -128,7 +141,6 @@ def financeiro():
     if not session.get("logado"):
         return redirect("/")
 
-    # 🔒 senha financeiro
     if not session.get("fin_ok"):
         if request.method == "POST":
             if request.form.get("senha") == "jesus":
@@ -138,7 +150,6 @@ def financeiro():
 
     lista = carregar()
 
-    # 🔥 filtros novos
     data_inicio = request.args.get("data_inicio")
     data_fim = request.args.get("data_fim")
     aberto = request.args.get("aberto")
@@ -147,15 +158,15 @@ def financeiro():
         lista = [o for o in lista if o.get("status") != "pago"]
 
     if data_inicio and data_fim:
-        lista_filtrada = []
+        filtrado = []
         for o in lista:
             try:
                 d = datetime.strptime(o.get("data"), "%Y-%m-%d")
                 if data_inicio <= d.strftime("%Y-%m-%d") <= data_fim:
-                    lista_filtrada.append(o)
+                    filtrado.append(o)
             except:
                 pass
-        lista = lista_filtrada
+        lista = filtrado
 
     total = sum(float(o.get("valor",0)) for o in lista)
     custo = sum(float(o.get("custo",0)) for o in lista)
