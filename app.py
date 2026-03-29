@@ -41,16 +41,16 @@ def gerar_pdf(numero, d):
     doc = SimpleDocTemplate(
         caminho,
         pagesize=A4,
-        rightMargin=15,
-        leftMargin=15,
-        topMargin=15,
-        bottomMargin=15
+        rightMargin=12,
+        leftMargin=12,
+        topMargin=12,
+        bottomMargin=12
     )
 
     styles = getSampleStyleSheet()
 
-    normal = ParagraphStyle(name="normal", fontSize=8, leading=9)
-    titulo = ParagraphStyle(name="titulo", fontSize=10, leading=11)
+    normal = ParagraphStyle(name="normal", fontSize=9, leading=11)
+    titulo = ParagraphStyle(name="titulo", fontSize=12, leading=13)
 
     el = []
 
@@ -66,7 +66,7 @@ def gerar_pdf(numero, d):
         el.append(Paragraph(f"<b>{titulo_txt}</b>", titulo))
         el.append(Paragraph(f"<b>{d.get('loja')}</b>", normal))
         el.append(Paragraph(f"WhatsApp: {d.get('whats')}", normal))
-        el.append(Spacer(1,4))
+        el.append(Spacer(1,6))
 
         dados = [
             linha("OS Nº:", numero, "Data:", d.get("data")),
@@ -79,25 +79,25 @@ def gerar_pdf(numero, d):
             linha("Senha:", d.get("senha"), "", ""),
         ]
 
-        t = Table(dados, colWidths=[60, 110, 60, 110])
+        t = Table(dados, colWidths=[70, 130, 70, 130], rowHeights=18)
         t.setStyle(TableStyle([
-            ("GRID", (0,0), (-1,-1), 0.3, colors.black),
+            ("GRID", (0,0), (-1,-1), 0.5, colors.black),
             ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
         ]))
 
         el.append(t)
 
-        el.append(Spacer(1,5))
+        el.append(Spacer(1,10))
         el.append(Paragraph("<b>Senha de desenho:</b>", normal))
-        el.append(Table([["■"]*3 for _ in range(3)], 10, 10))
+        el.append(Table([["■"]*3 for _ in range(3)], 18, 18))
 
-        el.append(Spacer(1,6))
-        el.append(Paragraph("<b>Ass:</b> ____________________", normal))
-        el.append(Spacer(1,8))
+        el.append(Spacer(1,12))
+        el.append(Paragraph("<b>Assinatura:</b> ________________________________", normal))
+        el.append(Spacer(1,12))
 
     bloco("VIA CLIENTE")
 
-    el.append(Paragraph("----------------------------------------------", normal))
+    el.append(Paragraph("--------------------------------------------------------------", normal))
 
     bloco("VIA LOJA")
 
