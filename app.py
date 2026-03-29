@@ -26,8 +26,11 @@ USUARIOS = {
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
         return []
-    with open(ARQUIVO_DB, "r") as f:
-        return json.load(f)
+    try:
+        with open(ARQUIVO_DB, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
 def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
@@ -158,6 +161,9 @@ def nova():
 # ================= VER PDF =================
 @app.route("/os/<numero>")
 def ver(numero):
+    if not session.get("logado"):
+        return redirect("/")
+
     lista = carregar()
     o = next((x for x in lista if x["numero"] == numero), None)
 
@@ -179,6 +185,34 @@ def historico():
     lista = [o for o in carregar() if o.get("loja") == loja]
 
     return render_template("historico.html", lista=lista)
+
+# ================= FINANCEIRO =================
+@app.route("/financeiro", methods=["GET","POST"])
+def financeiro():
+    if not session.get("logado"):
+        return redirect("/")
+
+    if not session.get("fin_ok"):
+        if request.method == "POST":
+            if request.form.get("senha") == "jesus":
+                session["fin_ok"] = True
+                return redirect("/financeiro")
+        return render_template("financeiro_login.html")
+
+    lista = carregar()
+
+    total = sum(float(o.get("valor",0)) for o in lista)
+    custo = sum(float(o.get("custo",0)) for o in lista)
+    frete = sum(float(o.get("frete",0)) for o in lista)
+    lucro = total - custo - frete
+
+    return render_template("financeiro.html",
+        lista=lista,
+        total=total,
+        custo=custo,
+        frete=frete,
+        lucro=lucro
+    )
 
 # ================= SAIR =================
 @app.route("/sair")
