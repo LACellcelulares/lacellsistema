@@ -1,6 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Financeiro</title>
+
+<style>
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    margin:0;
+    padding:20px;
+}
+
+h2{
+    color:#22c55e;
+    text-align:center;
+}
+
+.topo{
+    margin-bottom:15px;
+    text-align:center;
+}
+
+input{
+    padding:8px;
+    border-radius:6px;
+    border:none;
+    background:#1f2937;
+    color:white;
+}
+
+button{
+    padding:8px 12px;
+    background:#22c55e;
+    border:none;
+    border-radius:6px;
+    color:#0f172a;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+th{
+    background:#111827;
+    padding:10px;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid #1f2937;
+}
+
+tr:hover{
+    background:#1f2937;
+}
+
+.pago_txt{
+    color:#22c55e;
+    font-weight:bold;
+}
+
+.aberto{
+    color:#f59e0b;
+    font-weight:bold;
+}
+
+.cancelar{
+    background:#dc2626;
+    color:white;
+}
+
+.pago{
+    background:#22c55e;
+    color:#0f172a;
+}
+
+.total{
+    margin-top:20px;
+    background:#111827;
+    padding:15px;
+    border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
 <h2>💰 Financeiro</h2>
 
 <div class="topo">
+
 <a href="/financeiro"><button>Todos</button></a>
 <a href="/financeiro?aberto=1"><button>Em aberto</button></a>
 
@@ -8,6 +107,7 @@
 <input name="busca" placeholder="Buscar cliente ou OS">
 <button>Buscar</button>
 </form>
+
 </div>
 
 <table>
@@ -46,7 +146,7 @@
 <td>
 <a href="/editar/{{ os.numero }}"><button>Editar</button></a>
 <a href="/pagar/{{ os.numero }}"><button class="pago">Pagar</button></a>
-<a href="/cancelar/{{ os.numero }}"><button class="cancelar">Cancelar</button></a>
+<a href="/cancelar/{{ os.numero }}"><button class="cancelar">Excluir</button></a>
 </td>
 
 </tr>
@@ -62,3 +162,6 @@ Frete Total: R$ {{ frete }}<br>
 
 <b>Lucro Total: R$ {{ lucro }}</b>
 </div>
+
+</body>
+</html>
