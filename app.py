@@ -18,8 +18,8 @@ os.makedirs(PASTA_PDF, exist_ok=True)
 
 # ================= USUARIOS =================
 USUARIOS = {
-    "adriano": {"senha": "jesus", "loja": "L&A CELL", "whats": "(11)98083-3734"},
-    "pytty": {"senha": "diemfafa", "loja": "MILLENNIUM", "whats": "(11)99846-8349"}
+    "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
+    "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
 
 # ================= DB =================
