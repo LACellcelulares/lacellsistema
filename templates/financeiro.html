@@ -117,7 +117,7 @@ tr:nth-child(even){
 <td>R$ {{ os.valor }}</td>
 <td>R$ {{ os.custo or 0 }}</td>
 <td>R$ {{ os.frete or 0 }}</td>
-<td>R$ {{ os.restante }}</td>
+<td>R$ {{ os.restante or 0 }}</td>
 
 <td>
 {% if os.get("status") == "pago" %}
@@ -128,6 +128,7 @@ tr:nth-child(even){
 </td>
 
 <td>
+<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
 <a href="/pagar/{{ os.numero }}"><button class="pago">Pagar</button></a>
 <a href="/cancelar/{{ os.numero }}"><button class="cancelar">Cancelar</button></a>
 </td>
@@ -139,7 +140,7 @@ tr:nth-child(even){
 <div class="total">
 <h3>📊 TOTAL</h3>
 
-Valor Total: R$ {{ total }}<br>
+Valor Total (Recebido): R$ {{ total }}<br>
 Custo Total: R$ {{ custo }}<br>
 Frete Total: R$ {{ frete }}<br>
 
