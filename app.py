@@ -2,122 +2,42 @@ from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
-PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
-
-os.makedirs(PASTA_PDF, exist_ok=True)
 
 USUARIOS = {
-    "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
-    "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
+    "pytty": {"senha": "diemfafa", "loja": "L&A CELL", "whats": "11980833734"},
+    "adriano": {"senha": "jesus", "loja": "MILLENNIUM", "whats": "11998468349"}
 }
 
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
         return []
-    try:
-        with open(ARQUIVO_DB, "r") as f:
-            return json.load(f)
-    except:
-        return []
+    with open(ARQUIVO_DB, "r") as f:
+        return json.load(f)
 
 def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= PDF =================
-def gerar_pdf(numero, d):
-    caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
-
-    doc = SimpleDocTemplate(
-        caminho,
-        pagesize=A4,
-        rightMargin=12,
-        leftMargin=12,
-        topMargin=12,
-        bottomMargin=12
-    )
-
-    styles = getSampleStyleSheet()
-
-    normal = ParagraphStyle(name="normal", fontSize=9, leading=11)
-    titulo = ParagraphStyle(name="titulo", fontSize=12, leading=13)
-
-    el = []
-
-    def linha(l1, v1, l2, v2):
-        return [
-            Paragraph(f"<b>{l1}</b>", normal),
-            Paragraph(str(v1 or ""), normal),
-            Paragraph(f"<b>{l2}</b>", normal),
-            Paragraph(str(v2 or ""), normal),
-        ]
-
-    def bloco(titulo_txt):
-        el.append(Paragraph(f"<b>{titulo_txt}</b>", titulo))
-        el.append(Paragraph(f"<b>{d.get('loja')}</b>", normal))
-        el.append(Paragraph(f"WhatsApp: {d.get('whats')}", normal))
-        el.append(Spacer(1,6))
-
-        dados = [
-            linha("OS Nº:", numero, "Data:", d.get("data")),
-            linha("Cliente:", d.get("cliente"), "Telefone:", d.get("telefone")),
-            linha("CPF/CNPJ:", d.get("cpf"), "IMEI:", d.get("imei")),
-            linha("Aparelho:", d.get("aparelho"), "Defeito:", d.get("defeito")),
-            linha("Valor:", f"R$ {d.get('valor')}", "Pagamento:", d.get("pagamento")),
-            linha("Sinal:", f"R$ {d.get('sinal')}", "Restante:", f"R$ {d.get('restante')}"),
-            linha("Entrega:", d.get("entrega"), "Garantia:", d.get("garantia")),
-            linha("Senha:", d.get("senha"), "", ""),
-        ]
-
-        t = Table(dados, colWidths=[70, 130, 70, 130], rowHeights=18)
-        t.setStyle(TableStyle([
-            ("GRID", (0,0), (-1,-1), 0.5, colors.black),
-            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-        ]))
-
-        el.append(t)
-
-        el.append(Spacer(1,10))
-        el.append(Paragraph("<b>Senha de desenho:</b>", normal))
-        el.append(Table([["■"]*3 for _ in range(3)], 18, 18))
-
-        el.append(Spacer(1,12))
-        el.append(Paragraph("<b>Assinatura:</b> ________________________________", normal))
-        el.append(Spacer(1,12))
-
-    bloco("VIA CLIENTE")
-
-    el.append(Paragraph("--------------------------------------------------------------", normal))
-
-    bloco("VIA LOJA")
-
-    doc.build(el)
-    return caminho
-
-# ================= RESTO =================
+# ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        usuario = (request.form.get("usuario") or "").lower()
-        senha = request.form.get("senha") or ""
+        u = request.form.get("usuario").lower()
+        s = request.form.get("senha")
 
-        if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
+        if u in USUARIOS and USUARIOS[u]["senha"] == s:
             session["logado"] = True
-            session["usuario"] = usuario
+            session["usuario"] = u
             return redirect("/painel")
 
     return render_template("login.html")
 
+# ================= PAINEL =================
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -127,64 +47,188 @@ def painel():
     loja = USUARIOS[usuario]["loja"]
 
     lista = [o for o in carregar() if o.get("loja") == loja]
+
     return render_template("painel.html", total_os=len(lista))
 
+# ================= NOVA OS =================
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
         return redirect("/")
 
     if request.method == "POST":
-        lista = carregar()
-        n = datetime.now().strftime("%Y%m%d%H%M%S")
 
-        v = float(request.form.get("valor") or 0)
-        s = float(request.form.get("sinal") or 0)
+        lista = carregar()
+        numero = datetime.now().strftime("%Y%m%d%H%M%S")
+
+        valor = float(request.form.get("valor") or 0)
+        sinal = float(request.form.get("sinal") or 0)
 
         usuario = session["usuario"]
 
         d = {
-            "numero": n,
+            "numero": numero,
             "cliente": request.form.get("cliente"),
             "telefone": request.form.get("telefone"),
             "cpf": request.form.get("cpf"),
             "imei": request.form.get("imei"),
             "aparelho": request.form.get("aparelho"),
             "defeito": request.form.get("defeito"),
-            "valor": v,
-            "sinal": s,
-            "restante": v - s,
+            "valor": valor,
+            "sinal": sinal,
+            "restante": valor - sinal,
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
             "pagamento": request.form.get("pagamento"),
             "entrega": request.form.get("entrega"),
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
-            "status": "aberto",
             "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "loja": USUARIOS[usuario]["loja"],
-            "whats": USUARIOS[usuario]["whats"]
+            "loja": USUARIOS[usuario]["loja"]
         }
 
         lista.append(d)
         salvar(lista)
 
-        pdf = gerar_pdf(n, d)
-        return send_file(pdf, as_attachment=True)
+        return redirect("/historico")
 
     return render_template("nova_os.html")
 
-@app.route("/os/<numero>")
-def ver(numero):
-    lista = carregar()
-    o = next((x for x in lista if x["numero"] == numero), None)
+# ================= HISTÓRICO =================
+@app.route("/historico")
+def historico():
+    if not session.get("logado"):
+        return redirect("/")
 
-    if not o:
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    busca = request.args.get("busca","").lower()
+
+    if busca:
+        lista = [o for o in lista if
+            busca in str(o.get("cliente","")).lower()
+            or busca in str(o.get("aparelho","")).lower()
+            or busca in str(o.get("telefone","")).lower()
+            or busca in str(o.get("numero",""))
+        ]
+
+    lista = sorted(lista, key=lambda x: x.get("data",""), reverse=True)
+
+    return render_template("historico.html", lista=lista)
+
+# ================= FINANCEIRO =================
+@app.route("/financeiro", methods=["GET","POST"])
+def financeiro():
+
+    if not session.get("logado"):
+        return redirect("/")
+
+    if request.method == "POST":
+        if request.form.get("senha") == "jesus":
+            session["financeiro"] = True
+        else:
+            return render_template("financeiro_login.html")
+
+    if not session.get("financeiro"):
+        return render_template("financeiro_login.html")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    busca = request.args.get("busca","").lower()
+    aberto = request.args.get("aberto")
+
+    if busca:
+        lista = [o for o in lista if
+            busca in str(o.get("cliente","")).lower()
+            or busca in str(o.get("numero",""))
+        ]
+
+    if aberto:
+        lista = [o for o in lista if float(o.get("restante",0)) > 0]
+
+    total = sum(float(o.get("valor",0)) for o in lista)
+    custo = sum(float(o.get("custo",0)) for o in lista)
+    frete = sum(float(o.get("frete",0)) for o in lista)
+
+    lucro = total - (custo + frete)
+
+    return render_template("financeiro.html",
+        lista=lista,
+        total=round(total,2),
+        custo=round(custo,2),
+        frete=round(frete,2),
+        lucro=round(lucro,2)
+    )
+
+# ================= EDITAR =================
+@app.route("/editar/<numero>", methods=["GET","POST"])
+def editar(numero):
+
+    lista = carregar()
+    os_edit = next((o for o in lista if o["numero"] == numero), None)
+
+    if not os_edit:
         return "OS não encontrada"
 
-    pdf = gerar_pdf(numero, o)
-    return send_file(pdf)
+    if request.method == "POST":
 
+        os_edit["cliente"] = request.form.get("cliente")
+        os_edit["telefone"] = request.form.get("telefone")
+        os_edit["cpf"] = request.form.get("cpf")
+        os_edit["imei"] = request.form.get("imei")
+        os_edit["aparelho"] = request.form.get("aparelho")
+        os_edit["defeito"] = request.form.get("defeito")
+
+        os_edit["valor"] = float(request.form.get("valor") or 0)
+        os_edit["sinal"] = float(request.form.get("sinal") or 0)
+
+        os_edit["custo"] = float(request.form.get("custo") or 0)
+        os_edit["frete"] = float(request.form.get("frete") or 0)
+
+        os_edit["restante"] = os_edit["valor"] - os_edit["sinal"]
+
+        os_edit["pagamento"] = request.form.get("pagamento")
+        os_edit["entrega"] = request.form.get("entrega")
+        os_edit["garantia"] = request.form.get("garantia")
+        os_edit["senha"] = request.form.get("senha")
+
+        salvar(lista)
+
+        return redirect("/financeiro")
+
+    return render_template("editar.html", os=os_edit)
+
+# ================= PAGAR =================
+@app.route("/pagar/<numero>")
+def pagar(numero):
+
+    lista = carregar()
+
+    for o in lista:
+        if o["numero"] == numero:
+            o["sinal"] = o["valor"]
+            o["restante"] = 0
+
+    salvar(lista)
+    return redirect("/financeiro")
+
+# ================= EXCLUIR =================
+@app.route("/cancelar/<numero>")
+def cancelar(numero):
+
+    lista = carregar()
+    lista = [o for o in lista if o["numero"] != numero]
+
+    salvar(lista)
+    return redirect("/financeiro")
+
+# ================= SAIR =================
 @app.route("/sair")
 def sair():
     session.clear()
