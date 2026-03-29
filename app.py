@@ -162,7 +162,7 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= VER PDF =================
+# ================= VER =================
 @app.route("/os/<numero>")
 def ver(numero):
     if not session.get("logado"):
@@ -221,9 +221,13 @@ def financeiro():
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
-    total = sum(float(o.get("valor",0)) for o in lista)
-    custo = sum(float(o.get("custo",0)) for o in lista)
-    frete = sum(float(o.get("frete",0)) for o in lista)
+    # 🔥 LUCRO CORRETO (só pagos)
+    pagos = [o for o in lista if o.get("status") == "pago"]
+
+    total = sum(float(o.get("valor",0)) for o in pagos)
+    custo = sum(float(o.get("custo",0)) for o in pagos)
+    frete = sum(float(o.get("frete",0)) for o in pagos)
+
     lucro = total - custo - frete
 
     return render_template("financeiro.html",
