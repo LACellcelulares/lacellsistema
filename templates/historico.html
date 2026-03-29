@@ -4,11 +4,35 @@
 <meta charset="UTF-8">
 
 <style>
-body{background:#0f172a;color:white;font-family:Arial;padding:15px;}
-h2{text-align:center;color:#22c55e;}
+body{
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    padding:20px;
+}
 
-table{width:100%;border-collapse:collapse;}
-td,th{padding:10px;border-bottom:1px solid #1f2937;}
+h2{
+    color:#22c55e;
+    text-align:center;
+}
+
+input{
+    padding:10px;
+    width:100%;
+    margin-bottom:15px;
+    border-radius:8px;
+    border:none;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+td,th{
+    padding:10px;
+    border-bottom:1px solid #1f2937;
+}
 
 button{
     background:#22c55e;
@@ -17,13 +41,29 @@ button{
     border-radius:6px;
 }
 </style>
+
+<script>
+function buscar(){
+    let input = document.getElementById("busca").value.toLowerCase()
+    let linhas = document.querySelectorAll("tbody tr")
+
+    linhas.forEach(l => {
+        let texto = l.innerText.toLowerCase()
+        l.style.display = texto.includes(input) ? "" : "none"
+    })
+}
+</script>
+
 </head>
 
 <body>
 
 <h2>📂 Histórico</h2>
 
+<input id="busca" onkeyup="buscar()" placeholder="🔍 Buscar cliente, aparelho, telefone...">
+
 <table>
+<thead>
 <tr>
 <th>OS</th>
 <th>Cliente</th>
@@ -33,7 +73,9 @@ button{
 <th>Valor</th>
 <th>Ação</th>
 </tr>
+</thead>
 
+<tbody>
 {% for os in lista %}
 <tr>
 <td>{{ os.numero }}</td>
@@ -49,6 +91,7 @@ button{
 </td>
 </tr>
 {% endfor %}
+</tbody>
 
 </table>
 
