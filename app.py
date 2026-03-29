@@ -16,13 +16,11 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ================= USUARIOS =================
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
 
-# ================= DB =================
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
         return []
@@ -51,72 +49,65 @@ def gerar_pdf(numero, d):
 
     styles = getSampleStyleSheet()
 
-    estilo = ParagraphStyle(
-        name="normal",
-        fontSize=9,
-        leading=11
-    )
-
-    titulo = ParagraphStyle(
-        name="titulo",
-        fontSize=12,
-        leading=14,
-        spaceAfter=5
-    )
+    normal = ParagraphStyle(name="normal", fontSize=9, leading=11)
+    bold = ParagraphStyle(name="bold", fontSize=9, leading=11)
 
     el = []
 
-    def tabela_dados():
+    def linha(label, valor):
         return [
-            ["<b>OS Nº:</b>", numero, "<b>Data:</b>", d.get("data")],
-            ["<b>Cliente:</b>", d.get("cliente"), "<b>Telefone:</b>", d.get("telefone")],
-            ["<b>CPF/CNPJ:</b>", d.get("cpf"), "<b>IMEI:</b>", d.get("imei")],
-            ["<b>Aparelho:</b>", d.get("aparelho"), "<b>Defeito:</b>", d.get("defeito")],
-            ["<b>Valor:</b>", f"R$ {d.get('valor')}", "<b>Pagamento:</b>", d.get("pagamento")],
-            ["<b>Sinal:</b>", f"R$ {d.get('sinal')}", "<b>Restante:</b>", f"R$ {d.get('restante')}"],
-            ["<b>Entrega:</b>", d.get("entrega"), "<b>Garantia:</b>", d.get("garantia")],
-            ["<b>Senha:</b>", d.get("senha"), "", ""],
+            Paragraph(f"<b>{label}</b>", normal),
+            Paragraph(str(valor or ""), normal)
         ]
 
     def bloco(titulo_txt):
-        el.append(Paragraph(f"<b>{titulo_txt}</b>", titulo))
-        el.append(Paragraph(f"<b>{d.get('loja')}</b>", estilo))
-        el.append(Paragraph(f"WhatsApp: {d.get('whats')}", estilo))
-        el.append(Spacer(1,5))
+        el.append(Paragraph(f"<b>{titulo_txt}</b>", styles["Heading3"]))
+        el.append(Paragraph(f"<b>{d.get('loja')}</b>", normal))
+        el.append(Paragraph(f"WhatsApp: {d.get('whats')}", normal))
+        el.append(Spacer(1,6))
 
-        tabela = Table(tabela_dados(), colWidths=[70, 150, 70, 150])
-        tabela.setStyle(TableStyle([
-            ("GRID", (0,0), (-1,-1), 0.5, colors.black),
-            ("FONTNAME", (0,0), (-1,-1), "Helvetica"),
-            ("FONTSIZE", (0,0), (-1,-1), 9),
+        tabela = [
+            linha("OS Nº:", numero),
+            linha("Data:", d.get("data")),
+            linha("Cliente:", d.get("cliente")),
+            linha("Telefone:", d.get("telefone")),
+            linha("CPF/CNPJ:", d.get("cpf")),
+            linha("IMEI:", d.get("imei")),
+            linha("Aparelho:", d.get("aparelho")),
+            linha("Defeito:", d.get("defeito")),
+            linha("Valor:", f"R$ {d.get('valor')}"),
+            linha("Pagamento:", d.get("pagamento")),
+            linha("Sinal:", f"R$ {d.get('sinal')}"),
+            linha("Restante:", f"R$ {d.get('restante')}"),
+            linha("Entrega:", d.get("entrega")),
+            linha("Garantia:", d.get("garantia")),
+            linha("Senha:", d.get("senha")),
+        ]
+
+        t = Table(tabela, colWidths=[120, 300])
+        t.setStyle(TableStyle([
+            ("GRID", (0,0), (-1,-1), 0.3, colors.black),
             ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
         ]))
 
-        el.append(tabela)
+        el.append(t)
 
         el.append(Spacer(1,8))
-
-        el.append(Paragraph("<b>Senha de desenho:</b>", estilo))
-        grade = Table([["■"]*3 for _ in range(3)], 15, 15)
-        el.append(grade)
+        el.append(Paragraph("<b>Senha de desenho:</b>", normal))
+        el.append(Table([["■"]*3 for _ in range(3)], 15, 15))
 
         el.append(Spacer(1,10))
-        el.append(Paragraph("<b>Assinatura:</b> ________________________________", estilo))
+        el.append(Paragraph("<b>Assinatura:</b> ____________________________", normal))
         el.append(Spacer(1,15))
 
-    # VIA CLIENTE
     bloco("VIA CLIENTE")
-
-    # linha corte
-    el.append(Paragraph("----------------------------------------------", estilo))
-
-    # VIA LOJA
+    el.append(Paragraph("------------------------------------------", normal))
     bloco("VIA LOJA")
 
     doc.build(el)
     return caminho
 
-# ================= LOGIN =================
+# ================= RESTO =================
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -130,7 +121,6 @@ def login():
 
     return render_template("login.html")
 
-# ================= PAINEL =================
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -142,7 +132,6 @@ def painel():
     lista = [o for o in carregar() if o.get("loja") == loja]
     return render_template("painel.html", total_os=len(lista))
 
-# ================= NOVA =================
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
@@ -188,7 +177,6 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= RESTO =================
 @app.route("/os/<numero>")
 def ver(numero):
     lista = carregar()
@@ -199,63 +187,6 @@ def ver(numero):
 
     pdf = gerar_pdf(numero, o)
     return send_file(pdf)
-
-@app.route("/historico")
-def historico():
-    if not session.get("logado"):
-        return redirect("/")
-
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
-
-    busca = (request.args.get("busca") or "").lower()
-    lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
-
-    return render_template("historico.html", lista=lista)
-
-@app.route("/financeiro")
-def financeiro():
-    if not session.get("logado"):
-        return redirect("/")
-
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
-
-    lista = [o for o in carregar() if o.get("loja") == loja]
-
-    total = sum(float(o.get("valor",0)) for o in lista)
-    custo = sum(float(o.get("custo",0)) for o in lista)
-    frete = sum(float(o.get("frete",0)) for o in lista)
-
-    recebido = sum(float(o.get("valor",0)) - float(o.get("restante",0)) for o in lista)
-    lucro = recebido - custo - frete
-
-    return render_template("financeiro.html",
-        lista=lista,
-        total=total,
-        custo=custo,
-        frete=frete,
-        lucro=lucro
-    )
-
-@app.route("/pagar/<numero>")
-def pagar(numero):
-    lista = carregar()
-    for o in lista:
-        if o["numero"] == numero:
-            o["status"] = "pago"
-            o["restante"] = 0
-    salvar(lista)
-    return redirect("/financeiro")
-
-@app.route("/cancelar/<numero>")
-def cancelar(numero):
-    lista = [o for o in carregar() if o["numero"] != numero]
-    salvar(lista)
-    return redirect("/financeiro")
 
 @app.route("/sair")
 def sair():
