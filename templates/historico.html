@@ -1,21 +1,68 @@
-<link rel="stylesheet" href="/static/style.css">
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
 
-<h2>Histórico</h2>
+<style>
+body{background:#0f172a;color:white;font-family:Arial;padding:15px;}
+h2{text-align:center;color:#22c55e;}
+
+input{
+    padding:8px;
+    border-radius:6px;
+    border:none;
+    margin-bottom:10px;
+    width:100%;
+}
+
+table{width:100%;border-collapse:collapse;}
+td,th{padding:10px;border-bottom:1px solid #1f2937;}
+
+button{
+    background:#22c55e;
+    border:none;
+    padding:6px;
+    border-radius:6px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📂 Histórico</h2>
+
+<form method="get">
+<input name="busca" placeholder="Buscar cliente, aparelho, telefone ou OS">
+</form>
 
 <table>
 <tr>
-<th>OS</th><th>Cliente</th><th>Valor</th><th>Ação</th>
+<th>OS</th>
+<th>Cliente</th>
+<th>Aparelho</th>
+<th>Telefone</th>
+<th>Data</th>
+<th>Valor</th>
+<th>Ação</th>
 </tr>
 
-{% for o in lista %}
+{% for os in lista %}
 <tr>
-<td>{{ o.numero }}</td>
-<td>{{ o.cliente }}</td>
-<td>R$ {{ o.valor }}</td>
+<td>{{ os.numero }}</td>
+<td>{{ os.cliente or '-' }}</td>
+<td>{{ os.aparelho or '-' }}</td>
+<td>{{ os.telefone or '-' }}</td>
+<td>{{ os.data }}</td>
+<td>R$ {{ os.valor }}</td>
 <td>
-<a href="/ver_pdf/{{ o.numero }}" target="_blank">PDF</a>
-<a href="/editar/{{ o.numero }}">Editar</a>
+<a href="/os/{{ os.numero }}" target="_blank">
+<button>Ver</button>
+</a>
 </td>
 </tr>
 {% endfor %}
+
 </table>
+
+</body>
+</html>
