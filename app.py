@@ -162,21 +162,6 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= VER =================
-@app.route("/os/<numero>")
-def ver(numero):
-    if not session.get("logado"):
-        return redirect("/")
-
-    lista = carregar()
-    o = next((x for x in lista if x["numero"] == numero), None)
-
-    if not o:
-        return "OS não encontrada"
-
-    pdf = gerar_pdf(numero, o)
-    return send_file(pdf)
-
 # ================= HISTORICO =================
 @app.route("/historico")
 def historico():
@@ -186,12 +171,7 @@ def historico():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
-    busca = (request.args.get("busca") or "").lower()
-
     lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
 
     return render_template("historico.html", lista=lista)
 
@@ -201,7 +181,7 @@ def financeiro():
     if not session.get("logado"):
         return redirect("/")
 
-    # 🔒 TELA DE SENHA
+    # 🔒 SENHA
     if not session.get("fin_ok"):
         if request.method == "POST":
             if request.form.get("senha") == "jesus":
@@ -212,12 +192,7 @@ def financeiro():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
-    busca = (request.args.get("busca") or "").lower()
-
     lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
 
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
@@ -226,7 +201,7 @@ def financeiro():
     custo = sum(float(o.get("custo",0)) for o in lista)
     frete = sum(float(o.get("frete",0)) for o in lista)
 
-    # 🔥 lucro só do que já recebeu
+    # 🔥 lucro correto
     lucro = sum(
         (float(o.get("valor",0)) - float(o.get("custo",0)) - float(o.get("frete",0)))
         for o in lista if float(o.get("restante",0)) == 0
@@ -264,6 +239,5 @@ def sair():
     session.clear()
     return redirect("/")
 
-# ================= RUN =================
 if __name__ == "__main__":
     app.run(debug=True)
