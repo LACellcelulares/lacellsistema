@@ -68,14 +68,14 @@ def gerar_pdf(numero, d):
 
     def tabela_dados():
         return [
-            ["OS Nº:", numero, "Data:", d.get("data")],
-            ["Cliente:", d.get("cliente"), "Telefone:", d.get("telefone")],
-            ["CPF/CNPJ:", d.get("cpf"), "IMEI:", d.get("imei")],
-            ["Aparelho:", d.get("aparelho"), "Defeito:", d.get("defeito")],
-            ["Valor:", f"R$ {d.get('valor')}", "Pagamento:", d.get("pagamento")],
-            ["Sinal:", f"R$ {d.get('sinal')}", "Restante:", f"R$ {d.get('restante')}"],
-            ["Entrega:", d.get("entrega"), "Garantia:", d.get("garantia")],
-            ["Senha:", d.get("senha"), "", ""],
+            ["<b>OS Nº:</b>", numero, "<b>Data:</b>", d.get("data")],
+            ["<b>Cliente:</b>", d.get("cliente"), "<b>Telefone:</b>", d.get("telefone")],
+            ["<b>CPF/CNPJ:</b>", d.get("cpf"), "<b>IMEI:</b>", d.get("imei")],
+            ["<b>Aparelho:</b>", d.get("aparelho"), "<b>Defeito:</b>", d.get("defeito")],
+            ["<b>Valor:</b>", f"R$ {d.get('valor')}", "<b>Pagamento:</b>", d.get("pagamento")],
+            ["<b>Sinal:</b>", f"R$ {d.get('sinal')}", "<b>Restante:</b>", f"R$ {d.get('restante')}"],
+            ["<b>Entrega:</b>", d.get("entrega"), "<b>Garantia:</b>", d.get("garantia")],
+            ["<b>Senha:</b>", d.get("senha"), "", ""],
         ]
 
     def bloco(titulo_txt):
@@ -89,19 +89,19 @@ def gerar_pdf(numero, d):
             ("GRID", (0,0), (-1,-1), 0.5, colors.black),
             ("FONTNAME", (0,0), (-1,-1), "Helvetica"),
             ("FONTSIZE", (0,0), (-1,-1), 9),
+            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
         ]))
 
         el.append(tabela)
 
         el.append(Spacer(1,8))
 
-        # senha desenho
-        el.append(Paragraph("Senha de desenho:", estilo))
+        el.append(Paragraph("<b>Senha de desenho:</b>", estilo))
         grade = Table([["■"]*3 for _ in range(3)], 15, 15)
         el.append(grade)
 
         el.append(Spacer(1,10))
-        el.append(Paragraph("Assinatura: ________________________________", estilo))
+        el.append(Paragraph("<b>Assinatura:</b> ________________________________", estilo))
         el.append(Spacer(1,15))
 
     # VIA CLIENTE
@@ -188,7 +188,7 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= RESTO IGUAL =================
+# ================= RESTO =================
 @app.route("/os/<numero>")
 def ver(numero):
     lista = carregar()
