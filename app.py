@@ -9,7 +9,7 @@ from reportlab.lib import colors
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
-# ================= CAMINHOS SEGUROS =================
+# ================= CAMINHOS =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
@@ -118,20 +118,25 @@ def login():
 # ================= PAINEL =================
 @app.route("/painel")
 def painel():
-    if not session.get("logado"): return redirect("/")
+    if not session.get("logado"):
+        return redirect("/")
+
     u = session["usuario"]
     loja = USUARIOS[u]["loja"]
 
     lista = [o for o in carregar() if o.get("loja") == loja]
 
-    return render_template("painel.html",
-                           total_os=len(lista),
-                           total_valor=sum(float(o.get("valor",0)) for o in lista))
+    return render_template(
+        "painel.html",
+        total_os=len(lista),
+        total_valor=sum(float(o.get("valor",0)) for o in lista)
+    )
 
 # ================= NOVA OS =================
 @app.route("/nova", methods=["GET","POST"])
 def nova():
-    if not session.get("logado"): return redirect("/")
+    if not session.get("logado"):
+        return redirect("/")
 
     if request.method == "POST":
         try:
@@ -181,7 +186,8 @@ def nova():
 # ================= EDITAR =================
 @app.route("/editar/<numero>", methods=["GET","POST"])
 def editar(numero):
-    if not session.get("logado"): return redirect("/")
+    if not session.get("logado"):
+        return redirect("/")
 
     lista = carregar()
     os_encontrada = next((x for x in lista if x["numero"] == numero), None)
@@ -211,7 +217,9 @@ def editar(numero):
 # ================= HISTORICO =================
 @app.route("/historico")
 def historico():
-    if not session.get("logado"): return redirect("/")
+    if not session.get("logado"):
+        return redirect("/")
+
     u = session["usuario"]
     loja = USUARIOS[u]["loja"]
 
@@ -224,8 +232,3 @@ def historico():
 def sair():
     session.clear()
     return redirect("/")
-
-# ================= RENDER =================
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
