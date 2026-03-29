@@ -2,10 +2,9 @@ from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
@@ -36,75 +35,77 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= DESENHO SENHA =================
-def senha9():
-    t = Table([["○"]*3 for _ in range(3)], 18, 18)
-    t.setStyle(TableStyle([
-        ('GRID',(0,0),(-1,-1),1,colors.black)
-    ]))
-    return t
-
-# ================= LINHA CORTE =================
-def linha_corte():
-    t = Table([["- - - - - - - - - - - - - - - - - - - - - - -"]])
-    t.setStyle(TableStyle([
-        ('ALIGN',(0,0),(-1,-1),'CENTER')
-    ]))
-    return t
-
 # ================= PDF =================
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
-    doc = SimpleDocTemplate(caminho, pagesize=A4)
+    doc = SimpleDocTemplate(
+        caminho,
+        pagesize=A4,
+        rightMargin=15,
+        leftMargin=15,
+        topMargin=15,
+        bottomMargin=15
+    )
+
     styles = getSampleStyleSheet()
+
+    estilo = ParagraphStyle(
+        name="compacto",
+        fontSize=7,
+        leading=8
+    )
+
+    titulo = ParagraphStyle(
+        name="titulo",
+        fontSize=9,
+        leading=10
+    )
+
     el = []
 
-    def bloco():
-        el.append(Paragraph(f"<b>{d.get('loja')}</b>", styles["Normal"]))
-        el.append(Paragraph(f"WhatsApp: {d.get('whats')}", styles["Normal"]))
-        el.append(Spacer(1,6))
+    def bloco(titulo_txt):
+        el.append(Paragraph(f"<b>{titulo_txt}</b>", titulo))
+        el.append(Paragraph(f"<b>{d.get('loja')}</b>", estilo))
+        el.append(Paragraph(f"WhatsApp: {d.get('whats')}", estilo))
 
         dados = [
-            f"OS Nº: {numero}",
+            f"OS: {numero}",
             f"Data: {d.get('data')}",
             f"Cliente: {d.get('cliente')}",
-            f"Telefone: {d.get('telefone')}",
+            f"Tel: {d.get('telefone')}",
             f"CPF/CNPJ: {d.get('cpf')}",
             f"IMEI: {d.get('imei')}",
             f"Aparelho: {d.get('aparelho')}",
             f"Defeito: {d.get('defeito')}",
-            f"Valor: R$ {d.get('valor')}",
-            f"Sinal: R$ {d.get('sinal')}",
-            f"Restante: R$ {d.get('restante')}",
-            f"Pagamento: {d.get('pagamento')}",
+            f"Valor: {d.get('valor')}",
+            f"Sinal: {d.get('sinal')}",
+            f"Restante: {d.get('restante')}",
+            f"Pg: {d.get('pagamento')}",
             f"Entrega: {d.get('entrega')}",
             f"Garantia: {d.get('garantia')}",
             f"Senha: {d.get('senha')}",
         ]
 
         for x in dados:
-            el.append(Paragraph(x, styles["Normal"]))
+            el.append(Paragraph(x, estilo))
 
-        el.append(Spacer(1,5))
-        el.append(Paragraph("Desenho da senha:", styles["Normal"]))
-        el.append(senha9())
+        el.append(Spacer(1,3))
+        el.append(Paragraph("Senha:", estilo))
+        el.append(Table([["○"]*3 for _ in range(3)], 12, 12))
 
-        el.append(Spacer(1,15))
-        el.append(Paragraph("Assinatura do cliente: ___________________________", styles["Normal"]))
-        el.append(Spacer(1,15))
+        el.append(Spacer(1,6))
+        el.append(Paragraph("Ass: ____________________", estilo))
+        el.append(Spacer(1,6))
 
     # VIA CLIENTE
-    el.append(Paragraph("<b>VIA CLIENTE</b>", styles["Heading3"]))
-    bloco()
+    bloco("VIA CLIENTE")
 
     # LINHA CORTE
-    el.append(linha_corte())
-    el.append(Spacer(1,10))
+    el.append(Paragraph("- - - - - - - - - - - - - - - - -", estilo))
 
     # VIA LOJA
-    el.append(Paragraph("<b>VIA LOJA</b>", styles["Heading3"]))
-    bloco()
+    bloco("VIA LOJA")
 
     doc.build(el)
     return caminho
@@ -234,7 +235,6 @@ def financeiro():
     custo = sum(float(o.get("custo",0)) for o in lista)
     frete = sum(float(o.get("frete",0)) for o in lista)
 
-    # 🔥 CORREÇÃO DO LUCRO (só dinheiro recebido)
     recebido = sum(float(o.get("valor",0)) - float(o.get("restante",0)) for o in lista)
     lucro = recebido - custo - frete
 
