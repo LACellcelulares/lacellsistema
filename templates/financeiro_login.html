@@ -2,149 +2,47 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<title>Financeiro</title>
 
 <style>
 body{
     background:#0f172a;
     color:white;
     font-family:Arial;
-    padding:20px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
-
-h2{
-    color:#22c55e;
+.box{
+    background:#111827;
+    padding:30px;
+    border-radius:12px;
 }
-
-.topo{
-    margin-bottom:15px;
-}
-
 input{
-    padding:6px;
-    border-radius:6px;
-    border:none;
-    margin-right:5px;
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
 }
-
 button{
+    width:100%;
+    padding:10px;
     background:#22c55e;
     border:none;
-    padding:6px 10px;
-    border-radius:6px;
-    cursor:pointer;
-}
-
-.cancelar{background:#dc2626;}
-.pago{background:#2563eb;}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-    background:#111827;
-    border-radius:10px;
-    overflow:hidden;
-}
-
-th, td{
-    padding:10px;
-    text-align:center;
-}
-
-th{
-    background:#020617;
-    color:#22c55e;
-}
-
-tr:nth-child(even){
-    background:#1f2937;
-}
-
-.aberto{
-    color:#facc15;
-    font-weight:bold;
-}
-
-.pago_txt{
-    color:#22c55e;
-    font-weight:bold;
-}
-
-.total{
-    margin-top:20px;
-    background:#020617;
-    padding:15px;
-    border-radius:10px;
-    border:1px solid #22c55e;
 }
 </style>
 </head>
 
 <body>
 
-<h2>💰 Financeiro</h2>
+<div class="box">
+<h3>🔒 Financeiro</h3>
 
-<div class="topo">
-<a href="/financeiro"><button>Todos</button></a>
-<a href="/financeiro?aberto=1"><button>Em aberto</button></a>
-
-<form method="get" style="display:inline;">
-<input name="busca" placeholder="Buscar cliente ou OS">
-<button>Buscar</button>
+<form method="post">
+<input type="password" name="senha" placeholder="Senha">
+<button>Entrar</button>
 </form>
-</div>
 
-<table>
-<tr>
-<th>OS</th>
-<th>Cliente</th>
-<th>Data</th>
-<th>Valor</th>
-<th>Custo</th>
-<th>Frete</th>
-<th>Restante</th>
-<th>Status</th>
-<th>Ação</th>
-</tr>
-
-{% for os in lista %}
-<tr>
-
-<td>{{ os.numero }}</td>
-<td>{{ os.cliente }}</td>
-<td>{{ os.data }}</td>
-
-<td>R$ {{ os.valor }}</td>
-<td>R$ {{ os.custo or 0 }}</td>
-<td>R$ {{ os.frete or 0 }}</td>
-<td>R$ {{ os.restante }}</td>
-
-<td>
-{% if os.get("status") == "pago" %}
-<span class="pago_txt">PAGO</span>
-{% else %}
-<span class="aberto">ABERTO</span>
-{% endif %}
-</td>
-
-<td>
-<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
-<a href="/pagar/{{ os.numero }}"><button class="pago">Pagar</button></a>
-<a href="/cancelar/{{ os.numero }}"><button class="cancelar">Cancelar</button></a>
-</td>
-
-</tr>
-{% endfor %}
-</table>
-
-<div class="total">
-<h3>📊 TOTAL</h3>
-
-Valor Total: R$ {{ total }}<br>
-Custo Total: R$ {{ custo }}<br>
-Frete Total: R$ {{ frete }}<br>
-
-<b>Lucro Total: R$ {{ lucro }}</b>
 </div>
 
 </body>
