@@ -16,7 +16,7 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ================= USUARIOS =================
+# ✅ USUARIOS
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
@@ -36,13 +36,12 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= SENHA DESENHO =================
+# ================= PDF =================
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 20, 20)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# ================= PDF =================
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -58,27 +57,15 @@ def gerar_pdf(numero, d):
 
         dados = [
             f"OS Nº {numero}",
-            f"Data: {d.get('data','')}",
             f"Cliente: {d.get('cliente','')}",
-            f"Telefone: {d.get('telefone','')}",
-            f"CPF/CNPJ: {d.get('cpf','')}",
-            f"IMEI: {d.get('imei','')}",
-            f"Aparelho: {d.get('aparelho','')}",
-            f"Defeito: {d.get('defeito','')}",
             f"Valor: R$ {d.get('valor',0)}",
-            f"Sinal: R$ {d.get('sinal',0)}",
             f"Restante: R$ {d.get('restante',0)}",
-            f"Pagamento: {d.get('pagamento','')}",
-            f"Entrega: {d.get('entrega','')}",
-            f"Garantia: {d.get('garantia','')}",
-            f"Senha: {d.get('senha','')}",
         ]
 
         for x in dados:
             el.append(Paragraph(x, styles["Normal"]))
 
         el.append(Spacer(1,10))
-        el.append(Paragraph("Desenho da senha:", styles["Normal"]))
         el.append(senha9())
         el.append(Spacer(1,20))
 
@@ -98,7 +85,6 @@ def login():
         if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
             session["logado"] = True
             session["usuario"] = usuario
-            session["fin_ok"] = False
             return redirect("/painel")
 
     return render_template("login.html")
@@ -134,20 +120,11 @@ def nova():
         d = {
             "numero": n,
             "cliente": request.form.get("cliente"),
-            "telefone": request.form.get("telefone"),
-            "cpf": request.form.get("cpf"),
-            "imei": request.form.get("imei"),
-            "aparelho": request.form.get("aparelho"),
-            "defeito": request.form.get("defeito"),
             "valor": v,
             "sinal": s,
             "restante": v - s,
             "custo": float(request.form.get("custo") or 0),
             "frete": float(request.form.get("frete") or 0),
-            "pagamento": request.form.get("pagamento"),
-            "entrega": request.form.get("entrega"),
-            "garantia": request.form.get("garantia"),
-            "senha": request.form.get("senha"),
             "status": "aberto",
             "data": datetime.now().strftime("%Y-%m-%d"),
             "loja": USUARIOS[usuario]["loja"],
@@ -162,51 +139,11 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= VER PDF =================
-@app.route("/os/<numero>")
-def ver(numero):
-    if not session.get("logado"):
-        return redirect("/")
-
-    lista = carregar()
-    o = next((x for x in lista if x["numero"] == numero), None)
-
-    if not o:
-        return "OS não encontrada"
-
-    pdf = gerar_pdf(numero, o)
-    return send_file(pdf)
-
-# ================= HISTORICO =================
-@app.route("/historico")
-def historico():
-    if not session.get("logado"):
-        return redirect("/")
-
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
-
-    busca = (request.args.get("busca") or "").lower()
-
-    lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
-
-    return render_template("historico.html", lista=lista)
-
 # ================= FINANCEIRO =================
-@app.route("/financeiro", methods=["GET","POST"])
+@app.route("/financeiro")
 def financeiro():
     if not session.get("logado"):
         return redirect("/")
-
-    if not session.get("fin_ok"):
-        if request.method == "POST":
-            if request.form.get("senha") == "jesus":
-                session["fin_ok"] = True
-                return redirect("/financeiro")
-        return render_template("financeiro_login.html")
 
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
@@ -221,10 +158,16 @@ def financeiro():
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
+    # ✅ CORREÇÃO DO LUCRO
     total = sum(float(o.get("valor",0)) for o in lista)
     custo = sum(float(o.get("custo",0)) for o in lista)
     frete = sum(float(o.get("frete",0)) for o in lista)
-    lucro = total - custo - frete
+
+    # 🔥 lucro só do que foi pago
+    lucro = sum(
+        float(o.get("valor",0)) - float(o.get("custo",0)) - float(o.get("frete",0))
+        for o in lista if float(o.get("restante",0)) == 0
+    )
 
     return render_template("financeiro.html",
         lista=lista,
