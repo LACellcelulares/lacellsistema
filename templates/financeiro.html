@@ -20,14 +20,22 @@ button{
     padding:6px;
     border-radius:6px;
     margin:2px;
+    cursor:pointer;
 }
 
-.cancelar{
-    background:#dc2626;
-}
+.cancelar{background:#dc2626;}
+.pago{background:#2563eb;}
 
-.pago{
-    background:#2563eb;
+.topo{
+    margin-bottom:20px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+input{
+    padding:8px;
+    border-radius:6px;
+    border:none;
 }
 </style>
 </head>
@@ -35,6 +43,16 @@ button{
 <body>
 
 <h2>💰 Financeiro</h2>
+
+<form method="get" class="topo">
+    <input type="date" name="data_inicio">
+    <input type="date" name="data_fim">
+    <button type="submit">Filtrar</button>
+
+    <a href="/financeiro?aberto=1">
+        <button type="button">🔎 Em aberto</button>
+    </a>
+</form>
 
 {% for os in lista %}
 <div class="card">
@@ -61,7 +79,9 @@ Status:
 
 <a href="/editar/{{ os.numero }}"><button>Editar</button></a>
 
+{% if os.get("status") != "pago" %}
 <a href="/pagar/{{ os.numero }}"><button class="pago">Marcar Pago</button></a>
+{% endif %}
 
 <a href="/cancelar/{{ os.numero }}"><button class="cancelar">Cancelar</button></a>
 
