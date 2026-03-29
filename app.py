@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, send_file
+from flask import Flask, render_template, request, redirect, session
 import os, json
 from datetime import datetime
 
@@ -8,16 +8,21 @@ app.secret_key = "lacell_secret"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
 
+# ===== USUÁRIOS =====
 USUARIOS = {
-    "pytty": {"senha": "diemfafa", "loja": "L&A CELL", "whats": "11980833734"},
-    "adriano": {"senha": "jesus", "loja": "MILLENNIUM", "whats": "11998468349"}
+    "pytty": {"senha": "diemfafa", "loja": "L&A CELL"},
+    "adriano": {"senha": "jesus", "loja": "MILLENNIUM"}
 }
 
+# ===== BANCO JSON =====
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
         return []
-    with open(ARQUIVO_DB, "r") as f:
-        return json.load(f)
+    try:
+        with open(ARQUIVO_DB, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
 def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
@@ -26,16 +31,20 @@ def salvar(lista):
 # ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
+    erro = None
+
     if request.method == "POST":
-        u = request.form.get("usuario").lower()
-        s = request.form.get("senha")
+        usuario = (request.form.get("usuario") or "").lower()
+        senha = request.form.get("senha") or ""
 
-        if u in USUARIOS and USUARIOS[u]["senha"] == s:
+        if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
             session["logado"] = True
-            session["usuario"] = u
+            session["usuario"] = usuario
             return redirect("/painel")
+        else:
+            erro = "Usuário ou senha inválidos"
 
-    return render_template("login.html")
+    return render_template("login.html", erro=erro)
 
 # ================= PAINEL =================
 @app.route("/painel")
@@ -105,11 +114,12 @@ def historico():
 
     lista = [o for o in carregar() if o.get("loja") == loja]
 
-    busca = request.args.get("busca","").lower()
+    busca = (request.args.get("busca") or "").lower()
 
     if busca:
-        lista = [o for o in lista if
-            busca in str(o.get("cliente","")).lower()
+        lista = [
+            o for o in lista
+            if busca in str(o.get("cliente","")).lower()
             or busca in str(o.get("aparelho","")).lower()
             or busca in str(o.get("telefone","")).lower()
             or busca in str(o.get("numero",""))
@@ -126,11 +136,12 @@ def financeiro():
     if not session.get("logado"):
         return redirect("/")
 
+    # login financeiro
     if request.method == "POST":
         if request.form.get("senha") == "jesus":
             session["financeiro"] = True
         else:
-            return render_template("financeiro_login.html")
+            return render_template("financeiro_login.html", erro="Senha incorreta")
 
     if not session.get("financeiro"):
         return render_template("financeiro_login.html")
@@ -140,12 +151,13 @@ def financeiro():
 
     lista = [o for o in carregar() if o.get("loja") == loja]
 
-    busca = request.args.get("busca","").lower()
+    busca = (request.args.get("busca") or "").lower()
     aberto = request.args.get("aberto")
 
     if busca:
-        lista = [o for o in lista if
-            busca in str(o.get("cliente","")).lower()
+        lista = [
+            o for o in lista
+            if busca in str(o.get("cliente","")).lower()
             or busca in str(o.get("numero",""))
         ]
 
@@ -216,6 +228,7 @@ def pagar(numero):
             o["restante"] = 0
 
     salvar(lista)
+
     return redirect("/financeiro")
 
 # ================= EXCLUIR =================
@@ -226,6 +239,7 @@ def cancelar(numero):
     lista = [o for o in lista if o["numero"] != numero]
 
     salvar(lista)
+
     return redirect("/financeiro")
 
 # ================= SAIR =================
@@ -234,5 +248,6 @@ def sair():
     session.clear()
     return redirect("/")
 
+# ================= START =================
 if __name__ == "__main__":
     app.run(debug=True)
