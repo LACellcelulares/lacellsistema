@@ -1,79 +1,74 @@
 from flask import Flask, render_template, request, redirect, send_file, session
-import json, os
+import os, json
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "123456"
+app.secret_key = "1234"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ARQUIVO = os.path.join(BASE_DIR, "os.json")
+DB = os.path.join(BASE_DIR, "os.json")
 
 
-# ================== BANCO ==================
-def carregar():
-    if not os.path.exists(ARQUIVO):
+# ================= BANCO =================
+def load_db():
+    if not os.path.exists(DB):
         return []
     try:
-        with open(ARQUIVO, "r") as f:
+        with open(DB, "r") as f:
             return json.load(f)
     except:
         return []
 
-def salvar(lista):
-    with open(ARQUIVO, "w") as f:
-        json.dump(lista, f, indent=4)
+def save_db(data):
+    with open(DB, "w") as f:
+        json.dump(data, f, indent=4)
 
 
-# ================== PDF ==================
+# ================= PDF =================
 def gerar_pdf(os_data):
-
     try:
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import getSampleStyleSheet
     except:
-        print("ERRO: precisa instalar reportlab")
+        print("Instale: pip install reportlab")
         return
 
     pasta = os.path.join(BASE_DIR, "pdfs")
     os.makedirs(pasta, exist_ok=True)
 
-    caminho = os.path.join(pasta, f"{os_data['numero']}.pdf")
+    file = os.path.join(pasta, f"{os_data['numero']}.pdf")
 
-    doc = SimpleDocTemplate(caminho, pagesize=A4)
+    doc = SimpleDocTemplate(file, pagesize=A4)
     styles = getSampleStyleSheet()
-
-    elementos = []
 
     def bloco(titulo):
         return [
-            Paragraph(f"<b>{titulo}</b>", styles['Title']),
+            Paragraph(f"<b>{titulo}</b>", styles["Title"]),
             Spacer(1, 5),
-
             Table([
-                ["OS", os_data.get("numero",""), "Data", os_data.get("data","")],
-                ["Cliente", os_data.get("cliente",""), "Telefone", os_data.get("telefone","")],
-                ["Aparelho", os_data.get("aparelho",""), "IMEI", os_data.get("imei","")],
-                ["Defeito", os_data.get("defeito",""), "Senha", os_data.get("senha","")],
-                ["Valor", f"R$ {os_data.get('valor',0)}", "Sinal", f"R$ {os_data.get('sinal',0)}"],
-                ["Restante", f"R$ {os_data.get('restante',0)}", "Pagamento", os_data.get("pagamento","")],
-                ["Garantia", os_data.get("garantia",""), "Previsão", os_data.get("entrega","")]
+                ["OS", os_data["numero"], "Data", os_data["data"]],
+                ["Cliente", os_data["cliente"], "Telefone", os_data["telefone"]],
+                ["Aparelho", os_data["aparelho"], "IMEI", os_data["imei"]],
+                ["Defeito", os_data["defeito"], "Senha", os_data["senha"]],
+                ["Valor", f"R$ {os_data['valor']}", "Sinal", f"R$ {os_data['sinal']}"],
+                ["Restante", f"R$ {os_data['restante']}", "Pagamento", os_data["pagamento"]],
             ], colWidths=[70,150,70,150]),
-
-            Spacer(1, 10),
-            Paragraph("Assinatura: ___________________________", styles['Normal']),
+            Spacer(1, 15),
+            Paragraph("Assinatura: ____________________", styles["Normal"]),
             Spacer(1, 30)
         ]
 
-    elementos += bloco("VIA DO CLIENTE - L&A CELL")
-    elementos.append(Paragraph("-----------------------------------------------------", styles['Normal']))
-    elementos.append(Spacer(1, 10))
-    elementos += bloco("VIA DA LOJA - L&A CELL")
+    elements = []
+    elements += bloco("VIA CLIENTE - L&A CELL")
+    elements.append(Paragraph("-------------------------------", styles["Normal"]))
+    elements.append(Spacer(1, 10))
+    elements += bloco("VIA LOJA - L&A CELL")
 
-    doc.build(elementos)
+    doc.build(elements)
 
 
-# ================== ROTAS ==================
+# ================= ROTAS =================
 
 @app.route("/")
 def index():
@@ -81,36 +76,31 @@ def index():
 
 
 @app.route("/salvar", methods=["POST"])
-def salvar_os():
-    lista = carregar()
+def salvar():
+    db = load_db()
 
     numero = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    try:
-        os_data = {
-            "numero": numero,
-            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "cliente": request.form.get("cliente",""),
-            "telefone": request.form.get("telefone",""),
-            "aparelho": request.form.get("aparelho",""),
-            "imei": request.form.get("imei",""),
-            "defeito": request.form.get("defeito",""),
-            "senha": request.form.get("senha",""),
-            "valor": float(request.form.get("valor") or 0),
-            "custo": float(request.form.get("custo") or 0),
-            "frete": float(request.form.get("frete") or 0),
-            "sinal": float(request.form.get("sinal") or 0),
-            "restante": float(request.form.get("restante") or 0),
-            "pagamento": request.form.get("pagamento",""),
-            "garantia": request.form.get("garantia",""),
-            "entrega": request.form.get("entrega",""),
-            "status": "EM ABERTO"
-        }
-    except Exception as e:
-        return f"Erro ao salvar OS: {e}"
+    os_data = {
+        "numero": numero,
+        "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "cliente": request.form.get("cliente",""),
+        "telefone": request.form.get("telefone",""),
+        "aparelho": request.form.get("aparelho",""),
+        "imei": request.form.get("imei",""),
+        "defeito": request.form.get("defeito",""),
+        "senha": request.form.get("senha",""),
+        "valor": float(request.form.get("valor") or 0),
+        "custo": float(request.form.get("custo") or 0),
+        "frete": float(request.form.get("frete") or 0),
+        "sinal": float(request.form.get("sinal") or 0),
+        "restante": float(request.form.get("restante") or 0),
+        "pagamento": request.form.get("pagamento",""),
+        "status": "EM ABERTO"
+    }
 
-    lista.append(os_data)
-    salvar(lista)
+    db.append(os_data)
+    save_db(db)
 
     gerar_pdf(os_data)
 
@@ -119,51 +109,26 @@ def salvar_os():
 
 @app.route("/historico")
 def historico():
-    lista = carregar()
-    return render_template("historico.html", lista=lista)
+    return render_template("historico.html", lista=load_db())
 
 
 @app.route("/ver/<numero>")
 def ver(numero):
-    caminho = os.path.join(BASE_DIR, "pdfs", f"{numero}.pdf")
-
-    if not os.path.exists(caminho):
+    path = os.path.join(BASE_DIR, "pdfs", f"{numero}.pdf")
+    if not os.path.exists(path):
         return "PDF não encontrado"
-
-    return send_file(caminho)
+    return send_file(path)
 
 
 @app.route("/excluir/<numero>")
 def excluir(numero):
-    lista = carregar()
-    lista = [x for x in lista if x["numero"] != numero]
-    salvar(lista)
+    db = load_db()
+    db = [x for x in db if x["numero"] != numero]
+    save_db(db)
     return redirect("/historico")
 
 
-@app.route("/editar/<numero>", methods=["GET", "POST"])
-def editar(numero):
-    lista = carregar()
-
-    os_data = next((x for x in lista if x["numero"] == numero), None)
-
-    if not os_data:
-        return "OS não encontrada"
-
-    if request.method == "POST":
-        try:
-            os_data["cliente"] = request.form.get("cliente","")
-            os_data["valor"] = float(request.form.get("valor") or 0)
-        except:
-            pass
-
-        salvar(lista)
-        return redirect("/historico")
-
-    return render_template("editar.html", os=os_data)
-
-
-# ================== FINANCEIRO ==================
+# ================= FINANCEIRO =================
 
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
@@ -175,18 +140,17 @@ def financeiro():
                 return redirect("/financeiro")
         return render_template("login.html")
 
-    lista = carregar()
+    db = load_db()
+    pagos = [x for x in db if x["status"] == "PAGO"]
 
-    pagos = [x for x in lista if x.get("status") == "PAGO"]
-
-    total = sum(x.get("valor",0) for x in pagos)
-    custo = sum(x.get("custo",0) for x in pagos)
-    frete = sum(x.get("frete",0) for x in pagos)
+    total = sum(x["valor"] for x in pagos)
+    custo = sum(x["custo"] for x in pagos)
+    frete = sum(x["frete"] for x in pagos)
 
     lucro = total - custo - frete
 
     return render_template("financeiro.html",
-                           lista=lista,
+                           lista=db,
                            total=total,
                            custo=custo,
                            frete=frete,
@@ -195,16 +159,14 @@ def financeiro():
 
 @app.route("/pagar/<numero>")
 def pagar(numero):
-    lista = carregar()
-
-    for x in lista:
+    db = load_db()
+    for x in db:
         if x["numero"] == numero:
             x["status"] = "PAGO"
-
-    salvar(lista)
+    save_db(db)
     return redirect("/financeiro")
 
 
-# ================== RUN ==================
+# ================= RUN =================
 if __name__ == "__main__":
     app.run(debug=True)
