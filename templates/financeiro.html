@@ -1,49 +1,64 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Financeiro</title>
+<h2>💰 Financeiro</h2>
 
-<style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
-.box{
-    background:#111827;
-    padding:30px;
-    border-radius:12px;
-}
-input{
-    width:100%;
-    padding:10px;
-    margin-bottom:10px;
-}
-button{
-    width:100%;
-    padding:10px;
-    background:#22c55e;
-    border:none;
-}
-</style>
-</head>
+<div class="topo">
+<a href="/financeiro"><button>Todos</button></a>
+<a href="/financeiro?aberto=1"><button>Em aberto</button></a>
 
-<body>
-
-<div class="box">
-<h3>🔒 Financeiro</h3>
-
-<form method="post">
-<input type="password" name="senha" placeholder="Senha">
-<button>Entrar</button>
+<form method="get" style="display:inline;">
+<input name="busca" placeholder="Buscar cliente ou OS">
+<button>Buscar</button>
 </form>
-
 </div>
 
-</body>
-</html>
+<table>
+<tr>
+<th>OS</th>
+<th>Cliente</th>
+<th>Data</th>
+<th>Valor</th>
+<th>Custo</th>
+<th>Frete</th>
+<th>Restante</th>
+<th>Status</th>
+<th>Ação</th>
+</tr>
+
+{% for os in lista %}
+<tr>
+
+<td>{{ os.numero }}</td>
+<td>{{ os.cliente }}</td>
+<td>{{ os.data }}</td>
+
+<td>R$ {{ os.valor }}</td>
+<td>R$ {{ os.custo or 0 }}</td>
+<td>R$ {{ os.frete or 0 }}</td>
+<td>R$ {{ os.restante }}</td>
+
+<td>
+{% if os.restante == 0 %}
+<span class="pago_txt">PAGO</span>
+{% else %}
+<span class="aberto">EM ABERTO</span>
+{% endif %}
+</td>
+
+<td>
+<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
+<a href="/pagar/{{ os.numero }}"><button class="pago">Pagar</button></a>
+<a href="/cancelar/{{ os.numero }}"><button class="cancelar">Cancelar</button></a>
+</td>
+
+</tr>
+{% endfor %}
+</table>
+
+<div class="total">
+<h3>📊 TOTAL</h3>
+
+Valor Total: R$ {{ total }}<br>
+Custo Total: R$ {{ custo }}<br>
+Frete Total: R$ {{ frete }}<br>
+
+<b>Lucro Total: R$ {{ lucro }}</b>
+</div>
