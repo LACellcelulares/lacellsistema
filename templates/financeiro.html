@@ -5,35 +5,50 @@
 <a href="/financeiro?aberto=1"><button>Em aberto</button></a>
 </div>
 
+<form method="get">
+<input name="busca" placeholder="Buscar cliente ou OS">
+<button type="submit">Buscar</button>
+</form>
+
+<table>
+<tr>
+<th>OS</th>
+<th>Cliente</th>
+<th>Data</th>
+<th>Valor</th>
+<th>Custo</th>
+<th>Frete</th>
+<th>Restante</th>
+<th>Status</th>
+<th>Ação</th>
+</tr>
+
 {% for os in lista %}
-<div class="card">
+<tr>
+<td>{{ os.numero }}</td>
+<td>{{ os.cliente }}</td>
+<td>{{ os.data }}</td>
+<td>R$ {{ os.valor }}</td>
+<td>R$ {{ os.custo or 0 }}</td>
+<td>R$ {{ os.frete or 0 }}</td>
+<td>R$ {{ os.restante or 0 }}</td>
 
-<b>OS {{ os.numero }}</b><br>
-{{ os.cliente }}<br>
-📅 {{ os.data }}<br><br>
-
-Valor: R$ {{ os.valor }}<br>
-Custo: R$ {{ os.custo or 0 }}<br>
-Frete: R$ {{ os.frete or 0 }}<br>
-Restante: R$ {{ os.restante or 0 }}<br>
-
-<b>Lucro: R$ {{ (os.valor or 0) - (os.custo or 0) - (os.frete or 0) }}</b><br><br>
-
-Status:
+<td>
 {% if os.restante == 0 %}
 <span style="color:#22c55e">PAGO</span>
 {% else %}
-<span style="color:#facc15">EM ABERTO</span>
+<span style="color:#facc15">ABERTO</span>
 {% endif %}
+</td>
 
-<br><br>
-
-<a href="/editar/{{ os.numero }}"><button>Editar</button></a>
+<td>
 <a href="/pagar/{{ os.numero }}"><button class="pago">Pagar</button></a>
 <a href="/cancelar/{{ os.numero }}"><button class="cancelar">Cancelar</button></a>
+</td>
 
-</div>
+</tr>
 {% endfor %}
+</table>
 
 <div class="total">
 <h3>📊 TOTAL</h3>
@@ -41,6 +56,5 @@ Status:
 Valor Total: R$ {{ total }}<br>
 Custo Total: R$ {{ custo }}<br>
 Frete Total: R$ {{ frete }}<br>
-
-<b>Lucro Total: R$ {{ lucro }}</b>
+<b>Lucro: R$ {{ lucro }}</b>
 </div>
