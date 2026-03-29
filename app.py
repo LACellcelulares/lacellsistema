@@ -45,12 +45,15 @@ def senha9():
     return t
 
 # ================= PDF =================
-def gerar_pdf(numero, d, loja, whats):
+def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
     doc = SimpleDocTemplate(caminho, pagesize=A4)
     styles = getSampleStyleSheet()
     el = []
+
+    loja = d.get("loja")
+    whats = d.get("whats")
 
     def bloco(titulo):
         el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading3"]))
@@ -94,8 +97,8 @@ def login():
     erro = None
 
     if request.method == "POST":
-        usuario = (request.form.get("usuario") or "").strip().lower()
-        senha = (request.form.get("senha") or "").strip()
+        usuario = (request.form.get("usuario") or "").lower()
+        senha = request.form.get("senha") or ""
 
         if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
             session["logado"] = True
@@ -113,7 +116,11 @@ def painel():
     if not session.get("logado"):
         return redirect("/")
 
-    lista = carregar()
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
     return render_template("painel.html", total_os=len(lista))
 
 # ================= NOVA =================
@@ -146,13 +153,15 @@ def nova():
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "aberto",
-            "data": datetime.now().strftime("%Y-%m-%d")
+            "data": datetime.now().strftime("%Y-%m-%d"),
+            "loja": USUARIOS[usuario]["loja"],
+            "whats": USUARIOS[usuario]["whats"]
         }
 
         lista.append(d)
         salvar(lista)
 
-        pdf = gerar_pdf(n, d, USUARIOS[usuario]["loja"], USUARIOS[usuario]["whats"])
+        pdf = gerar_pdf(n, d)
         return send_file(pdf, as_attachment=True)
 
     return render_template("nova_os.html")
@@ -169,41 +178,8 @@ def ver(numero):
     if not o:
         return "OS não encontrada"
 
-    usuario = session["usuario"]
-
-    pdf = gerar_pdf(numero, o, USUARIOS[usuario]["loja"], USUARIOS[usuario]["whats"])
+    pdf = gerar_pdf(numero, o)
     return send_file(pdf)
-
-# ================= EDITAR =================
-@app.route("/editar/<numero>", methods=["GET","POST"])
-def editar(numero):
-    if not session.get("logado"):
-        return redirect("/")
-
-    lista = carregar()
-    o = next((x for x in lista if x["numero"] == numero), None)
-
-    if not o:
-        return "OS não encontrada"
-
-    if request.method == "POST":
-        o.update({
-            "cliente": request.form.get("cliente"),
-            "telefone": request.form.get("telefone"),
-            "aparelho": request.form.get("aparelho"),
-            "valor": float(request.form.get("valor") or 0),
-            "sinal": float(request.form.get("sinal") or 0),
-            "custo": float(request.form.get("custo") or 0),
-            "frete": float(request.form.get("frete") or 0),
-            "senha": request.form.get("senha"),
-        })
-
-        o["restante"] = o["valor"] - o["sinal"]
-
-        salvar(lista)
-        return redirect("/financeiro")
-
-    return render_template("editar.html", os=o)
 
 # ================= HISTORICO =================
 @app.route("/historico")
@@ -211,8 +187,12 @@ def historico():
     if not session.get("logado"):
         return redirect("/")
 
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
     busca = request.args.get("busca","").lower()
-    lista = carregar()
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
 
     if busca:
         lista = [o for o in lista if busca in str(o).lower()]
@@ -232,7 +212,10 @@ def financeiro():
                 return redirect("/financeiro")
         return render_template("financeiro_login.html")
 
-    lista = carregar()
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
 
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if o.get("status") != "pago"]
