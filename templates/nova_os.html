@@ -48,16 +48,17 @@ button{
 <form method="post">
 
 <input name="cliente" placeholder="Cliente" required>
-<input name="telefone" placeholder="Telefone">
 
-<input name="cpf_cnpj" placeholder="CPF / CNPJ">
+<input name="telefone" id="telefone" placeholder="Telefone">
+
+<input name="cpf" placeholder="CPF / CNPJ">
 <input name="imei" placeholder="IMEI">
 
 <input name="aparelho" placeholder="Aparelho">
 <input name="defeito" placeholder="Defeito">
 
-<input name="valor" placeholder="Valor">
-<input name="sinal" placeholder="Sinal">
+<input name="valor" id="valor" placeholder="Valor">
+<input name="sinal" id="sinal" placeholder="Sinal">
 <input name="custo" placeholder="Custo">
 <input name="frete" placeholder="Frete">
 
@@ -82,6 +83,7 @@ button{
 </div>
 
 <script>
+// calcular restante
 function calc(){
  let v=parseFloat(valor.value)||0
  let s=parseFloat(sinal.value)||0
@@ -89,6 +91,21 @@ function calc(){
 }
 valor.oninput=calc
 sinal.oninput=calc
+
+// mascara telefone
+document.getElementById("telefone").addEventListener("input", function(e){
+    let v = e.target.value.replace(/\D/g,"")
+
+    if(v.length > 11) v = v.slice(0,11)
+
+    if(v.length > 6){
+        v = `(${v.slice(0,2)})${v.slice(2,7)}-${v.slice(7)}`
+    }else if(v.length > 2){
+        v = `(${v.slice(0,2)})${v.slice(2)}`
+    }
+
+    e.target.value = v
+})
 </script>
 
 </body>
