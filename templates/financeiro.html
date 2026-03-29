@@ -2,80 +2,56 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    padding:20px;
-}
+body{background:#0f172a;color:white;font-family:Arial;padding:10px;}
+h2{color:#22c55e;font-size:20px;}
 
-h2{
-    color:#22c55e;
-}
+.topo{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:15px;}
+.topo form{width:100%;}
 
-.topo{
-    margin-bottom:15px;
-}
-
-input{
-    padding:6px;
+input, button{
+    padding:10px;
     border-radius:6px;
     border:none;
-    margin-right:5px;
+    width:100%;
+    font-size:14px;
 }
 
-button{
-    background:#22c55e;
-    border:none;
-    padding:6px 10px;
-    border-radius:6px;
-    cursor:pointer;
-}
-
+button{background:#22c55e;cursor:pointer;}
 .cancelar{background:#dc2626;}
 .pago{background:#2563eb;}
 
+.table-box{overflow-x:auto;}
+
 table{
     width:100%;
+    min-width:700px;
     border-collapse:collapse;
-    margin-top:10px;
     background:#111827;
     border-radius:10px;
-    overflow:hidden;
 }
 
 th, td{
-    padding:10px;
+    padding:8px;
+    font-size:12px;
     text-align:center;
 }
 
-th{
-    background:#020617;
-    color:#22c55e;
-}
+th{background:#020617;color:#22c55e;}
+tr:nth-child(even){background:#1f2937;}
 
-tr:nth-child(even){
-    background:#1f2937;
-}
-
-.aberto{
-    color:#facc15;
-    font-weight:bold;
-}
-
-.pago_txt{
-    color:#22c55e;
-    font-weight:bold;
-}
+.aberto{color:#facc15;font-weight:bold;}
+.pago_txt{color:#22c55e;font-weight:bold;}
 
 .total{
-    margin-top:20px;
+    margin-top:15px;
     background:#020617;
-    padding:15px;
+    padding:10px;
     border-radius:10px;
     border:1px solid #22c55e;
+    font-size:14px;
 }
 </style>
 </head>
@@ -85,43 +61,33 @@ tr:nth-child(even){
 <h2>💰 Financeiro</h2>
 
 <div class="topo">
-
 <a href="/financeiro"><button>Todos</button></a>
 <a href="/financeiro?aberto=1"><button>Em aberto</button></a>
 
-<form method="get" style="display:inline;">
+<form method="get">
 <input name="busca" placeholder="Buscar cliente ou OS">
 <button>Buscar</button>
 </form>
 
-<!-- 🔥 FILTRO POR MÊS -->
-<form method="get" style="display:inline;">
+<form method="get">
 <input type="month" name="mes">
 <button>Filtrar Mês</button>
 </form>
-
 </div>
 
+<div class="table-box">
 <table>
 <tr>
-<th>OS</th>
-<th>Cliente</th>
-<th>Data</th>
-<th>Valor</th>
-<th>Custo</th>
-<th>Frete</th>
-<th>Restante</th>
-<th>Status</th>
-<th>Ação</th>
+<th>OS</th><th>Cliente</th><th>Data</th><th>Valor</th>
+<th>Custo</th><th>Frete</th><th>Restante</th>
+<th>Status</th><th>Ação</th>
 </tr>
 
 {% for os in lista %}
 <tr>
-
 <td>{{ os.numero }}</td>
 <td>{{ os.cliente }}</td>
 <td>{{ os.data }}</td>
-
 <td>R$ {{ os.valor }}</td>
 <td>R$ {{ os.custo or 0 }}</td>
 <td>R$ {{ os.frete or 0 }}</td>
@@ -136,39 +102,33 @@ tr:nth-child(even){
 </td>
 
 <td>
-
-<form action="/receber/{{ os.numero }}" method="post" style="display:inline;">
-<input name="valor" type="number" step="0.01" placeholder="R$" style="width:70px;">
-<button type="submit">Receber</button>
+<form action="/receber/{{ os.numero }}" method="post">
+<input name="valor" type="number" step="0.01" placeholder="R$">
+<button>Receber</button>
 </form>
 
 <a href="/editar/{{ os.numero }}"><button>Editar</button></a>
 <a href="/pagar/{{ os.numero }}"><button class="pago">Quitar</button></a>
 <a href="/cancelar/{{ os.numero }}"><button class="cancelar">Cancelar</button></a>
-
 </td>
-
 </tr>
 {% endfor %}
 </table>
+</div>
 
 <div class="total">
 <h3>📊 TOTAL</h3>
-
-Valor Total (Recebido): R$ {{ total }}<br>
-Custo Total: R$ {{ custo }}<br>
-Frete Total: R$ {{ frete }}<br>
-
-<b>Lucro Total: R$ {{ lucro }}</b>
+Valor Total: R$ {{ total }}<br>
+Custo: R$ {{ custo }}<br>
+Frete: R$ {{ frete }}<br>
+<b>Lucro: R$ {{ lucro }}</b>
 </div>
 
 <div class="total">
 <h3>📅 LUCRO POR DIA</h3>
-
 {% for dia, valor in lucro_por_dia.items() %}
 {{ dia }} → R$ {{ valor }}<br>
 {% endfor %}
-
 </div>
 
 </body>
