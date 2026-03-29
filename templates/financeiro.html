@@ -85,6 +85,7 @@ tr:nth-child(even){
 <h2>💰 Financeiro</h2>
 
 <div class="topo">
+
 <a href="/financeiro"><button>Todos</button></a>
 <a href="/financeiro?aberto=1"><button>Em aberto</button></a>
 
@@ -92,6 +93,13 @@ tr:nth-child(even){
 <input name="busca" placeholder="Buscar cliente ou OS">
 <button>Buscar</button>
 </form>
+
+<!-- 🔥 FILTRO POR MÊS -->
+<form method="get" style="display:inline;">
+<input type="month" name="mes">
+<button>Filtrar Mês</button>
+</form>
+
 </div>
 
 <table>
