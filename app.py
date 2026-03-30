@@ -39,7 +39,6 @@ def senha9():
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# PDF (mantido como estava)
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -109,7 +108,6 @@ def gerar_pdf(numero, d):
     ]))
 
     elementos = []
-
     elementos.extend(bloco("VIA CLIENTE"))
     elementos.append(Spacer(1,10))
     elementos.append(linha)
@@ -144,7 +142,6 @@ def painel():
     lista = [o for o in carregar() if o.get("loja") == loja]
     return render_template("painel.html", total_os=len(lista))
 
-# 🔥 CORRIGIDO AQUI
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
@@ -156,7 +153,6 @@ def nova():
 
         v = float(request.form.get("valor") or 0)
         s = float(request.form.get("sinal") or 0)
-
         restante = v - s
 
         usuario = session["usuario"]
@@ -192,55 +188,21 @@ def nova():
 
     return render_template("nova_os.html")
 
-# 🔥 CORRIGIDO AQUI
-@app.route("/editar/<numero>", methods=["GET","POST"])
-def editar(numero):
+# 🔥 ESSA ERA A QUE FALTAVA
+@app.route("/os/<numero>")
+def ver(numero):
     if not session.get("logado"):
         return redirect("/")
 
     lista = carregar()
-    os_edit = next((x for x in lista if x["numero"] == numero), None)
+    o = next((x for x in lista if x["numero"] == numero), None)
 
-    if not os_edit:
+    if not o:
         return "OS não encontrada"
 
-    if request.method == "POST":
-        os_edit["cliente"] = request.form.get("cliente")
-        os_edit["telefone"] = request.form.get("telefone")
-        os_edit["cpf"] = request.form.get("cpf")
-        os_edit["imei"] = request.form.get("imei")
-        os_edit["aparelho"] = request.form.get("aparelho")
-        os_edit["defeito"] = request.form.get("defeito")
+    pdf = gerar_pdf(numero, o)
+    return send_file(pdf)
 
-        v = float(request.form.get("valor") or 0)
-        s = float(request.form.get("sinal") or 0)
-
-        restante = v - s
-
-        os_edit["valor"] = v
-        os_edit["sinal"] = s
-        os_edit["restante"] = restante
-
-        # 🔥 CORREÇÃO
-        if restante <= 0:
-            os_edit["status"] = "pago"
-        else:
-            os_edit["status"] = "aberto"
-
-        os_edit["custo"] = float(request.form.get("custo") or 0)
-        os_edit["frete"] = float(request.form.get("frete") or 0)
-
-        os_edit["pagamento"] = request.form.get("pagamento")
-        os_edit["entrega"] = request.form.get("entrega")
-        os_edit["garantia"] = request.form.get("garantia")
-        os_edit["senha"] = request.form.get("senha")
-
-        salvar(lista)
-        return redirect("/financeiro")
-
-    return render_template("editar.html", os=os_edit)
-
-# resto igual...
 @app.route("/historico")
 def historico():
     if not session.get("logado"):
