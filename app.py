@@ -16,13 +16,11 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# ================= USUARIOS =================
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
 
-# ================= DB =================
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
         return []
@@ -36,16 +34,13 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# ================= SENHA DESENHO =================
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 20, 20)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# ================= PDF =================
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
-
     doc = SimpleDocTemplate(caminho, pagesize=A4)
     styles = getSampleStyleSheet()
     el = []
@@ -80,6 +75,22 @@ def gerar_pdf(numero, d):
         el.append(Spacer(1,10))
         el.append(Paragraph("Desenho da senha:", styles["Normal"]))
         el.append(senha9())
+
+        el.append(Spacer(1,20))
+
+        el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
+        el.append(Spacer(1,10))
+
+        el.append(Paragraph(
+            "Obs: Garantia não cobre queda, trincos, riscos ou contato com água.",
+            styles["Normal"]
+        ))
+
+        el.append(Paragraph(
+            "Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.",
+            styles["Normal"]
+        ))
+
         el.append(Spacer(1,20))
 
     bloco("VIA CLIENTE")
@@ -88,7 +99,6 @@ def gerar_pdf(numero, d):
     doc.build(el)
     return caminho
 
-# ================= LOGIN =================
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -103,7 +113,6 @@ def login():
 
     return render_template("login.html")
 
-# ================= PAINEL =================
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -113,10 +122,8 @@ def painel():
     loja = USUARIOS[usuario]["loja"]
 
     lista = [o for o in carregar() if o.get("loja") == loja]
-
     return render_template("painel.html", total_os=len(lista))
 
-# ================= NOVA =================
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
@@ -162,7 +169,6 @@ def nova():
 
     return render_template("nova_os.html")
 
-# ================= VER PDF =================
 @app.route("/os/<numero>")
 def ver(numero):
     if not session.get("logado"):
@@ -177,7 +183,6 @@ def ver(numero):
     pdf = gerar_pdf(numero, o)
     return send_file(pdf)
 
-# ================= HISTORICO =================
 @app.route("/historico")
 def historico():
     if not session.get("logado"):
@@ -187,7 +192,6 @@ def historico():
     loja = USUARIOS[usuario]["loja"]
 
     busca = (request.args.get("busca") or "").lower()
-
     lista = [o for o in carregar() if o.get("loja") == loja]
 
     if busca:
@@ -195,7 +199,6 @@ def historico():
 
     return render_template("historico.html", lista=lista)
 
-# ================= FINANCEIRO =================
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
     if not session.get("logado"):
@@ -212,26 +215,21 @@ def financeiro():
     loja = USUARIOS[usuario]["loja"]
 
     busca = (request.args.get("busca") or "").lower()
-    mes = request.args.get("mes")
-
     lista = [o for o in carregar() if o.get("loja") == loja]
 
     if busca:
         lista = [o for o in lista if busca in str(o).lower()]
 
-    # 🔥 FILTRO POR MÊS
-    if mes:
-        lista = [o for o in lista if o.get("data","").startswith(mes)]
-
     if request.args.get("aberto") == "1":
         lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
     total = sum(float(o.get("valor",0)) - float(o.get("restante",0)) for o in lista)
+    total_aberto = sum(float(o.get("restante",0)) for o in lista)
+
     custo = sum(float(o.get("custo",0)) for o in lista)
     frete = sum(float(o.get("frete",0)) for o in lista)
     lucro = total - custo - frete
 
-    # 🔥 LUCRO POR DIA
     lucro_por_dia = {}
     for o in lista:
         recebido = float(o.get("valor",0)) - float(o.get("restante",0))
@@ -247,13 +245,13 @@ def financeiro():
     return render_template("financeiro.html",
         lista=lista,
         total=total,
+        total_aberto=total_aberto,
         custo=custo,
         frete=frete,
         lucro=lucro,
         lucro_por_dia=lucro_por_dia
     )
 
-# ================= RECEBER PARCIAL =================
 @app.route("/receber/<numero>", methods=["POST"])
 def receber(numero):
     lista = carregar()
@@ -273,7 +271,6 @@ def receber(numero):
     salvar(lista)
     return redirect("/financeiro")
 
-# ================= PAGAR =================
 @app.route("/pagar/<numero>")
 def pagar(numero):
     lista = carregar()
@@ -284,14 +281,12 @@ def pagar(numero):
     salvar(lista)
     return redirect("/financeiro")
 
-# ================= CANCELAR =================
 @app.route("/cancelar/<numero>")
 def cancelar(numero):
     lista = [o for o in carregar() if o["numero"] != numero]
     salvar(lista)
     return redirect("/financeiro")
 
-# ================= EDITAR =================
 @app.route("/editar/<numero>", methods=["GET","POST"])
 def editar(numero):
     if not session.get("logado"):
@@ -331,7 +326,6 @@ def editar(numero):
 
     return render_template("editar.html", os=os_edit)
 
-# ================= SAIR =================
 @app.route("/sair")
 def sair():
     session.clear()
