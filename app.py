@@ -39,15 +39,15 @@ def senha9():
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# 🔥 PDF AJUSTADO (MESMO LAYOUT, AGORA EM 1 FOLHA)
+# 🔥 PDF FINAL (1 folha A4, cliente em cima / loja embaixo)
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
     doc = SimpleDocTemplate(
         caminho,
         pagesize=A4,
-        leftMargin=10,
-        rightMargin=10,
+        leftMargin=15,
+        rightMargin=15,
         topMargin=10,
         bottomMargin=10
     )
@@ -60,7 +60,7 @@ def gerar_pdf(numero, d):
         el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
         el.append(Paragraph(d.get("loja",""), styles["Normal"]))
         el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
-        el.append(Spacer(1,5))
+        el.append(Spacer(1,4))
 
         dados = [
             f"OS Nº {numero}",
@@ -83,13 +83,14 @@ def gerar_pdf(numero, d):
         for x in dados:
             el.append(Paragraph(x, styles["Normal"]))
 
-        el.append(Spacer(1,5))
+        el.append(Spacer(1,4))
         el.append(Paragraph("Desenho da senha:", styles["Normal"]))
         el.append(senha9())
 
-        el.append(Spacer(1,10))
+        el.append(Spacer(1,8))
         el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
-        el.append(Spacer(1,5))
+
+        el.append(Spacer(1,4))
 
         el.append(Paragraph(
             "Obs: Garantia não cobre queda, trincos, riscos ou contato com água.",
@@ -103,15 +104,25 @@ def gerar_pdf(numero, d):
 
         return el
 
-    tabela = Table([
-        [bloco("VIA CLIENTE"), bloco("VIA LOJA")]
-    ], colWidths=[270,270])
-
-    tabela.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    # linha divisória
+    linha = Table([[""]], colWidths=[520])
+    linha.setStyle(TableStyle([
+        ('LINEABOVE', (0,0), (-1,-1), 1, colors.black)
     ]))
 
-    doc.build([tabela])
+    elementos = []
+
+    # VIA CLIENTE
+    elementos.extend(bloco("VIA CLIENTE"))
+
+    elementos.append(Spacer(1,10))
+    elementos.append(linha)
+    elementos.append(Spacer(1,10))
+
+    # VIA LOJA
+    elementos.extend(bloco("VIA LOJA"))
+
+    doc.build(elementos)
     return caminho
 
 @app.route("/", methods=["GET","POST"])
