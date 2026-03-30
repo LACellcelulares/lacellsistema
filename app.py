@@ -34,78 +34,84 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-# 🔥 PDF NOVO (1 folha, 2 vias lado a lado)
+def senha9():
+    t = Table([["○"]*3 for _ in range(3)], 15, 15)
+    t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
+    return t
+
+# 🔥 PDF AJUSTADO (MESMO LAYOUT, AGORA EM 1 FOLHA)
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
-    doc = SimpleDocTemplate(caminho, pagesize=A4)
+
+    doc = SimpleDocTemplate(
+        caminho,
+        pagesize=A4,
+        leftMargin=10,
+        rightMargin=10,
+        topMargin=10,
+        bottomMargin=10
+    )
+
     styles = getSampleStyleSheet()
-    el = []
 
-    def conteudo():
-        dados = []
+    def bloco(titulo):
+        el = []
 
-        def linha(label, valor, negrito=False):
-            if negrito:
-                return f"<b>{label}: {valor}</b>"
-            return f"{label}: {valor}"
+        el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
+        el.append(Paragraph(d.get("loja",""), styles["Normal"]))
+        el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
+        el.append(Spacer(1,5))
 
-        dados.append(Paragraph(f"<b>OS Nº {numero}</b>", styles["Normal"]))
-        dados.append(Paragraph(linha("Data", d.get('data','')), styles["Normal"]))
-        dados.append(Paragraph(linha("Cliente", d.get('cliente','')), styles["Normal"]))
-        dados.append(Paragraph(linha("Telefone", d.get('telefone','')), styles["Normal"]))
-        dados.append(Paragraph(linha("Aparelho", d.get('aparelho','')), styles["Normal"]))
-        dados.append(Paragraph(linha("Defeito", d.get('defeito','')), styles["Normal"]))
+        dados = [
+            f"OS Nº {numero}",
+            f"Data: {d.get('data','')}",
+            f"Cliente: {d.get('cliente','')}",
+            f"Telefone: {d.get('telefone','')}",
+            f"CPF/CNPJ: {d.get('cpf','')}",
+            f"IMEI: {d.get('imei','')}",
+            f"Aparelho: {d.get('aparelho','')}",
+            f"Defeito: {d.get('defeito','')}",
+            f"Valor: R$ {d.get('valor',0)}",
+            f"Sinal: R$ {d.get('sinal',0)}",
+            f"Restante: R$ {d.get('restante',0)}",
+            f"Pagamento: {d.get('pagamento','')}",
+            f"Entrega: {d.get('entrega','')}",
+            f"Garantia: {d.get('garantia','')}",
+            f"Senha: {d.get('senha','')}",
+        ]
 
-        dados.append(Spacer(1,5))
+        for x in dados:
+            el.append(Paragraph(x, styles["Normal"]))
 
-        dados.append(Paragraph(linha("Valor", f"R$ {d.get('valor',0)}", True), styles["Normal"]))
-        dados.append(Paragraph(linha("Sinal", f"R$ {d.get('sinal',0)}"), styles["Normal"]))
-        dados.append(Paragraph(linha("Em aberto", f"R$ {d.get('restante',0)}", True), styles["Normal"]))
+        el.append(Spacer(1,5))
+        el.append(Paragraph("Desenho da senha:", styles["Normal"]))
+        el.append(senha9())
 
-        dados.append(Spacer(1,5))
+        el.append(Spacer(1,10))
+        el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
+        el.append(Spacer(1,5))
 
-        dados.append(Paragraph(linha("Pagamento", d.get('pagamento','')), styles["Normal"]))
-        dados.append(Paragraph(linha("Entrega", d.get('entrega','')), styles["Normal"]))
-        dados.append(Paragraph(linha("Garantia", d.get('garantia','')), styles["Normal"]))
-
-        dados.append(Spacer(1,5))
-
-        dados.append(Paragraph(linha("Senha", d.get('senha','')), styles["Normal"]))
-
-        dados.append(Spacer(1,10))
-
-        dados.append(Paragraph("<b>Assinatura:</b> ___________________________", styles["Normal"]))
-
-        dados.append(Spacer(1,5))
-
-        dados.append(Paragraph(
+        el.append(Paragraph(
             "Obs: Garantia não cobre queda, trincos, riscos ou contato com água.",
             styles["Normal"]
         ))
 
-        dados.append(Paragraph(
+        el.append(Paragraph(
             "Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.",
             styles["Normal"]
         ))
 
-        return dados
-
-    titulo = Paragraph(f"<b>{d.get('loja','')}</b><br/>WhatsApp: {d.get('whats','')}", styles["Normal"])
+        return el
 
     tabela = Table([
-        [titulo, titulo],
-        [conteudo(), conteudo()]
+        [bloco("VIA CLIENTE"), bloco("VIA LOJA")]
     ], colWidths=[270,270])
 
     tabela.setStyle(TableStyle([
-        ('BOX', (0,0), (-1,-1), 1, colors.black),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.grey),
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
     ]))
 
-    el.append(tabela)
-
-    doc.build(el)
+    doc.build([tabela])
     return caminho
 
 @app.route("/", methods=["GET","POST"])
