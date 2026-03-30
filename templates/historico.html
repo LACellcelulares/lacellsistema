@@ -20,7 +20,7 @@ input{
 
 table{
     width:100%;
-    min-width:600px;
+    min-width:700px;
 }
 
 td,th{
@@ -49,8 +49,15 @@ button{
 <div class="table-box">
 <table>
 <tr>
-<th>OS</th><th>Cliente</th><th>Aparelho</th>
-<th>Telefone</th><th>Data</th><th>Valor</th><th>Ação</th>
+<th>OS</th>
+<th>Cliente</th>
+<th>Aparelho</th>
+<th>Telefone</th>
+<th>Data</th>
+<th>Valor</th>
+<th>Em Aberto</th>
+<th>Status</th>
+<th>Ação</th>
 </tr>
 
 {% for os in lista %}
@@ -60,7 +67,17 @@ button{
 <td>{{ os.aparelho or '-' }}</td>
 <td>{{ os.telefone or '-' }}</td>
 <td>{{ os.data }}</td>
+
 <td>R$ {{ os.valor }}</td>
+<td>R$ {{ os.restante or 0 }}</td>
+
+<td>
+{% if os.get("status") == "pago" %}
+<span style="color:#22c55e;font-weight:bold;">PAGO</span>
+{% else %}
+<span style="color:#facc15;font-weight:bold;">ABERTO</span>
+{% endif %}
+</td>
 
 <td>
 <a href="/os/{{ os.numero }}" target="_blank">
