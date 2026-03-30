@@ -39,7 +39,7 @@ def senha9():
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# PDF (cliente em cima / loja embaixo)
+# PDF (mantido como estava)
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -144,6 +144,7 @@ def painel():
     lista = [o for o in carregar() if o.get("loja") == loja]
     return render_template("painel.html", total_os=len(lista))
 
+# 🔥 CORRIGIDO AQUI
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
@@ -191,6 +192,7 @@ def nova():
 
     return render_template("nova_os.html")
 
+# 🔥 CORRIGIDO AQUI
 @app.route("/editar/<numero>", methods=["GET","POST"])
 def editar(numero):
     if not session.get("logado"):
@@ -219,6 +221,7 @@ def editar(numero):
         os_edit["sinal"] = s
         os_edit["restante"] = restante
 
+        # 🔥 CORREÇÃO
         if restante <= 0:
             os_edit["status"] = "pago"
         else:
@@ -237,4 +240,80 @@ def editar(numero):
 
     return render_template("editar.html", os=os_edit)
 
-# restante do código continua IGUAL (financeiro, histórico, etc.)
+# resto igual...
+@app.route("/historico")
+def historico():
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    busca = (request.args.get("busca") or "").lower()
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    if busca:
+        lista = [o for o in lista if busca in str(o).lower()]
+
+    return render_template("historico.html", lista=lista)
+
+@app.route("/financeiro", methods=["GET","POST"])
+def financeiro():
+    if not session.get("logado"):
+        return redirect("/")
+
+    if not session.get("fin_ok"):
+        if request.method == "POST":
+            if request.form.get("senha") == "jesus":
+                session["fin_ok"] = True
+                return redirect("/financeiro")
+        return render_template("financeiro_login.html")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    busca = (request.args.get("busca") or "").lower()
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    if busca:
+        lista = [o for o in lista if busca in str(o).lower()]
+
+    if request.args.get("aberto") == "1":
+        lista = [o for o in lista if float(o.get("restante",0)) > 0]
+
+    total = sum(float(o.get("valor",0)) - float(o.get("restante",0)) for o in lista)
+    total_aberto = sum(float(o.get("restante",0)) for o in lista)
+
+    custo = sum(float(o.get("custo",0)) for o in lista)
+    frete = sum(float(o.get("frete",0)) for o in lista)
+    lucro = total - custo - frete
+
+    lucro_por_dia = {}
+    for o in lista:
+        recebido = float(o.get("valor",0)) - float(o.get("restante",0))
+        data = o.get("data")
+
+        lucro_os = recebido - float(o.get("custo",0)) - float(o.get("frete",0))
+
+        if data not in lucro_por_dia:
+            lucro_por_dia[data] = 0
+
+        lucro_por_dia[data] += lucro_os
+
+    return render_template("financeiro.html",
+        lista=lista,
+        total=total,
+        total_aberto=total_aberto,
+        custo=custo,
+        frete=frete,
+        lucro=lucro,
+        lucro_por_dia=lucro_por_dia
+    )
+
+@app.route("/sair")
+def sair():
+    session.clear()
+    return redirect("/")
+
+if __name__ == "__main__":
+    app.run(debug=True)
