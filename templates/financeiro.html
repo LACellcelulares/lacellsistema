@@ -17,7 +17,6 @@ h2{
     font-size:18px;
 }
 
-/* TOPO */
 .topo{
     display:flex;
     flex-wrap:wrap;
@@ -31,7 +30,6 @@ h2{
     width:100%;
 }
 
-/* INPUTS */
 input{
     padding:6px;
     font-size:12px;
@@ -39,7 +37,6 @@ input{
     border:none;
 }
 
-/* BOTÕES */
 button{
     padding:6px 8px;
     font-size:12px;
@@ -52,7 +49,6 @@ button{
 .cancelar{background:#dc2626;}
 .pago{background:#2563eb;}
 
-/* TABELA */
 .table-box{
     overflow-x:auto;
 }
@@ -80,7 +76,6 @@ tr:nth-child(even){
     background:#1f2937;
 }
 
-/* STATUS */
 .aberto{
     color:#facc15;
     font-weight:bold;
@@ -91,12 +86,10 @@ tr:nth-child(even){
     font-weight:bold;
 }
 
-/* INPUT RECEBER */
 td input{
     width:60px;
 }
 
-/* BOX TOTAL */
 .total{
     margin-top:10px;
     background:#020617;
@@ -170,9 +163,9 @@ td input{
 <button>OK</button>
 </form>
 
-<a href="/editar/{{ os.numero }}"><button>✏️</button></a>
-<a href="/pagar/{{ os.numero }}"><button class="pago">✔</button></a>
-<a href="/cancelar/{{ os.numero }}"><button class="cancelar">✖</button></a>
+<a href="/editar/{{ os.numero }}"><button>E</button></a>
+<a href="/pagar/{{ os.numero }}"><button class="pago">P</button></a>
+<a href="/cancelar/{{ os.numero }}"><button class="cancelar">X</button></a>
 
 </td>
 
@@ -184,6 +177,7 @@ td input{
 
 <div class="total">
 <b>Total Recebido:</b> R$ {{ total }}<br>
+<b>Total em aberto:</b> R$ {{ total_aberto }}<br>
 <b>Custo:</b> R$ {{ custo }}<br>
 <b>Frete:</b> R$ {{ frete }}<br>
 <b>Lucro:</b> R$ {{ lucro }}
