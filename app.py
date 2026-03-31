@@ -7,6 +7,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
+# 🔥 GOOGLE DRIVE (SEM LOGIN)
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
+from oauth2client.service_account import ServiceAccountCredentials
+
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
@@ -30,16 +35,49 @@ def carregar():
     except:
         return []
 
+# 🔥 CONECTA DRIVE
+def conectar_drive():
+    scope = ["https://www.googleapis.com/auth/drive"]
+
+    gauth = GoogleAuth()
+    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        "credencial.json", scope
+    )
+
+    return GoogleDrive(gauth)
+
+# 🔥 BACKUP AUTOMÁTICO
+def backup_drive():
+    try:
+        drive = conectar_drive()
+
+        nome = f"os_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+        arquivo = drive.CreateFile({
+            'title': nome,
+            'parents': [{'id': '1csPmYXDH9qLPY1dLx7e3XPsn5SDJwS2T'}]
+        })
+
+        arquivo.SetContentFile(ARQUIVO_DB)
+        arquivo.Upload()
+
+        print("✅ Backup enviado para Google Drive")
+
+    except Exception as e:
+        print("❌ Erro no backup:", e)
+
 def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
+
+    backup_drive()  # 🔥 automático
 
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 15, 15)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# PDF
+# PDF 1 folha A4 (cliente em cima / loja embaixo)
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
