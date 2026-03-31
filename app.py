@@ -7,6 +7,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
+# 🔥 GOOGLE DRIVE
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
+from oauth2client.service_account import ServiceAccountCredentials
+
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
@@ -17,6 +22,8 @@ USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
+
+# ------------------ BANCO JSON ------------------
 
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
@@ -30,13 +37,47 @@ def carregar():
 def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
+    backup_drive()
+
+# ------------------ GOOGLE DRIVE ------------------
+
+def conectar_drive():
+    scope = ["https://www.googleapis.com/auth/drive"]
+    gauth = GoogleAuth()
+    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        "credencial.json", scope
+    )
+    return GoogleDrive(gauth)
+
+def backup_drive():
+    try:
+        if not os.path.exists(ARQUIVO_DB):
+            return
+
+        drive = conectar_drive()
+
+        nome = f"os_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+        arquivo = drive.CreateFile({
+            'title': nome,
+            'parents': [{'id': '1csPmYXDH9qLPY1dLx7e3XPsn5SDJwS2T'}]
+        })
+
+        arquivo.SetContentFile(ARQUIVO_DB)
+        arquivo.Upload()
+
+        print("✅ Backup enviado pro Drive")
+
+    except Exception as e:
+        print("❌ Erro no backup:", e)
+
+# ------------------ PDF ------------------
 
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 15, 15)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# 🔥 PDF EM MEMÓRIA (RAILWAY OK)
 def gerar_pdf(numero, d):
     buffer = io.BytesIO()
 
@@ -88,15 +129,8 @@ def gerar_pdf(numero, d):
         el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
         el.append(Spacer(1,4))
 
-        el.append(Paragraph(
-            "Obs: Garantia não cobre queda, trincos, riscos ou contato com água.",
-            styles["Normal"]
-        ))
-
-        el.append(Paragraph(
-            "Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.",
-            styles["Normal"]
-        ))
+        el.append(Paragraph("Obs: Garantia não cobre queda, trincos, riscos ou contato com água.", styles["Normal"]))
+        el.append(Paragraph("Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.", styles["Normal"]))
 
         return el
 
@@ -111,9 +145,10 @@ def gerar_pdf(numero, d):
     elementos.extend(bloco("VIA LOJA"))
 
     doc.build(elementos)
-
     buffer.seek(0)
     return buffer
+
+# ------------------ ROTAS ------------------
 
 @app.route("/", methods=["GET","POST"])
 def login():
@@ -136,8 +171,8 @@ def painel():
 
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
-
     lista = [o for o in carregar() if o.get("loja") == loja]
+
     return render_template("painel.html", total_os=len(lista))
 
 @app.route("/nova", methods=["GET","POST"])
@@ -200,22 +235,7 @@ def ver(numero):
     pdf = gerar_pdf(numero, o)
     return send_file(pdf, download_name=f"OS_{numero}.pdf", as_attachment=False)
 
-@app.route("/historico")
-def historico():
-    if not session.get("logado"):
-        return redirect("/")
-
-    usuario = session["usuario"]
-    loja = USUARIOS[usuario]["loja"]
-
-    busca = (request.args.get("busca") or "").lower()
-    lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
-
-    return render_template("historico.html", lista=lista)
-
+# 🔥 FINANCEIRO 100% CORRIGIDO
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
     if not session.get("logado"):
@@ -242,21 +262,31 @@ def financeiro():
         total_aberto=total_aberto
     )
 
+@app.route("/historico")
+def historico():
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+
+    lista = [o for o in carregar() if o.get("loja") == loja]
+
+    return render_template("historico.html", lista=lista)
+
+# ------------------ AÇÕES ------------------
+
 @app.route("/receber/<numero>", methods=["POST"])
 def receber(numero):
     lista = carregar()
-    valor_recebido = float(request.form.get("valor") or 0)
+    valor = float(request.form.get("valor") or 0)
 
     for o in lista:
         if o["numero"] == numero:
-            restante = float(o.get("restante", 0))
-            restante -= valor_recebido
-
-            if restante <= 0:
+            o["restante"] -= valor
+            if o["restante"] <= 0:
                 o["restante"] = 0
                 o["status"] = "pago"
-            else:
-                o["restante"] = restante
 
     salvar(lista)
     return redirect("/financeiro")
@@ -266,8 +296,8 @@ def pagar(numero):
     lista = carregar()
     for o in lista:
         if o["numero"] == numero:
-            o["status"] = "pago"
             o["restante"] = 0
+            o["status"] = "pago"
     salvar(lista)
     return redirect("/financeiro")
 
@@ -284,9 +314,6 @@ def editar(numero):
 
     lista = carregar()
     os_edit = next((x for x in lista if x["numero"] == numero), None)
-
-    if not os_edit:
-        return "OS não encontrada"
 
     if request.method == "POST":
         v = float(request.form.get("valor") or 0)
