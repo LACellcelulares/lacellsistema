@@ -21,6 +21,8 @@ USUARIOS = {
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
 
+# ------------------ JSON ------------------
+
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
         return []
@@ -31,15 +33,21 @@ def carregar():
         return []
 
 def salvar(lista):
+    # salva principal
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
+
+    # 🔥 backup automático (seguro)
+    with open("backup_os.json", "w") as f:
+        json.dump(lista, f, indent=2)
+
+# ------------------ PDF ------------------
 
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 15, 15)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# PDF
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -115,6 +123,8 @@ def gerar_pdf(numero, d):
 
     doc.build(elementos)
     return caminho
+
+# ------------------ ROTAS ------------------
 
 @app.route("/", methods=["GET","POST"])
 def login():
@@ -209,11 +219,7 @@ def historico():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
-    busca = (request.args.get("busca") or "").lower()
     lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
 
     return render_template("historico.html", lista=lista)
 
@@ -232,59 +238,30 @@ def financeiro():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
-    busca = (request.args.get("busca") or "").lower()
     lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
-
-    if request.args.get("aberto") == "1":
-        lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
     total = sum(float(o.get("valor",0)) - float(o.get("restante",0)) for o in lista)
     total_aberto = sum(float(o.get("restante",0)) for o in lista)
 
-    custo = sum(float(o.get("custo",0)) for o in lista)
-    frete = sum(float(o.get("frete",0)) for o in lista)
-    lucro = total - custo - frete
-
-    lucro_por_dia = {}
-    for o in lista:
-        recebido = float(o.get("valor",0)) - float(o.get("restante",0))
-        data = o.get("data")
-
-        lucro_os = recebido - float(o.get("custo",0)) - float(o.get("frete",0))
-
-        if data not in lucro_por_dia:
-            lucro_por_dia[data] = 0
-
-        lucro_por_dia[data] += lucro_os
-
     return render_template("financeiro.html",
         lista=lista,
         total=total,
-        total_aberto=total_aberto,
-        custo=custo,
-        frete=frete,
-        lucro=lucro,
-        lucro_por_dia=lucro_por_dia
+        total_aberto=total_aberto
     )
+
+# ------------------ AÇÕES ------------------
 
 @app.route("/receber/<numero>", methods=["POST"])
 def receber(numero):
     lista = carregar()
-    valor_recebido = float(request.form.get("valor") or 0)
+    valor = float(request.form.get("valor") or 0)
 
     for o in lista:
         if o["numero"] == numero:
-            restante = float(o.get("restante", 0))
-            restante -= valor_recebido
-
-            if restante <= 0:
+            o["restante"] -= valor
+            if o["restante"] <= 0:
                 o["restante"] = 0
                 o["status"] = "pago"
-            else:
-                o["restante"] = restante
 
     salvar(lista)
     return redirect("/financeiro")
@@ -294,8 +271,8 @@ def pagar(numero):
     lista = carregar()
     for o in lista:
         if o["numero"] == numero:
-            o["status"] = "pago"
             o["restante"] = 0
+            o["status"] = "pago"
     salvar(lista)
     return redirect("/financeiro")
 
@@ -317,13 +294,6 @@ def editar(numero):
         return "OS não encontrada"
 
     if request.method == "POST":
-        os_edit["cliente"] = request.form.get("cliente")
-        os_edit["telefone"] = request.form.get("telefone")
-        os_edit["cpf"] = request.form.get("cpf")
-        os_edit["imei"] = request.form.get("imei")
-        os_edit["aparelho"] = request.form.get("aparelho")
-        os_edit["defeito"] = request.form.get("defeito")
-
         v = float(request.form.get("valor") or 0)
         s = float(request.form.get("sinal") or 0)
         restante = v - s
@@ -332,9 +302,6 @@ def editar(numero):
         os_edit["sinal"] = s
         os_edit["restante"] = restante
         os_edit["status"] = "pago" if restante <= 0 else "aberto"
-
-        os_edit["custo"] = float(request.form.get("custo") or 0)
-        os_edit["frete"] = float(request.form.get("frete") or 0)
 
         salvar(lista)
         return redirect("/financeiro")
