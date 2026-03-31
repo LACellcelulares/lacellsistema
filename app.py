@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, send_file
-import os, json
+import os, json, io
 from datetime import datetime
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -7,19 +7,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
-# 🔥 GOOGLE DRIVE (SEM LOGIN)
-from pydrive2.auth import GoogleAuth
-from pydrive2.drive import GoogleDrive
-from oauth2client.service_account import ServiceAccountCredentials
-
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
-PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
-
-os.makedirs(PASTA_PDF, exist_ok=True)
 
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
@@ -35,54 +27,21 @@ def carregar():
     except:
         return []
 
-# 🔥 CONECTA DRIVE
-def conectar_drive():
-    scope = ["https://www.googleapis.com/auth/drive"]
-
-    gauth = GoogleAuth()
-    gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        "credencial.json", scope
-    )
-
-    return GoogleDrive(gauth)
-
-# 🔥 BACKUP AUTOMÁTICO
-def backup_drive():
-    try:
-        drive = conectar_drive()
-
-        nome = f"os_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-
-        arquivo = drive.CreateFile({
-            'title': nome,
-            'parents': [{'id': '1csPmYXDH9qLPY1dLx7e3XPsn5SDJwS2T'}]
-        })
-
-        arquivo.SetContentFile(ARQUIVO_DB)
-        arquivo.Upload()
-
-        print("✅ Backup enviado para Google Drive")
-
-    except Exception as e:
-        print("❌ Erro no backup:", e)
-
 def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
-
-    backup_drive()  # 🔥 automático
 
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 15, 15)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
-# PDF 1 folha A4 (cliente em cima / loja embaixo)
+# 🔥 PDF EM MEMÓRIA (RAILWAY OK)
 def gerar_pdf(numero, d):
-    caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
+    buffer = io.BytesIO()
 
     doc = SimpleDocTemplate(
-        caminho,
+        buffer,
         pagesize=A4,
         leftMargin=15,
         rightMargin=15,
@@ -152,7 +111,9 @@ def gerar_pdf(numero, d):
     elementos.extend(bloco("VIA LOJA"))
 
     doc.build(elementos)
-    return caminho
+
+    buffer.seek(0)
+    return buffer
 
 @app.route("/", methods=["GET","POST"])
 def login():
@@ -221,7 +182,7 @@ def nova():
         salvar(lista)
 
         pdf = gerar_pdf(n, d)
-        return send_file(pdf, as_attachment=True)
+        return send_file(pdf, download_name=f"OS_{n}.pdf", as_attachment=True)
 
     return render_template("nova_os.html")
 
@@ -237,7 +198,7 @@ def ver(numero):
         return "OS não encontrada"
 
     pdf = gerar_pdf(numero, o)
-    return send_file(pdf)
+    return send_file(pdf, download_name=f"OS_{numero}.pdf", as_attachment=False)
 
 @app.route("/historico")
 def historico():
@@ -270,42 +231,15 @@ def financeiro():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
-    busca = (request.args.get("busca") or "").lower()
     lista = [o for o in carregar() if o.get("loja") == loja]
-
-    if busca:
-        lista = [o for o in lista if busca in str(o).lower()]
-
-    if request.args.get("aberto") == "1":
-        lista = [o for o in lista if float(o.get("restante",0)) > 0]
 
     total = sum(float(o.get("valor",0)) - float(o.get("restante",0)) for o in lista)
     total_aberto = sum(float(o.get("restante",0)) for o in lista)
 
-    custo = sum(float(o.get("custo",0)) for o in lista)
-    frete = sum(float(o.get("frete",0)) for o in lista)
-    lucro = total - custo - frete
-
-    lucro_por_dia = {}
-    for o in lista:
-        recebido = float(o.get("valor",0)) - float(o.get("restante",0))
-        data = o.get("data")
-
-        lucro_os = recebido - float(o.get("custo",0)) - float(o.get("frete",0))
-
-        if data not in lucro_por_dia:
-            lucro_por_dia[data] = 0
-
-        lucro_por_dia[data] += lucro_os
-
     return render_template("financeiro.html",
         lista=lista,
         total=total,
-        total_aberto=total_aberto,
-        custo=custo,
-        frete=frete,
-        lucro=lucro,
-        lucro_por_dia=lucro_por_dia
+        total_aberto=total_aberto
     )
 
 @app.route("/receber/<numero>", methods=["POST"])
@@ -355,13 +289,6 @@ def editar(numero):
         return "OS não encontrada"
 
     if request.method == "POST":
-        os_edit["cliente"] = request.form.get("cliente")
-        os_edit["telefone"] = request.form.get("telefone")
-        os_edit["cpf"] = request.form.get("cpf")
-        os_edit["imei"] = request.form.get("imei")
-        os_edit["aparelho"] = request.form.get("aparelho")
-        os_edit["defeito"] = request.form.get("defeito")
-
         v = float(request.form.get("valor") or 0)
         s = float(request.form.get("sinal") or 0)
         restante = v - s
@@ -370,9 +297,6 @@ def editar(numero):
         os_edit["sinal"] = s
         os_edit["restante"] = restante
         os_edit["status"] = "pago" if restante <= 0 else "aberto"
-
-        os_edit["custo"] = float(request.form.get("custo") or 0)
-        os_edit["frete"] = float(request.form.get("frete") or 0)
 
         salvar(lista)
         return redirect("/financeiro")
