@@ -39,6 +39,7 @@ def senha9():
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
+# PDF
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -103,9 +104,7 @@ def gerar_pdf(numero, d):
         return el
 
     linha = Table([[""]], colWidths=[520])
-    linha.setStyle(TableStyle([
-        ('LINEABOVE', (0,0), (-1,-1), 1, colors.black)
-    ]))
+    linha.setStyle(TableStyle([('LINEABOVE', (0,0), (-1,-1), 1, colors.black)]))
 
     elementos = []
     elementos.extend(bloco("VIA CLIENTE"))
@@ -188,7 +187,6 @@ def nova():
 
     return render_template("nova_os.html")
 
-# 🔥 ESSA ERA A QUE FALTAVA
 @app.route("/os/<numero>")
 def ver(numero):
     if not session.get("logado"):
@@ -271,6 +269,77 @@ def financeiro():
         lucro=lucro,
         lucro_por_dia=lucro_por_dia
     )
+
+@app.route("/receber/<numero>", methods=["POST"])
+def receber(numero):
+    lista = carregar()
+    valor_recebido = float(request.form.get("valor") or 0)
+
+    for o in lista:
+        if o["numero"] == numero:
+            restante = float(o.get("restante", 0))
+            restante -= valor_recebido
+
+            if restante <= 0:
+                o["restante"] = 0
+                o["status"] = "pago"
+            else:
+                o["restante"] = restante
+
+    salvar(lista)
+    return redirect("/financeiro")
+
+@app.route("/pagar/<numero>")
+def pagar(numero):
+    lista = carregar()
+    for o in lista:
+        if o["numero"] == numero:
+            o["status"] = "pago"
+            o["restante"] = 0
+    salvar(lista)
+    return redirect("/financeiro")
+
+@app.route("/cancelar/<numero>")
+def cancelar(numero):
+    lista = [o for o in carregar() if o["numero"] != numero]
+    salvar(lista)
+    return redirect("/financeiro")
+
+@app.route("/editar/<numero>", methods=["GET","POST"])
+def editar(numero):
+    if not session.get("logado"):
+        return redirect("/")
+
+    lista = carregar()
+    os_edit = next((x for x in lista if x["numero"] == numero), None)
+
+    if not os_edit:
+        return "OS não encontrada"
+
+    if request.method == "POST":
+        os_edit["cliente"] = request.form.get("cliente")
+        os_edit["telefone"] = request.form.get("telefone")
+        os_edit["cpf"] = request.form.get("cpf")
+        os_edit["imei"] = request.form.get("imei")
+        os_edit["aparelho"] = request.form.get("aparelho")
+        os_edit["defeito"] = request.form.get("defeito")
+
+        v = float(request.form.get("valor") or 0)
+        s = float(request.form.get("sinal") or 0)
+        restante = v - s
+
+        os_edit["valor"] = v
+        os_edit["sinal"] = s
+        os_edit["restante"] = restante
+        os_edit["status"] = "pago" if restante <= 0 else "aberto"
+
+        os_edit["custo"] = float(request.form.get("custo") or 0)
+        os_edit["frete"] = float(request.form.get("frete") or 0)
+
+        salvar(lista)
+        return redirect("/financeiro")
+
+    return render_template("editar.html", os=os_edit)
 
 @app.route("/sair")
 def sair():
