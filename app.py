@@ -36,7 +36,9 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-    with open("backup_os.json", "w") as f:
+    # backup com data/hora (NUNCA perde OS)
+    nome_backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
+    with open(nome_backup, "w") as f:
         json.dump(lista, f, indent=2)
 
 # ------------------ PDF ------------------
@@ -45,18 +47,6 @@ def senha9():
     t = Table([["○"]*3 for _ in range(3)], 15, 15)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
-
-def horario_funcionamento():
-    return """
-    <font size=7>
-    Horário:<br/>
-    Seg a Qua: 09:00–17:30<br/>
-    Quinta: 12:00–17:30<br/>
-    Sexta: 09:00–17:30<br/>
-    Sábado: 09:00–14:00<br/>
-    Domingo: Fechado
-    </font>
-    """
 
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
@@ -75,19 +65,7 @@ def gerar_pdf(numero, d):
     def bloco(titulo):
         el = []
 
-        # 🔥 HORÁRIO APENAS PARA PYTTY
-        if session.get("usuario") == "pytty":
-            topo = Table([
-                [
-                    Paragraph(f"<b>{titulo}</b>", styles["Heading4"]),
-                    Paragraph(horario_funcionamento(), styles["Normal"])
-                ]
-            ], colWidths=[360,150])
-
-            el.append(topo)
-        else:
-            el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
-
+        el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
         el.append(Paragraph(d.get("loja",""), styles["Normal"]))
         el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
         el.append(Spacer(1,4))
@@ -146,7 +124,7 @@ def gerar_pdf(numero, d):
     doc.build(elementos)
     return caminho
 
-# ------------------ ROTAS (INALTERADAS) ------------------
+# ------------------ ROTAS ------------------
 
 @app.route("/", methods=["GET","POST"])
 def login():
@@ -206,7 +184,7 @@ def nova():
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "pago" if restante <= 0 else "aberto",
-            "data": datetime.now().strftime("%Y-%m-%d"),
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
@@ -219,4 +197,4 @@ def nova():
 
     return render_template("nova_os.html")
 
-# resto do código continua igual...
+# resto do código permanece IGUAL (não mexi em nada)
