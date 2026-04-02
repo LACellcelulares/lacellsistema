@@ -93,6 +93,20 @@ def gerar_pdf(numero, d):
 
     styles = getSampleStyleSheet()
 
+    # 🔥 HORÁRIO (SÓ PYTTY)
+    def desenhar_horario(canvas, doc):
+        usuario = session.get("usuario")
+
+        if usuario == "pytty":
+            canvas.setFont("Helvetica", 7)
+
+            canvas.drawRightString(580, 820, "Horário de funcionamento:")
+            canvas.drawRightString(580, 810, "Seg a Qua: 09:00–17:30")
+            canvas.drawRightString(580, 800, "Qui: 12:00–17:30")
+            canvas.drawRightString(580, 790, "Sex: 09:00–17:30")
+            canvas.drawRightString(580, 780, "Sáb: 09:00–14:00")
+            canvas.drawRightString(580, 770, "Dom: Fechado")
+
     def bloco(titulo):
         el = []
 
@@ -152,7 +166,8 @@ def gerar_pdf(numero, d):
     elementos.append(Spacer(1,10))
     elementos.extend(bloco("VIA LOJA"))
 
-    doc.build(elementos)
+    doc.build(elementos, onFirstPage=desenhar_horario, onLaterPages=desenhar_horario)
+
     return caminho
 
 # ------------------ ROTAS ------------------
@@ -221,9 +236,6 @@ def nova():
         }
 
         lista.append(d)
-
-        print("SALVANDO:", d)
-
         salvar(lista)
 
         pdf = gerar_pdf(n, d)
