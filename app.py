@@ -36,9 +36,7 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-    # backup com data e hora (não perde OS nunca)
-    nome_backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
-    with open(nome_backup, "w") as f:
+    with open("backup_os.json", "w") as f:
         json.dump(lista, f, indent=2)
 
 # ------------------ PDF ------------------
@@ -99,8 +97,15 @@ def gerar_pdf(numero, d):
         el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
         el.append(Spacer(1,4))
 
-        el.append(Paragraph("Obs: Garantia não cobre queda, trincos, riscos ou contato com água.", styles["Normal"]))
-        el.append(Paragraph("Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.", styles["Normal"]))
+        el.append(Paragraph(
+            "Obs: Garantia não cobre queda, trincos, riscos ou contato com água.",
+            styles["Normal"]
+        ))
+
+        el.append(Paragraph(
+            "Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.",
+            styles["Normal"]
+        ))
 
         return el
 
@@ -177,12 +182,15 @@ def nova():
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "pago" if restante <= 0 else "aberto",
-            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),  # ✅ horario corrigido
+            "data": datetime.now().strftime("%Y-%m-%d"),
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
 
         lista.append(d)
+
+        print("SALVANDO:", d)  # 👈 AQUI FOI ADICIONADO
+
         salvar(lista)
 
         pdf = gerar_pdf(n, d)
