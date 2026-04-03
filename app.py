@@ -36,9 +36,8 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-    # backup com data e hora (não perde OS nunca)
-    nome_backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
-    with open(nome_backup, "w") as f:
+    # backup simples
+    with open("backup_os.json", "w") as f:
         json.dump(lista, f, indent=2)
 
 # ------------------ PDF ------------------
@@ -72,7 +71,7 @@ def gerar_pdf(numero, d):
 
         dados = [
             f"OS Nº {numero}",
-            f"Data: {d.get('data','')}",
+            f"Data: {d.get('data_hora', d.get('data',''))}",  # 🔥 corrigido
             f"Cliente: {d.get('cliente','')}",
             f"Telefone: {d.get('telefone','')}",
             f"CPF/CNPJ: {d.get('cpf','')}",
@@ -99,8 +98,15 @@ def gerar_pdf(numero, d):
         el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
         el.append(Spacer(1,4))
 
-        el.append(Paragraph("Obs: Garantia não cobre queda, trincos, riscos ou contato com água.", styles["Normal"]))
-        el.append(Paragraph("Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.", styles["Normal"]))
+        el.append(Paragraph(
+            "Obs: Garantia não cobre queda, trincos, riscos ou contato com água.",
+            styles["Normal"]
+        ))
+
+        el.append(Paragraph(
+            "Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.",
+            styles["Normal"]
+        ))
 
         return el
 
@@ -177,7 +183,11 @@ def nova():
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "pago" if restante <= 0 else "aberto",
-            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),  # ✅ horario corrigido
+
+            # 🔥 CORREÇÃO DO HORÁRIO (SEM QUEBRAR NADA)
+            "data": datetime.now().strftime("%Y-%m-%d"),
+            "data_hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
