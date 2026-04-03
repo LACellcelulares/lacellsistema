@@ -68,7 +68,7 @@ def gerar_pdf(numero, d):
         el.append(Paragraph(d.get("loja",""), styles["Normal"]))
         el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
 
-        # 🔥 HORÁRIO ADICIONADO
+        # 🔥 HORÁRIO (ÚNICA ALTERAÇÃO)
         el.append(Spacer(1,4))
         el.append(Paragraph("<b>Horário de funcionamento:</b>", styles["Normal"]))
         el.append(Paragraph("Quinta-feira: 12:00–17:30", styles["Normal"]))
@@ -201,4 +201,4 @@ def nova():
 
     return render_template("nova_os.html")
 
-# resto do código continua igual...
+# RESTANTE DO SEU CÓDIGO CONTINUA IGUAL (não mexi em nada)
