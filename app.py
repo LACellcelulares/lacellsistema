@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
+import requests  # 🔥 ADICIONADO
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
@@ -15,6 +16,10 @@ ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
 PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
+
+# 🔐 DROPBOX
+DROPBOX_TOKEN = "vou te dar o cod vc me da o cod.py alterado pode ser sl.u.AGYoRW3km-OzmxQNIs0b9gAnFW1aRqqN82OJUiAlMLqatJNECheNBVXBtwfZUg_0DVnwhu9cxG9qUyTlb75aGPe0QOSlvLlZPQGAZSSyJ6kVDschP-nadGCkZc9L_iavw_3Eh2jgi26YO8jkl03IGykt0jPV7W9r8Czb2xlPjpmpiWCHiKFeajcC-ylpSeY5lSGk8z8a5rOjF0PN7ACenMHMRkH1fgV119_p6xC9VY1tMU1wEtK_NW07ZyapwRBvCvxw2NBdxmdwvP_NsPile_6qkR-Xg7-AFPJjGKL0IZ_zFSuMxq8dd0YysEXSWs2GPHGTQerSNbuXZ4EYXlrXqb_5TFWYFn48JM3dTzWEXD1dq8n9ECKcoAcT2WcItfCznxT9v4OcUCI5fuIH8lWFzPWEARXrNnJ18im0pCCinRQVFo8HA3DMBiXugfTe98yRptATSPhjrtxuOqZEJfnfGJBG6t1xOAxb1rRYLNh0i0LNNNaUChvarYoADeZSidUIe_tOOYUh-6DyOVX5AsL5i_JiwwUghBCfTqc8AIJfrjsNqg4JfvE2dbaO5q7AvrVLD2Nlf4M93VrG7NQFeqGvYCstPhmrVK42NfR2eEaUBzYuRqN2jkVsgkCV-uASBh-7N5HqZFR30P7eSWiJPQpOEYOMCeKKYfVuWV0M64hNHqTfv9O8zz--JIZDVDtevQiw4mAoxab4P5SujkmBZRih2AkzyEaGQlp8B_Ax-k4dDh4vRvoZ0tk3Vh9rCjHnhmI8Gn4p4H5ENeJr_EnOw8nRwi2-7bM58b7C2JMR3EFxRg3NPW4DIXVnl7GK5jfD6pN8fzik23aH6EtV8Ps7T_FAUT1s3aNMYA5VeuBNUfWu20BCNWkOEWAaRWp14Kr_DH_NNFQXI9mbsIpJKcJnzY9gKu_8wEo8pzyZEptG3TTguJT5yjSqCJucMlOyXTvqC6RpPD4S3iRZmKX9emKNvoZmOBmx0WMpN1IrGOjAE-FJNSLXPm0sXwE1lMgzIPa2M12VHTJfBwCgYG9Fswk0hvQdLQWcsZeyhsHLzqCjtXcithR7FNoj1XdpSKzEzvg6SRMtt-Lc_dYGNDcFfJTNDyQJRWWqD0dCK9cNLaDeAfbl2-ivlPtBJmS7QzkioSW20nc91cPKA357rvJOEd4tJpabJ6sI6KDp1sNAh52gqX2rxl4dEGXnfRqKBy3Yy0AgADigR3U5YClMJ5HWtoiv0YRpw4LgF8LuaRrfNdLVyWA2IAD8tfNK-TPEIDcYQCqj69-LsWU4Dr5Kk4uHVS20jqx1lfsHSVxhLy0MMi4xWFkEVkzGuGOgQw24zdA_lK-GLfLhmXAG6DdJtFnI9Yv1PNxJj011cM9wfDGO4HQCeWtJ2w6sJVZAz6LLLngaYrll14QJP_epzzNUMVu8vvvKYYAqWFTi6BqY_lq4Xm2UM0Dp8FRVcA"
+ARQUIVO_DROPBOX = "/os.json"
 
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
@@ -33,13 +38,32 @@ def carregar():
         return []
 
 def salvar(lista):
+    # 💾 SALVA LOCAL
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-    # backup com data e hora (não perde OS nunca)
+    # 💾 BACKUP LOCAL
     nome_backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
     with open(nome_backup, "w") as f:
         json.dump(lista, f, indent=2)
+
+    # ☁️ BACKUP DROPBOX (SE DER ERRO, IGNORA)
+    try:
+        url = "https://content.dropboxapi.com/2/files/upload"
+
+        headers = {
+            "Authorization": f"Bearer {DROPBOX_TOKEN}",
+            "Dropbox-API-Arg": json.dumps({
+                "path": ARQUIVO_DROPBOX,
+                "mode": "overwrite"
+            }),
+            "Content-Type": "application/octet-stream"
+        }
+
+        requests.post(url, headers=headers, data=json.dumps(lista))
+
+    except:
+        pass
 
 # ------------------ PDF ------------------
 
@@ -177,7 +201,7 @@ def nova():
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "pago" if restante <= 0 else "aberto",
-            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),  # ✅ horario corrigido
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
