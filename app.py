@@ -21,6 +21,7 @@ os.makedirs(PASTA_PDF, exist_ok=True)
 DROPBOX_TOKEN = "sl.u.AGZ4ZN5fgJtTVSKYe-r_9Jw1nf3vhW-I5pWwNYvi9xXux6m-rCtGF9_9PggQd9HK0zstOGmEH2JG0HZGtEmra7TaPzNd0xOhBmN4hhdfBD_yl3zPokOIUGZcAMgNTDQS6S5iCgZ_CZ9AddffMeqRwgvV1APXsbfMBk9pifnX720uesXMjtSWqmuwLPXM1NiT6_hsNHJthDGfp-cdlrAWWFNT7p5dbi7XCeQ2KB4Uqy1g_Aej5QrOxUsCDVbkwUqiYWyheMjWV5j3ZLnbnZgY8CPTeyYV4LHbDyWS1wzlrRb4sx5wWGfD4tqJayc6fkQ5-Jwk-fqb3FT-SAIkf-MpSg1iUotodGvBPwVkd7VAWIZl1I9aYA317zP-t-YV3EXgJIyKcuId1wOH7VBTbgJNHGdnT1BVQEyfcujRkVOl0Y6kDuQFv7OP8W0mvCJfZSUaLuyoLwEN2t1SuulX_W7O2-dPTWdBOCfEUbLUe8RfTSV7lmRmtUJgKd4JHtspXtnAv5cz4lL2Cl2wiXkWy0pB4sLl0RLA9xNv9fzX_atUDlw8YMfaAuevUde_WwA98ATlhfs4mt5h0l5qjq68FLCrXVgS-m1RubzyNVNdcXo8pseib1TLuVmGyTeShu7cokPx8hbO51VkIh2JuyZzyjDwlZYiPTbt8U_x6H1p-Sywawq1Lbd6Zkrubczm5hYUUfMYeWrDD08I5yxI_Z5fsMHQd-TxuVGsUo-5PpA3_C04f96d8yK8PGmDonw53KTxmD2B9VgBo1Ly-ds7-QhT72SyM4EIdFNeZ0PyDKjSuJZxzoTCaIMJxS298qBs8qS3X-7X5ftkVlsUKikwyg0GhRpiR6o5PGB_WHOpNgoVpYIVyZV3vrpJgBbAEl3vwcD7bwt1sj-yT8k6qqerBOYJC79e59QJGt3DwAFf33L5DJPA0XLtHJru-4eBfHbTfdWYOuf8Q-qqFZtkSX3QLoEGfXIN5WyaMFQ8-9D-lyFze50NEZ8qjrM9ES8Ni-0nVa-g-IsV2gXeuvGVx_Le2ahPidB2lbKI-acO66lnKViu0lbG9ftnbKZIannJiP-kHNv-OG65kh8BHWa-wpGKMrcBulepc2URkH_z9YnhXaNvzxErtvZszmPIY-N-Ek7wKW9OjTBVhiHm3d2blLC_-WzIFUTsBbrCHh54HReHZHnQRmczn3mxqbDL4y-e5B2cSFfe5hJuiv8joxin9QL0BNyyCOL579ZUhYJOwY9kEFtJrrI9z5bTvbQfcCJxUVJx2WZrEPkWGeazbnHaS3zvaS-MZN0Zjhy2KJtdX1puaOQkq7XV6TAKuMX_WLtwNX5SmBba9aMWdbbY_2ZsCfWd0YOyBs7-F0ufaOKfiBJ5nUg9WyKZAQAm0suC0R_px3ALT1aEn0Ir3dNqz5y-Dk1jbShHoIN59lHt7zcYQUlpnIoE-M30zb0fQw"
 ARQUIVO_DROPBOX = "/os.json"
 
+# LOGINS
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
@@ -41,10 +42,11 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-    backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
-    with open(backup, "w") as f:
+    nome_backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
+    with open(nome_backup, "w") as f:
         json.dump(lista, f, indent=2)
 
+    # SALVAR NO DROPBOX (ambos usuários)
     try:
         url = "https://content.dropboxapi.com/2/files/upload"
         headers = {
@@ -59,6 +61,7 @@ def salvar(lista):
     except:
         pass
 
+
 # ------------------ PDF ------------------
 
 def senha9():
@@ -66,41 +69,37 @@ def senha9():
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
 
+
 def gerar_pdf(numero, d):
+
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
-
-    doc = SimpleDocTemplate(
-        caminho, pagesize=A4, leftMargin=15, rightMargin=15, topMargin=10, bottomMargin=10
-    )
-
+    doc = SimpleDocTemplate(caminho, pagesize=A4, leftMargin=15, rightMargin=15, topMargin=10, bottomMargin=10)
     styles = getSampleStyleSheet()
 
-    # ⭐ HORÁRIO NA VIA CLIENTE
-    horario_html = """
-    <para align='right'>
-    <b>Horário de funcionamento:</b><br/>
-    Seg a Qua: 09:00–17:30<br/>
-    <b>Qui: 12:00–17:30</b><br/>
-    Sex: 09:00–17:30<br/>
-    Sáb: 09:00–14:00<br/>
-    Dom: Fechado
-    </para>
-    """
-    horario_paragraph = Paragraph(horario_html, styles["Normal"])
+    # ⭐ HORÁRIO APENAS PARA PYTTY
+    horario = []
+    if d.get("loja") == "L&A CELL Celulares":
+        horario.append(Paragraph(
+            "<para align='right'><b>Horário de funcionamento:</b><br/>"
+            "Seg–Qua: 09:00–17:30<br/><b>Qui: 12:00–17:30</b><br/>"
+            "Sex: 09:00–17:30<br/>Sáb: 09:00–14:00<br/>Dom: Fechado</para>",
+            styles["Normal"]
+        ))
+        horario.append(Spacer(1, 8))
 
     def bloco(titulo, cliente=False):
         el = []
 
-        if cliente:
-            el.append(horario_paragraph)
-            el.append(Spacer(1, 8))
+        # horário só na via cliente e só do Pytty
+        if cliente and d.get("loja") == "L&A CELL Celulares":
+            el.extend(horario)
 
         el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
         el.append(Paragraph(d.get("loja",""), styles["Normal"]))
         el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
         el.append(Spacer(1,4))
 
-        dados = [
+        campos = [
             f"OS Nº {numero}",
             f"Data: {d.get('data','')}",
             f"Cliente: {d.get('cliente','')}",
@@ -118,19 +117,18 @@ def gerar_pdf(numero, d):
             f"Senha: {d.get('senha','')}",
         ]
 
-        for x in dados:
+        for x in campos:
             el.append(Paragraph(x, styles["Normal"]))
 
         el.append(Spacer(1,4))
         el.append(Paragraph("Desenho da senha:", styles["Normal"]))
         el.append(senha9())
-
         el.append(Spacer(1,8))
         el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
         el.append(Spacer(1,4))
 
         el.append(Paragraph("Obs: Garantia não cobre queda, trincos, riscos ou contato com água.", styles["Normal"]))
-        el.append(Paragraph("Após 30 dias sem retirada, o aparelho será desmontado.", styles["Normal"]))
+        el.append(Paragraph("Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.", styles["Normal"]))
 
         return el
 
@@ -146,6 +144,7 @@ def gerar_pdf(numero, d):
 
     doc.build(elementos)
     return caminho
+
 
 # ------------------ ROTAS ------------------
 
@@ -163,6 +162,7 @@ def login():
 
     return render_template("login.html")
 
+
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -174,12 +174,14 @@ def painel():
     lista = [o for o in carregar() if o.get("loja") == loja]
     return render_template("painel.html", total_os=len(lista))
 
+
 @app.route("/nova", methods=["GET","POST"])
 def nova():
     if not session.get("logado"):
         return redirect("/")
 
     if request.method == "POST":
+
         lista = carregar()
         n = datetime.now().strftime("%Y%m%d%H%M%S")
 
@@ -220,6 +222,7 @@ def nova():
 
     return render_template("nova_os.html")
 
+
 @app.route("/os/<numero>")
 def ver(numero):
     if not session.get("logado"):
@@ -233,6 +236,7 @@ def ver(numero):
 
     pdf = gerar_pdf(numero, o)
     return send_file(pdf)
+
 
 @app.route("/historico")
 def historico():
@@ -249,6 +253,7 @@ def historico():
         lista = [o for o in lista if busca in str(o).lower()]
 
     return render_template("historico.html", lista=lista)
+
 
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
@@ -285,13 +290,15 @@ def financeiro():
     for o in lista:
         recebido = float(o.get("valor",0)) - float(o.get("restante",0))
         data = o.get("data")
+
         lucro_os = recebido - float(o.get("custo",0)) - float(o.get("frete",0))
+
         if data not in lucro_por_dia:
             lucro_por_dia[data] = 0
+
         lucro_por_dia[data] += lucro_os
 
-    return render_template(
-        "financeiro.html",
+    return render_template("financeiro.html",
         lista=lista,
         total=total,
         total_aberto=total_aberto,
@@ -300,6 +307,7 @@ def financeiro():
         lucro=lucro,
         lucro_por_dia=lucro_por_dia
     )
+
 
 @app.route("/receber/<numero>", methods=["POST"])
 def receber(numero):
@@ -320,6 +328,7 @@ def receber(numero):
     salvar(lista)
     return redirect("/financeiro")
 
+
 @app.route("/pagar/<numero>")
 def pagar(numero):
     lista = carregar()
@@ -330,11 +339,13 @@ def pagar(numero):
     salvar(lista)
     return redirect("/financeiro")
 
+
 @app.route("/cancelar/<numero>")
 def cancelar(numero):
     lista = [o for o in carregar() if o["numero"] != numero]
     salvar(lista)
     return redirect("/financeiro")
+
 
 @app.route("/editar/<numero>", methods=["GET","POST"])
 def editar(numero):
@@ -366,6 +377,7 @@ def editar(numero):
 
         os_edit["custo"] = float(request.form.get("custo") or 0)
         os_edit["frete"] = float(request.form.get("frete") or 0)
+
         os_edit["pagamento"] = request.form.get("pagamento")
         os_edit["entrega"] = request.form.get("entrega")
         os_edit["garantia"] = request.form.get("garantia")
@@ -376,10 +388,12 @@ def editar(numero):
 
     return render_template("editar.html", os=os_edit)
 
+
 @app.route("/sair")
 def sair():
     session.clear()
     return redirect("/")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
