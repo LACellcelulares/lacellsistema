@@ -65,7 +65,6 @@ def salvar(lista):
     except:
         pass
 
-
 # ------------------ PDF ------------------
 
 def senha9():
@@ -87,29 +86,8 @@ def gerar_pdf(numero, d):
 
     styles = getSampleStyleSheet()
 
-    # ⭐ HORÁRIO SOMENTE VIA CLIENTE — NO CANTO DIREITO SUPERIOR
-    horario = []
-    if d.get("loja") == "L&A CELL Celulares":
-        horario_html = """
-        <para align='right'>
-        <b>Horário de funcionamento:</b><br/>
-        Seg a Qua: 09:00–17:30<br/>
-        <b>Qui: 12:00–17:30</b><br/>
-        Sex: 09:00–17:30<br/>
-        Sáb: 09:00–14:00<br/>
-        Dom: Fechado
-        </para>
-        """
-        horario.append(Paragraph(horario_html, styles["Normal"]))
-        horario.append(Spacer(1, 8))
-
-    def bloco(titulo, cliente=False):
+    def bloco(titulo):
         el = []
-
-        # 🔥 ADICIONADO AQUI — horário somente na via cliente
-        if cliente:
-            for h in horario:
-                el.append(h)
 
         el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
         el.append(Paragraph(d.get("loja",""), styles["Normal"]))
@@ -154,7 +132,7 @@ def gerar_pdf(numero, d):
     linha.setStyle(TableStyle([('LINEABOVE', (0,0), (-1,-1), 1, colors.black)]))
 
     elementos = []
-    elementos.extend(bloco("VIA CLIENTE", cliente=True))  # horário aparece aqui
+    elementos.extend(bloco("VIA CLIENTE"))
     elementos.append(Spacer(1,10))
     elementos.append(linha)
     elementos.append(Spacer(1,10))
