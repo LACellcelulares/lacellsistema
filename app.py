@@ -36,7 +36,9 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-    with open("backup_os.json", "w") as f:
+    # backup com data e hora (não perde OS nunca)
+    nome_backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
+    with open(nome_backup, "w") as f:
         json.dump(lista, f, indent=2)
 
 # ------------------ PDF ------------------
@@ -59,20 +61,6 @@ def gerar_pdf(numero, d):
     )
 
     styles = getSampleStyleSheet()
-
-    # 🔥 HORÁRIO NO TOPO DIREITO (SÓ PYTTY)
-    def desenhar_horario(canvas, doc):
-        usuario = session.get("usuario")
-
-        if usuario == "pytty":
-            canvas.setFont("Helvetica", 7)
-
-            canvas.drawRightString(580, 820, "Horário de funcionamento:")
-            canvas.drawRightString(580, 810, "Seg a Qua: 09:00–17:30")
-            canvas.drawRightString(580, 800, "Qui: 12:00–17:30")
-            canvas.drawRightString(580, 790, "Sex: 09:00–17:30")
-            canvas.drawRightString(580, 780, "Sáb: 09:00–14:00")
-            canvas.drawRightString(580, 770, "Dom: Fechado")
 
     def bloco(titulo):
         el = []
@@ -111,15 +99,8 @@ def gerar_pdf(numero, d):
         el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
         el.append(Spacer(1,4))
 
-        el.append(Paragraph(
-            "Obs: Garantia não cobre queda, trincos, riscos ou contato com água.",
-            styles["Normal"]
-        ))
-
-        el.append(Paragraph(
-            "Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.",
-            styles["Normal"]
-        ))
+        el.append(Paragraph("Obs: Garantia não cobre queda, trincos, riscos ou contato com água.", styles["Normal"]))
+        el.append(Paragraph("Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.", styles["Normal"]))
 
         return el
 
@@ -133,9 +114,7 @@ def gerar_pdf(numero, d):
     elementos.append(Spacer(1,10))
     elementos.extend(bloco("VIA LOJA"))
 
-    # 🔥 AQUI APLICAMOS O HORÁRIO
-    doc.build(elementos, onFirstPage=desenhar_horario, onLaterPages=desenhar_horario)
-
+    doc.build(elementos)
     return caminho
 
 # ------------------ ROTAS ------------------
@@ -198,7 +177,7 @@ def nova():
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "pago" if restante <= 0 else "aberto",
-            "data": datetime.now().strftime("%Y-%m-%d"),
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),  # ✅ horario corrigido
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
