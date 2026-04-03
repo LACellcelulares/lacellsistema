@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, send_file
-import os, json
+import os, json, sqlite3
 from datetime import datetime
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -11,33 +11,66 @@ app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
 PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
-
 os.makedirs(PASTA_PDF, exist_ok=True)
+
+# ------------------ BANCO SQLITE ------------------
+
+DB_PATH = os.path.join(BASE_DIR, "os.db")
+
+def conectar():
+    return sqlite3.connect(DB_PATH)
+
+def criar_tabela():
+    conn = conectar()
+    c = conn.cursor()
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS os (
+        numero TEXT PRIMARY KEY,
+        dados TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+criar_tabela()
+
+def salvar(lista):
+    conn = conectar()
+    c = conn.cursor()
+
+    for o in lista:
+        c.execute("""
+        INSERT OR REPLACE INTO os (numero, dados)
+        VALUES (?, ?)
+        """, (o["numero"], json.dumps(o)))
+
+    conn.commit()
+    conn.close()
+
+def carregar():
+    conn = conectar()
+    c = conn.cursor()
+
+    c.execute("SELECT dados FROM os")
+    rows = c.fetchall()
+
+    conn.close()
+
+    lista = []
+    for r in rows:
+        lista.append(json.loads(r[0]))
+
+    return lista
+
+# ------------------ USUÁRIOS ------------------
 
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
-
-# ------------------ BANCO ------------------
-
-def carregar():
-    if not os.path.exists(ARQUIVO_DB):
-        return []
-    try:
-        with open(ARQUIVO_DB, "r") as f:
-            return json.load(f)
-    except:
-        return []
-
-def salvar(lista):
-    with open(ARQUIVO_DB, "w") as f:
-        json.dump(lista, f, indent=2)
-
-    with open("backup_os.json", "w") as f:
-        json.dump(lista, f, indent=2)
 
 # ------------------ PDF ------------------
 
@@ -189,7 +222,7 @@ def nova():
 
         lista.append(d)
 
-        print("SALVANDO:", d)  # 👈 AQUI FOI ADICIONADO
+        print("SALVANDO:", d)
 
         salvar(lista)
 
