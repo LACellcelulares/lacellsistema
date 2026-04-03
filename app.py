@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 import os, json
 from datetime import datetime
-import requests  # 🔥 ADICIONADO
+import requests
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
@@ -17,7 +17,7 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# 🔐 DROPBOX
+# 🔐 DROPBOX TOKEN
 DROPBOX_TOKEN = "sl.u.AGZ4ZN5fgJtTVSKYe-r_9Jw1nf3vhW-I5pWwNYvi9xXux6m-rCtGF9_9PggQd9HK0zstOGmEH2JG0HZGtEmra7TaPzNd0xOhBmN4hhdfBD_yl3zPokOIUGZcAMgNTDQS6S5iCgZ_CZ9AddffMeqRwgvV1APXsbfMBk9pifnX720uesXMjtSWqmuwLPXM1NiT6_hsNHJthDGfp-cdlrAWWFNT7p5dbi7XCeQ2KB4Uqy1g_Aej5QrOxUsCDVbkwUqiYWyheMjWV5j3ZLnbnZgY8CPTeyYV4LHbDyWS1wzlrRb4sx5wWGfD4tqJayc6fkQ5-Jwk-fqb3FT-SAIkf-MpSg1iUotodGvBPwVkd7VAWIZl1I9aYA317zP-t-YV3EXgJIyKcuId1wOH7VBTbgJNHGdnT1BVQEyfcujRkVOl0Y6kDuQFv7OP8W0mvCJfZSUaLuyoLwEN2t1SuulX_W7O2-dPTWdBOCfEUbLUe8RfTSV7lmRmtUJgKd4JHtspXtnAv5cz4lL2Cl2wiXkWy0pB4sLl0RLA9xNv9fzX_atUDlw8YMfaAuevUde_WwA98ATlhfs4mt5h0l5qjq68FLCrXVgS-m1RubzyNVNdcXo8pseib1TLuVmGyTeShu7cokPx8hbO51VkIh2JuyZzyjDwlZYiPTbt8U_x6H1p-Sywawq1Lbd6Zkrubczm5hYUUfMYeWrDD08I5yxI_Z5fsMHQd-TxuVGsUo-5PpA3_C04f96d8yK8PGmDonw53KTxmD2B9VgBo1Ly-ds7-QhT72SyM4EIdFNeZ0PyDKjSuJZxzoTCaIMJxS298qBs8qS3X-7X5ftkVlsUKikwyg0GhRpiR6o5PGB_WHOpNgoVpYIVyZV3vrpJgBbAEl3vwcD7bwt1sj-yT8k6qqerBOYJC79e59QJGt3DwAFf33L5DJPA0XLtHJru-4eBfHbTfdWYOuf8Q-qqFZtkSX3QLoEGfXIN5WyaMFQ8-9D-lyFze50NEZ8qjrM9ES8Ni-0nVa-g-IsV2gXeuvGVx_Le2ahPidB2lbKI-acO66lnKViu0lbG9ftnbKZIannJiP-kHNv-OG65kh8BHWa-wpGKMrcBulepc2URkH_z9YnhXaNvzxErtvZszmPIY-N-Ek7wKW9OjTBVhiHm3d2blLC_-WzIFUTsBbrCHh54HReHZHnQRmczn3mxqbDL4y-e5B2cSFfe5hJuiv8joxin9QL0BNyyCOL579ZUhYJOwY9kEFtJrrI9z5bTvbQfcCJxUVJx2WZrEPkWGeazbnHaS3zvaS-MZN0Zjhy2KJtdX1puaOQkq7XV6TAKuMX_WLtwNX5SmBba9aMWdbbY_2ZsCfWd0YOyBs7-F0ufaOKfiBJ5nUg9WyKZAQAm0suC0R_px3ALT1aEn0Ir3dNqz5y-Dk1jbShHoIN59lHt7zcYQUlpnIoE-M30zb0fQw"
 ARQUIVO_DROPBOX = "/os.json"
 
@@ -38,19 +38,15 @@ def carregar():
         return []
 
 def salvar(lista):
-    # 💾 SALVA LOCAL
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-    # 💾 BACKUP LOCAL
-    nome_backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
-    with open(nome_backup, "w") as f:
+    backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
+    with open(backup, "w") as f:
         json.dump(lista, f, indent=2)
 
-    # ☁️ BACKUP DROPBOX (SE DER ERRO, IGNORA)
     try:
         url = "https://content.dropboxapi.com/2/files/upload"
-
         headers = {
             "Authorization": f"Bearer {DROPBOX_TOKEN}",
             "Dropbox-API-Arg": json.dumps({
@@ -59,9 +55,7 @@ def salvar(lista):
             }),
             "Content-Type": "application/octet-stream"
         }
-
         requests.post(url, headers=headers, data=json.dumps(lista))
-
     except:
         pass
 
@@ -76,18 +70,30 @@ def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
     doc = SimpleDocTemplate(
-        caminho,
-        pagesize=A4,
-        leftMargin=15,
-        rightMargin=15,
-        topMargin=10,
-        bottomMargin=10
+        caminho, pagesize=A4, leftMargin=15, rightMargin=15, topMargin=10, bottomMargin=10
     )
 
     styles = getSampleStyleSheet()
 
-    def bloco(titulo):
+    # ⭐ HORÁRIO NA VIA CLIENTE
+    horario_html = """
+    <para align='right'>
+    <b>Horário de funcionamento:</b><br/>
+    Seg a Qua: 09:00–17:30<br/>
+    <b>Qui: 12:00–17:30</b><br/>
+    Sex: 09:00–17:30<br/>
+    Sáb: 09:00–14:00<br/>
+    Dom: Fechado
+    </para>
+    """
+    horario_paragraph = Paragraph(horario_html, styles["Normal"])
+
+    def bloco(titulo, cliente=False):
         el = []
+
+        if cliente:
+            el.append(horario_paragraph)
+            el.append(Spacer(1, 8))
 
         el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
         el.append(Paragraph(d.get("loja",""), styles["Normal"]))
@@ -124,7 +130,7 @@ def gerar_pdf(numero, d):
         el.append(Spacer(1,4))
 
         el.append(Paragraph("Obs: Garantia não cobre queda, trincos, riscos ou contato com água.", styles["Normal"]))
-        el.append(Paragraph("Após 30 dias sem retirada, o aparelho será desmontado para cobrir despesas.", styles["Normal"]))
+        el.append(Paragraph("Após 30 dias sem retirada, o aparelho será desmontado.", styles["Normal"]))
 
         return el
 
@@ -132,7 +138,7 @@ def gerar_pdf(numero, d):
     linha.setStyle(TableStyle([('LINEABOVE', (0,0), (-1,-1), 1, colors.black)]))
 
     elementos = []
-    elementos.extend(bloco("VIA CLIENTE"))
+    elementos.extend(bloco("VIA CLIENTE", cliente=True))
     elementos.append(Spacer(1,10))
     elementos.append(linha)
     elementos.append(Spacer(1,10))
@@ -279,15 +285,13 @@ def financeiro():
     for o in lista:
         recebido = float(o.get("valor",0)) - float(o.get("restante",0))
         data = o.get("data")
-
         lucro_os = recebido - float(o.get("custo",0)) - float(o.get("frete",0))
-
         if data not in lucro_por_dia:
             lucro_por_dia[data] = 0
-
         lucro_por_dia[data] += lucro_os
 
-    return render_template("financeiro.html",
+    return render_template(
+        "financeiro.html",
         lista=lista,
         total=total,
         total_aberto=total_aberto,
@@ -362,7 +366,6 @@ def editar(numero):
 
         os_edit["custo"] = float(request.form.get("custo") or 0)
         os_edit["frete"] = float(request.form.get("frete") or 0)
-
         os_edit["pagamento"] = request.form.get("pagamento")
         os_edit["entrega"] = request.form.get("entrega")
         os_edit["garantia"] = request.form.get("garantia")
