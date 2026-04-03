@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, send_file
-import os, json
+import os
 from datetime import datetime
+import psycopg2
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import A4
@@ -10,14 +11,46 @@ from reportlab.lib import colors
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
-# ================== ALTERAÇÃO IMPORTANTE (RAILWAY) ==================
-BASE_DIR = "/data"  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# ------------------ POSTGRES ------------------
 
-ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+conn = psycopg2.connect(DATABASE_URL)
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS os (
+    numero TEXT PRIMARY KEY,
+    cliente TEXT,
+    telefone TEXT,
+    cpf TEXT,
+    imei TEXT,
+    aparelho TEXT,
+    defeito TEXT,
+    valor FLOAT,
+    sinal FLOAT,
+    restante FLOAT,
+    custo FLOAT,
+    frete FLOAT,
+    pagamento TEXT,
+    entrega TEXT,
+    garantia TEXT,
+    senha TEXT,
+    status TEXT,
+    data TEXT,
+    loja TEXT,
+    whats TEXT
+)
+""")
+conn.commit()
+
+# ------------------ PASTA PDF ------------------
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
-
 os.makedirs(PASTA_PDF, exist_ok=True)
-# ====================================================================
+
+# ------------------ USUARIOS ------------------
 
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
@@ -27,22 +60,46 @@ USUARIOS = {
 # ------------------ BANCO ------------------
 
 def carregar():
-    if not os.path.exists(ARQUIVO_DB):
-        return []
-    try:
-        with open(ARQUIVO_DB, "r") as f:
-            return json.load(f)
-    except:
-        return []
+    cursor.execute("SELECT * FROM os")
+    colunas = [desc[0] for desc in cursor.description]
+    dados = cursor.fetchall()
+
+    lista = []
+    for linha in dados:
+        lista.append(dict(zip(colunas, linha)))
+
+    return lista
 
 def salvar(lista):
-    with open(ARQUIVO_DB, "w") as f:
-        json.dump(lista, f, indent=2)
+    cursor.execute("DELETE FROM os")
 
-    # backup seguro dentro do volume
-    nome_backup = os.path.join(BASE_DIR, datetime.now().strftime("backup_%Y%m%d_%H%M%S.json"))
-    with open(nome_backup, "w") as f:
-        json.dump(lista, f, indent=2)
+    for d in lista:
+        cursor.execute("""
+            INSERT INTO os VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            d.get("numero"),
+            d.get("cliente"),
+            d.get("telefone"),
+            d.get("cpf"),
+            d.get("imei"),
+            d.get("aparelho"),
+            d.get("defeito"),
+            d.get("valor"),
+            d.get("sinal"),
+            d.get("restante"),
+            d.get("custo"),
+            d.get("frete"),
+            d.get("pagamento"),
+            d.get("entrega"),
+            d.get("garantia"),
+            d.get("senha"),
+            d.get("status"),
+            d.get("data"),
+            d.get("loja"),
+            d.get("whats")
+        ))
+
+    conn.commit()
 
 # ------------------ PDF ------------------
 
