@@ -17,14 +17,13 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-DROPBOX_TOKEN = "sl.u.AGb_lwNDRh0bOHgiE06eh8cMjWZxAqAxL6jFgmtfiVuLI1iZRT0wP7sJwZKph1NVeCXHgyhjc5ZgcsSG8fOcRDX2P_YSS6TC6PhDFckQikvInRSnh2b0x7ol8rn6ourgUVseIu8YV1Hg_VM45OuIG6s0hbBAwWCBF3IfaPj7JStwvnYXyWXG-QTJYoPMxLS2NnfgOQ9cJfsm1wQxWG3Y0kh1ZZbqv5QIkukEXYKFQUXcpfJJnYPdv5tjaigkK0tb1UE5ygDkgtstylO9nVUVRDUy-pYzEXMxuNZQM8UCAaeV-SerPkwwm9rahC_xQAUbvovDm5PP9KqZ1dXOnZxZHcI_1cHgmfS67_8LZQ61ncMMhC9XAk0aJ0XjQT_buqOkzsFyLv4La-bQDLclc4Ba8B3da7nptp3pXoK6hxsqPxGb3_8WRzGUXDhJnwb5Zkvh8TMtbU_l2GuAqc1HCC_3hbzHKvTR2uXK3ihNyi5EZz2c7t_ij_DQVNDHbc5dVXfuVNQuHiJfZviEwHxXhllnDYBDkJ6QExS6bVasvxyvwQ-pXjTiWxb64SZHvLQNBNA5x4xoPBeItX0RbrMfr3mfnZcscSqY6mEd8e1NPKNDmGATlGmx-kcXscyaB3fm7x2Zq0KNd0Akn-zRvnmAZgltfTIfZIuFuPOEIWGeWR4nJFtQa-hMnP1O3vKfVpuP2b8mEvZMDVesVUsjm0gObX32-HF9f3bP6WkStenfENP37GMHKP9mvPVuMkd-O30p1vf37KgVMOhKrlAIs_vlsxJFo-XnKdoVvnfcASdg-rtNOJ1cxbOxSArj6dlfC1woj-OD3UHK52OOzns_EFoveOCTs0QLEfKqcXlVsyynPHi1VFlRQK9p2U-LPmciJkMKQKonZ-XwE2a1wJTDiiHVNaCDpzwSwg0lRn4xkgdQdkPtLmES2gdWGB-ax9J4aXXSEThFqECGJbSbm5gtg-rfe6iXfpXwqbZRR-SKTYFueOXPOqEYP29i9a9eILNZgTAYRCKyIGXEm05Y5ObylBTzCZb7rajTLfeu1UsQ9wiO16lLj_tdoXQ7vILgo_HK-kfgVx8IlL7ZqcJ0BeK76hM76D50s3RWBcDsXfFmPdGoXOhsx-4qttLhZrf--_znPJX6oAs3-frzXyMLmGA4UO8yX-eNFKAa9lFwT5zs29CnmjDYW3C0AXPkRh4aEM3U7mvBmtAAUEmEyYlLttqBdwA1oq_tNunK5Igmuv-flGD4yxSQbAI4kaXwn2ThBaY4L_1J1bumSe8NpEVGI2LwGsr_xT-wKT_wc4oNbM1MlgxdzsdFKfiVWXQ-tDwyvpVX150765k5ydhDhWkS01p8QQQzWqgouchYbt8pXBNw
+DROPBOX_TOKEN = "sl.u.AGb_lwNDRh0bOHgiE06eh8cMjWZxAqAxL6jFgmtfiVuLI1iZRT0wP7sJwZKph1NVeCXHgyhjc5ZgcsSG8fOcRDX2P_YSS6TC6PhDFckQikvInRSnh2b0x7ol8rn6ourgUVseIu8YV1Hg_VM45OuIG6s0hbBAwWCBF3IfaPj7JStwvnYXyWXG-QTJYoPMxLS2NnfgOQ9cJfsm1wQxWG3Y0kh1ZZbqv5QIkukEXYKFQUXcpfJJnYPdv5tjaigkK0tb1UE5ygDkgtstylO9nVUVRDUy-pYzEXMxuNZQM8UCAaeV-SerPkwwm9rahC_xQAUbvovDm5PP9KqZ1dXOnZxZHcI_1cHgmfS67_8LZQ61ncMMhC9XAk0aJ0XjQT_buqOkzsFyLv4La-bQDLclc4Ba8B3da7nptp3pXoK6hxsqPxGb3_8WRzGUXDhJnwb5Zkvh8TMtbU_l2GuAqc1HCC_3hbzHKvTR2uXK3ihNyi5EZz2c7t_ij_DQVNDHbc5dVXfuVNQuHiJfZviEwHxXhllnDYBDkJ6QExS6bVasvxyvwQ-pXjTiWxb64SZHvLQNBNA5x4xoPBeItX0RbrMfr3mfnZcscSqY6mEd8e1NPKNDmGATlGmx-kcXscyaB3fm7x2Zq0KNd0Akn-zRvnmAZgltfTIfZIuFuPOEIWGeWR4nJFtQa-hMnP1O3vKfVpuP2b8mEvZMDVesVUsjm0gObX32-HF9f3bP6WkStenfENP37GMHKP9mvPVuMkd-O30p1vf37KgVMOhKrlAIs_vlsxJFo-XnKdoVvnfcASdg-rtNOJ1cxbOxSArj6dlfC1woj-OD3UHK52OOzns_EFoveOCTs0QLEfKqcXlVsyynPHi1VFlRQK9p2U-LPmciJkMKQKonZ-XwE2a1wJTDiiHVNaCDpzwSwg0lRn4xkgdQdkPtLmES2gdWGB-ax9J4aXXSEThFqECGJbSbm5gtg-rfe6iXfpXwqbZRR-SKTYFueOXPOqEYP29i9a9eILNZgTAYRCKyIGXEm05Y5ObylBTzCZb7rajTLfeu1UsQ9wiO16lLj_tdoXQ7vILgo_HK-kfgVx8IlL7ZqcJ0BeK76hM76D50s3RWBcDsXfFmPdGoXOhsx-4qttLhZrf--_znPJX6oAs3-frzXyMLmGA4UO8yX-eNFKAa9lFwT5zs29CnmjDYW3C0AXPkRh4aEM3U7mvBmtAAUEmEyYlLttqBdwA1oq_tNunK5Igmuv-flGD4yxSQbAI4kaXwn2ThBaY4L_1J1bumSe8NpEVGI2LwGsr_xT-wKT_wc4oNbM1MlgxdzsdFKfiVWXQ-tDwyvpVX150765k5ydhDhWkS01p8QQQzWqgouchYbt8pXBNwAnl6I1-7eFYUBCfhnhtNvQX4OVEWNp00FmeGILS7xsQ7tlixi9NkO2J72BWCa76WGzB6rjbO8YLIDw"
 ARQUIVO_DROPBOX = "/os.json"
 
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
     "adriano": {"senha": "jesus", "loja": "MILLENNIUM SOLUTIONS ATIBAIA", "whats": "(11)99846-8349"}
 }
-
 
 def carregar():
     if not os.path.exists(ARQUIVO_DB):
@@ -35,7 +34,6 @@ def carregar():
     except:
         return []
 
-
 def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
@@ -44,7 +42,6 @@ def salvar(lista):
     with open(nome_backup, "w") as f:
         json.dump(lista, f, indent=2)
 
-    # 🔥 CORREÇÃO DO DROPBOX (agora funciona)
     try:
         url = "https://content.dropboxapi.com/2/files/upload"
 
@@ -57,21 +54,20 @@ def salvar(lista):
             "Content-Type": "application/octet-stream"
         }
 
-        requests.post(
-            url,
-            headers=headers,
-            data=json.dumps(lista).encode("utf-8")  # ← CORREÇÃO AQUI
-        )
+        requests.post(url, headers=headers, data=json.dumps(lista))
 
     except:
         pass
-
 
 def senha9():
     t = Table([["○"]*3 for _ in range(3)], 15, 15)
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),1,colors.black)]))
     return t
-    # PDF
+
+# -------------------------------------------------------------------
+# AQUI ENTRA SOMENTE A ALTERAÇÃO DO HORÁRIO (VIA CLIENTE, PYTTY)
+# -------------------------------------------------------------------
+
 def gerar_pdf(numero, d):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
@@ -86,7 +82,7 @@ def gerar_pdf(numero, d):
 
     styles = getSampleStyleSheet()
 
-    # 🔥 Horário somente para PYTTY
+    # 🔥 Horário (somente para pytty, somente na via cliente)
     horario = []
     if d.get("loja") == "L&A CELL Celulares":
         horario_text = """
@@ -161,8 +157,8 @@ def gerar_pdf(numero, d):
     doc.build(elementos)
     return caminho
 
+# ------------------ ROTAS (SEM ALTERAÇÕES) ------------------
 
-# ROTAS — sem alterações
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -177,7 +173,6 @@ def login():
 
     return render_template("login.html")
 
-
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
@@ -188,7 +183,6 @@ def painel():
 
     lista = [o for o in carregar() if o.get("loja") == loja]
     return render_template("painel.html", total_os=len(lista))
-
 
 @app.route("/nova", methods=["GET","POST"])
 def nova():
@@ -236,7 +230,6 @@ def nova():
 
     return render_template("nova_os.html")
 
-
 @app.route("/os/<numero>")
 def ver(numero):
     if not session.get("logado"):
@@ -250,7 +243,6 @@ def ver(numero):
 
     pdf = gerar_pdf(numero, o)
     return send_file(pdf)
-
 
 @app.route("/historico")
 def historico():
@@ -267,7 +259,6 @@ def historico():
         lista = [o for o in lista if busca in str(o).lower()]
 
     return render_template("historico.html", lista=lista)
-
 
 @app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
@@ -322,7 +313,6 @@ def financeiro():
         lucro_por_dia=lucro_por_dia
     )
 
-
 @app.route("/receber/<numero>", methods=["POST"])
 def receber(numero):
     lista = carregar()
@@ -342,7 +332,6 @@ def receber(numero):
     salvar(lista)
     return redirect("/financeiro")
 
-
 @app.route("/pagar/<numero>")
 def pagar(numero):
     lista = carregar()
@@ -353,13 +342,11 @@ def pagar(numero):
     salvar(lista)
     return redirect("/financeiro")
 
-
 @app.route("/cancelar/<numero>")
 def cancelar(numero):
     lista = [o for o in carregar() if o["numero"] != numero]
     salvar(lista)
     return redirect("/financeiro")
-
 
 @app.route("/editar/<numero>", methods=["GET","POST"])
 def editar(numero):
@@ -402,12 +389,10 @@ def editar(numero):
 
     return render_template("editar.html", os=os_edit)
 
-
 @app.route("/sair")
 def sair():
     session.clear()
     return redirect("/")
-
 
 if __name__ == "__main__":
     app.run(debug=True)
