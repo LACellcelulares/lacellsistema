@@ -10,11 +10,14 @@ from reportlab.lib import colors
 app = Flask(__name__)
 app.secret_key = "lacell_secret"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# ================== ALTERAÇÃO IMPORTANTE (RAILWAY) ==================
+BASE_DIR = "/data"  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 ARQUIVO_DB = os.path.join(BASE_DIR, "os.json")
 PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 
 os.makedirs(PASTA_PDF, exist_ok=True)
+# ====================================================================
 
 USUARIOS = {
     "pytty": {"senha": "diemfafa", "loja": "L&A CELL Celulares", "whats": "(11)98083-3734"},
@@ -36,8 +39,8 @@ def salvar(lista):
     with open(ARQUIVO_DB, "w") as f:
         json.dump(lista, f, indent=2)
 
-    # backup com data e hora (não perde OS nunca)
-    nome_backup = datetime.now().strftime("backup_%Y%m%d_%H%M%S.json")
+    # backup seguro dentro do volume
+    nome_backup = os.path.join(BASE_DIR, datetime.now().strftime("backup_%Y%m%d_%H%M%S.json"))
     with open(nome_backup, "w") as f:
         json.dump(lista, f, indent=2)
 
@@ -177,7 +180,7 @@ def nova():
             "garantia": request.form.get("garantia"),
             "senha": request.form.get("senha"),
             "status": "pago" if restante <= 0 else "aberto",
-            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),  # ✅ horario corrigido
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "loja": USUARIOS[usuario]["loja"],
             "whats": USUARIOS[usuario]["whats"]
         }
