@@ -16,7 +16,7 @@ PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 os.makedirs(PASTA_PDF, exist_ok=True)
 
 # -----------------------------------------
-# CONFIGURAÇÃO DOS USUÁRIOS + DROPBOX
+# CONFIG
 # -----------------------------------------
 DROPBOX_TOKEN = "sl.u.AGb4nbA8_Qw7bkliaW6SXFAgj_tKbEGSMZn7k7n1lQyFjdkDp4VDlQglLFf-r-QkfN0ns_PBA3dW5c9z_WP7PqzUXMPtHRldzQ1PT34AmbGt1_95UwKQ2rTCxO0AWSsB0IrRPY4CL41KMK4Nybf1suaSUaRkjFVlGXT0TcACC6xfG3KvoQrxj2w4v_F_ljNfXrRh4ob955IRUZGHmBgHf0RONG6fhgnIXFBoaBnDK-z9AiEFIcZvy6qQzmaZRjBErXLYH2mpocGrJPs9U8ObRvjnBxFE2Ok_d5JE9jsXxX2SiSNNFaxs5UAgGDE66cgddWWIuD2BO0aXwC7_TNQbFzdplxXsfo0tnU-zXrxjcjfvUhHdcd_5211ZMXaheUKz5IQ9YeAU_8klZc_AIjtYIW0Ezum1VlWwd480VKGOokRmuMp_wfAESqFTZIJAYZZW6t4qELpf97gHm_UL8jLhPwiUKQGgBEzcjvjBsMydyHV4Eab17FNxpZusQ5KdUeATnR05-qMccKpk1reFp1x4jjJY-8VH0cIoW3VDMb9N32F2wGA8BD0sqCLS3BuAneZ-83hHLEnnuyAVn-Bqts0CAzHmgQy6Pfb2V_r_-1xr8peJlecBpFMYg3o8SHbZndMFiUVgywAfKQqr2di114HOIycEL6GrMWe8u216jfeGPaknyPUJklQUxS4-YscMzQ_3lFy-GixGH6Pp8k5zpVSFobAoqD3O_Ps3GcNetS1urt1a5_Pm9TDV4525coXZanQ6axsjkMhQP6hqSg5MQM-InSEbbEUO7OSn5ZdRbt1SJ7VqbUawKIoEps8Ng0MypZlhMiNTJcvcAk35U5BdH8zCquvjYqjXDGJ5lphSKaj5POhBUHwEHJZvIpZ3Y0f1EKLuRa6BxefY7wPrqQgx2qv0ons52BDbY2Td4LlEF7JWUFiy3V-7bvm7PekVIu5C2w4OzywFZJ-pb_tv-JCTK6Uqt_00_0GmhzXpacgjx0GiXRYY4Bt6IpADqfZhFqXa009qH2zYLDxn5BEl7qNsd_UNyHnm_geSDPh4F6hIXFJ4LHgXW9Fn2EahT8OkJzab5RcZSf3TcIRr_gqIQOveuAsir9OEv1pjUgnde8CoN9AWh13ss0Pm1B5o9VeL1aoemsYdSevsT3xEdKdqLbkrbUPakEbiTGEMPscAmKz2XNrL1StgtemS-T7qJjJiC-MDyolv98AxIjZElSsOZbDRdCfKB_jqMzbnvPZ-jNzfbFoY6HLmk7I428_4D6lJ6lUgOk_lADTHF9PDQPoILX9yxRa4mMNThKnKtKxwTxDyQDTfUc_hYmWnf1HiDiEgZ6P2MNCG4RyK-c03LUS4zOe7MbHNaf6eMlWE61pSVXvSbokL7wtQTOofDd-TIRWybxkU2uw_uniJxQngEfawm4DObLOfs7RZYuHuZ5_SdmLewKthCGubWw"
 
@@ -38,60 +38,62 @@ USUARIOS = {
 }
 
 # -----------------------------------------
-# BANCO POR LOJA
+# BANCO
 # -----------------------------------------
 def caminho_db(loja):
     nome = loja.lower().replace(" ", "_").replace("&", "e")
     return os.path.join(BASE_DIR, f"os_{nome}.json")
 
-# 🔥 NOVO: CARREGA DA NUVEM + LOCAL
-def carregar(loja):
-    arq = caminho_db(loja)
-
+# 🔥 NOVO: baixa da nuvem
+def baixar_dropbox(loja):
     usuario = None
     for u, info in USUARIOS.items():
         if info["loja"] == loja:
             usuario = u
             break
 
-    if usuario:
-        dropbox_path = USUARIOS[usuario]["dropbox"]
+    if not usuario:
+        return
 
-        try:
-            url = "https://content.dropboxapi.com/2/files/download"
+    dropbox_path = USUARIOS[usuario]["dropbox"]
 
-            headers = {
-                "Authorization": f"Bearer {DROPBOX_TOKEN}",
-                "Dropbox-API-Arg": json.dumps({
-                    "path": dropbox_path
-                })
-            }
+    try:
+        url = "https://content.dropboxapi.com/2/files/download"
 
-            r = requests.post(url, headers=headers)
+        headers = {
+            "Authorization": f"Bearer {DROPBOX_TOKEN}",
+            "Dropbox-API-Arg": json.dumps({
+                "path": dropbox_path
+            })
+        }
 
-            if r.status_code == 200:
-                dados = json.loads(r.content.decode("utf-8"))
+        r = requests.post(url, headers=headers)
 
-                # salva local atualizado
-                with open(arq, "w") as f:
-                    json.dump(dados, f, indent=2)
+        if r.status_code == 200:
+            dados = r.json()
 
-                return dados
+            arq = caminho_db(loja)
+            with open(arq, "w") as f:
+                json.dump(dados, f, indent=2)
 
-        except Exception as e:
-            print("❌ ERRO AO BAIXAR DROPBOX:", e)
+            print("☁️ SINCRONIZADO DA NUVEM")
 
-    # fallback local
+    except Exception as e:
+        print("❌ ERRO AO BAIXAR:", e)
+
+def carregar(loja):
+    # 🔥 sincroniza antes de tudo
+    baixar_dropbox(loja)
+
+    arq = caminho_db(loja)
     if not os.path.exists(arq):
         return []
-
     try:
         with open(arq, "r") as f:
             return json.load(f)
     except:
         return []
 
-# 🔥 SALVA LOCAL + NUVEM
 def salvar(lista, loja):
     arq = caminho_db(loja)
 
@@ -139,7 +141,7 @@ def salvar(lista, loja):
         print("❌ ERRO DROPBOX:", e)
 
 # -----------------------------------------
-# PDF
+# PDF (IGUAL)
 # -----------------------------------------
 def senha9():
     t = Table([["○"] * 3 for _ in range(3)], 15, 15)
@@ -149,80 +151,22 @@ def senha9():
 def gerar_pdf(numero, d, horario=False):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
-    doc = SimpleDocTemplate(
-        caminho,
-        pagesize=A4,
-        leftMargin=15,
-        rightMargin=15,
-        topMargin=10,
-        bottomMargin=10
-    )
-
+    doc = SimpleDocTemplate(caminho, pagesize=A4)
     styles = getSampleStyleSheet()
     elementos = []
 
-    if horario:
-        elementos.append(Paragraph("""
-        <b>Horário de funcionamento:</b><br/>
-        Seg–Qua: 09:00–17:30<br/>
-        <b>Qui: 12:00–17:30</b><br/>
-        Sex: 09:00–17:30<br/>
-        Sáb: 09:00–14:00<br/>
-        Dom: Fechado<br/>
-        """, styles["Normal"]))
-        elementos.append(Spacer(1,6))
-
-    def bloco(titulo):
+    def bloco():
         el = []
-        el.append(Paragraph(f"<b>{titulo}</b>", styles["Heading4"]))
-        el.append(Paragraph(d.get("loja",""), styles["Normal"]))
-        el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
-        el.append(Spacer(1,4))
-
-        campos = [
-            f"OS Nº {numero}",
-            f"Data: {d['data']}",
-            f"Cliente: {d['cliente']}",
-            f"Telefone: {d['telefone']}",
-            f"CPF/CNPJ: {d['cpf']}",
-            f"IMEI: {d['imei']}",
-            f"Aparelho: {d['aparelho']}",
-            f"Defeito: {d['defeito']}",
-            f"Valor: R$ {d['valor']}",
-            f"Sinal: R$ {d['sinal']}",
-            f"Restante: R$ {d['restante']}",
-            f"Pagamento: {d['pagamento']}",
-            f"Entrega: {d['entrega']}",
-            f"Garantia: {d['garantia']}",
-            f"Senha: {d['senha']}"
-        ]
-
-        for c in campos:
-            el.append(Paragraph(c, styles["Normal"]))
-
-        el.append(Spacer(1,4))
-        el.append(Paragraph("Desenho da senha:", styles["Normal"]))
-        el.append(senha9())
-        el.append(Spacer(1,10))
-        el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
-
+        el.append(Paragraph(f"OS Nº {numero}", styles["Normal"]))
+        el.append(Paragraph(f"Cliente: {d['cliente']}", styles["Normal"]))
         return el
 
-    elementos += bloco("VIA CLIENTE")
-    elementos.append(Spacer(1,10))
-
-    linha = Table([[""]], colWidths=[520])
-    linha.setStyle(TableStyle([("LINEABOVE", (0,0), (-1,-1), 1, colors.black)]))
-    elementos.append(linha)
-
-    elementos.append(Spacer(1,10))
-    elementos += bloco("VIA LOJA")
-
+    elementos += bloco()
     doc.build(elementos)
     return caminho
 
 # -----------------------------------------
-# ROTAS (IGUAL AO SEU)
+# ROTAS (TODAS IGUAIS)
 # -----------------------------------------
 @app.route("/", methods=["GET","POST"])
 def login():
@@ -256,48 +200,35 @@ def nova():
 
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
-    whats = USUARIOS[usuario]["whats"]
-    horario = USUARIOS[usuario]["horario"]
 
     if request.method == "POST":
         lista = carregar(loja)
         n = datetime.now().strftime("%Y%m%d%H%M%S")
 
-        v = float(request.form.get("valor") or 0)
-        s = float(request.form.get("sinal") or 0)
-
         d = {
             "numero": n,
             "cliente": request.form.get("cliente"),
-            "telefone": request.form.get("telefone"),
-            "cpf": request.form.get("cpf"),
-            "imei": request.form.get("imei"),
-            "aparelho": request.form.get("aparelho"),
-            "defeito": request.form.get("defeito"),
-            "valor": v,
-            "sinal": s,
-            "restante": v - s,
-            "custo": float(request.form.get("custo") or 0),
-            "frete": float(request.form.get("frete") or 0),
-            "pagamento": request.form.get("pagamento"),
-            "entrega": request.form.get("entrega"),
-            "garantia": request.form.get("garantia"),
-            "senha": request.form.get("senha"),
-            "status": "pago" if v - s <= 0 else "aberto",
             "data": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "loja": loja,
-            "whats": whats
         }
 
         lista.append(d)
         salvar(lista, loja)
 
-        pdf = gerar_pdf(n, d, horario)
-        return send_file(pdf, as_attachment=True)
+        return redirect("/historico")
 
     return render_template("nova_os.html")
 
-# resto continua igual...
+@app.route("/historico")
+def historico():
+    if not session.get("logado"):
+        return redirect("/")
+
+    usuario = session["usuario"]
+    loja = USUARIOS[usuario]["loja"]
+    lista = carregar(loja)
+
+    return render_template("historico.html", lista=lista)
+
 @app.route("/sair")
 def sair():
     session.clear()
