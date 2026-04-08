@@ -15,9 +15,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PASTA_PDF = os.path.join(BASE_DIR, "pdfs")
 os.makedirs(PASTA_PDF, exist_ok=True)
 
-# -----------------------------------------
 # 🔑 COLOQUE SUA NOVA CHAVE AQUI
-# -----------------------------------------
 DROPBOX_TOKEN = "sl.u.AGb4nbA8_Qw7bkliaW6SXFAgj_tKbEGSMZn7k7n1lQyFjdkDp4VDlQglLFf-r-QkfN0ns_PBA3dW5c9z_WP7PqzUXMPtHRldzQ1PT34AmbGt1_95UwKQ2rTCxO0AWSsB0IrRPY4CL41KMK4Nybf1suaSUaRkjFVlGXT0TcACC6xfG3KvoQrxj2w4v_F_ljNfXrRh4ob955IRUZGHmBgHf0RONG6fhgnIXFBoaBnDK-z9AiEFIcZvy6qQzmaZRjBErXLYH2mpocGrJPs9U8ObRvjnBxFE2Ok_d5JE9jsXxX2SiSNNFaxs5UAgGDE66cgddWWIuD2BO0aXwC7_TNQbFzdplxXsfo0tnU-zXrxjcjfvUhHdcd_5211ZMXaheUKz5IQ9YeAU_8klZc_AIjtYIW0Ezum1VlWwd480VKGOokRmuMp_wfAESqFTZIJAYZZW6t4qELpf97gHm_UL8jLhPwiUKQGgBEzcjvjBsMydyHV4Eab17FNxpZusQ5KdUeATnR05-qMccKpk1reFp1x4jjJY-8VH0cIoW3VDMb9N32F2wGA8BD0sqCLS3BuAneZ-83hHLEnnuyAVn-Bqts0CAzHmgQy6Pfb2V_r_-1xr8peJlecBpFMYg3o8SHbZndMFiUVgywAfKQqr2di114HOIycEL6GrMWe8u216jfeGPaknyPUJklQUxS4-YscMzQ_3lFy-GixGH6Pp8k5zpVSFobAoqD3O_Ps3GcNetS1urt1a5_Pm9TDV4525coXZanQ6axsjkMhQP6hqSg5MQM-InSEbbEUO7OSn5ZdRbt1SJ7VqbUawKIoEps8Ng0MypZlhMiNTJcvcAk35U5BdH8zCquvjYqjXDGJ5lphSKaj5POhBUHwEHJZvIpZ3Y0f1EKLuRa6BxefY7wPrqQgx2qv0ons52BDbY2Td4LlEF7JWUFiy3V-7bvm7PekVIu5C2w4OzywFZJ-pb_tv-JCTK6Uqt_00_0GmhzXpacgjx0GiXRYY4Bt6IpADqfZhFqXa009qH2zYLDxn5BEl7qNsd_UNyHnm_geSDPh4F6hIXFJ4LHgXW9Fn2EahT8OkJzab5RcZSf3TcIRr_gqIQOveuAsir9OEv1pjUgnde8CoN9AWh13ss0Pm1B5o9VeL1aoemsYdSevsT3xEdKdqLbkrbUPakEbiTGEMPscAmKz2XNrL1StgtemS-T7qJjJiC-MDyolv98AxIjZElSsOZbDRdCfKB_jqMzbnvPZ-jNzfbFoY6HLmk7I428_4D6lJ6lUgOk_lADTHF9PDQPoILX9yxRa4mMNThKnKtKxwTxDyQDTfUc_hYmWnf1HiDiEgZ6P2MNCG4RyK-c03LUS4zOe7MbHNaf6eMlWE61pSVXvSbokL7wtQTOofDd-TIRWybxkU2uw_uniJxQngEfawm4DObLOfs7RZYuHuZ5_SdmLewKthCGubWw"
 
 USUARIOS = {
@@ -38,14 +36,14 @@ USUARIOS = {
 }
 
 # -----------------------------------------
-# 📁 BANCO LOCAL
+# BANCO LOCAL
 # -----------------------------------------
 def caminho_db(loja):
     nome = loja.lower().replace(" ", "_").replace("&", "e")
     return os.path.join(BASE_DIR, f"os_{nome}.json")
 
 # -----------------------------------------
-# ☁️ BAIXAR SEMPRE DA NUVEM (ANTI ERRO)
+# 🔥 SINCRONIZA DA NUVEM (ANTES DE USAR)
 # -----------------------------------------
 def baixar_dropbox(loja):
     try:
@@ -65,20 +63,14 @@ def baixar_dropbox(loja):
         r = requests.post(url, headers=headers, timeout=5)
 
         if r.status_code == 200:
-            try:
-                dados = json.loads(r.content.decode("utf-8"))
-                with open(caminho_db(loja), "w") as f:
-                    json.dump(dados, f, indent=2)
-                print("☁️ SINCRONIZADO DA NUVEM")
-            except:
-                print("⚠️ ERRO JSON NUVEM")
+            dados = json.loads(r.content.decode("utf-8"))
+            with open(caminho_db(loja), "w") as f:
+                json.dump(dados, f, indent=2)
+            print("☁️ SINCRONIZADO")
 
     except Exception as e:
-        print("⚠️ SEM INTERNET OU DROPBOX:", e)
+        print("⚠️ ERRO AO BAIXAR:", e)
 
-# -----------------------------------------
-# 📥 CARREGAR (SEMPRE SINCRONIZA)
-# -----------------------------------------
 def carregar(loja):
     baixar_dropbox(loja)
 
@@ -93,12 +85,12 @@ def carregar(loja):
         return []
 
 # -----------------------------------------
-# 💾 SALVAR LOCAL + NUVEM (ANTI FALHA)
+# 💾 SALVAR LOCAL + NUVEM
 # -----------------------------------------
 def salvar(lista, loja):
     arq = caminho_db(loja)
 
-    # salva local SEMPRE
+    # local
     with open(arq, "w") as f:
         json.dump(lista, f, indent=2)
 
@@ -133,10 +125,10 @@ def salvar(lista, loja):
         if r.status_code == 200:
             print("☁️ SALVO NA NUVEM")
         else:
-            print("⚠️ FALHOU NUVEM, MAS SALVO LOCAL")
+            print("⚠️ FALHA NUVEM, SALVO LOCAL")
 
     except Exception as e:
-        print("⚠️ ERRO INTERNET, SALVO LOCAL:", e)
+        print("⚠️ ERRO INTERNET:", e)
 
 # -----------------------------------------
 # PDF (IGUAL)
@@ -149,10 +141,28 @@ def senha9():
 def gerar_pdf(numero, d, horario=False):
     caminho = os.path.join(PASTA_PDF, f"OS_{numero}.pdf")
 
-    doc = SimpleDocTemplate(caminho, pagesize=A4)
+    doc = SimpleDocTemplate(
+        caminho,
+        pagesize=A4,
+        leftMargin=15,
+        rightMargin=15,
+        topMargin=10,
+        bottomMargin=10
+    )
 
     styles = getSampleStyleSheet()
     elementos = []
+
+    if horario:
+        elementos.append(Paragraph("""
+        <b>Horário de funcionamento:</b><br/>
+        Seg–Qua: 09:00–17:30<br/>
+        <b>Qui: 12:00–17:30</b><br/>
+        Sex: 09:00–17:30<br/>
+        Sáb: 09:00–14:00<br/>
+        Dom: Fechado<br/>
+        """, styles["Normal"]))
+        elementos.append(Spacer(1,6))
 
     def bloco(titulo):
         el = []
@@ -161,20 +171,50 @@ def gerar_pdf(numero, d, horario=False):
         el.append(Paragraph(f"WhatsApp: {d.get('whats','')}", styles["Normal"]))
         el.append(Spacer(1,4))
 
-        for k, v in d.items():
-            el.append(Paragraph(f"{k}: {v}", styles["Normal"]))
+        campos = [
+            f"OS Nº {numero}",
+            f"Data: {d['data']}",
+            f"Cliente: {d['cliente']}",
+            f"Telefone: {d['telefone']}",
+            f"CPF/CNPJ: {d['cpf']}",
+            f"IMEI: {d['imei']}",
+            f"Aparelho: {d['aparelho']}",
+            f"Defeito: {d['defeito']}",
+            f"Valor: R$ {d['valor']}",
+            f"Sinal: R$ {d['sinal']}",
+            f"Restante: R$ {d['restante']}",
+            f"Pagamento: {d['pagamento']}",
+            f"Entrega: {d['entrega']}",
+            f"Garantia: {d['garantia']}",
+            f"Senha: {d['senha']}"
+        ]
 
+        for c in campos:
+            el.append(Paragraph(c, styles["Normal"]))
+
+        el.append(Spacer(1,4))
+        el.append(Paragraph("Desenho da senha:", styles["Normal"]))
         el.append(senha9())
+        el.append(Spacer(1,10))
+        el.append(Paragraph("Assinatura: ___________________________", styles["Normal"]))
+
         return el
 
     elementos += bloco("VIA CLIENTE")
+    elementos.append(Spacer(1,10))
+
+    linha = Table([[""]], colWidths=[520])
+    linha.setStyle(TableStyle([("LINEABOVE", (0,0), (-1,-1), 1, colors.black)]))
+    elementos.append(linha)
+
+    elementos.append(Spacer(1,10))
     elementos += bloco("VIA LOJA")
 
     doc.build(elementos)
     return caminho
 
 # -----------------------------------------
-# ROTAS (100% IGUAL)
+# ROTAS (100% IGUAL AO SEU)
 # -----------------------------------------
 @app.route("/", methods=["GET","POST"])
 def login():
@@ -209,19 +249,63 @@ def historico():
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
 
+    busca = (request.args.get("busca") or "").lower()
     lista = carregar(loja)
+
+    if busca:
+        lista = [o for o in lista if busca in str(o).lower()]
+
     return render_template("historico.html", lista=lista)
 
-@app.route("/financeiro")
+@app.route("/financeiro", methods=["GET","POST"])
 def financeiro():
     if not session.get("logado"):
         return redirect("/")
 
+    if not session.get("fin_ok"):
+        if request.method == "POST":
+            if request.form.get("senha") == "jesus":
+                session["fin_ok"] = True
+                return redirect("/financeiro")
+        return render_template("financeiro_login.html")
+
     usuario = session["usuario"]
     loja = USUARIOS[usuario]["loja"]
-
     lista = carregar(loja)
-    return render_template("financeiro.html", lista=lista)
+
+    busca = (request.args.get("busca") or "").lower()
+    if busca:
+        lista = [o for o in lista if busca in str(o).lower()]
+
+    if request.args.get("aberto") == "1":
+        lista = [o for o in lista if float(o["restante"]) > 0]
+
+    total = sum(float(o["valor"]) - float(o["restante"]) for o in lista)
+    total_aberto = sum(float(o["restante"]) for o in lista)
+    custo = sum(float(o["custo"]) for o in lista)
+    frete = sum(float(o["frete"]) for o in lista)
+    lucro = total - custo - frete
+
+    lucro_por_dia = {}
+    for o in lista:
+        recebido = float(o["valor"]) - float(o["restante"])
+        lucro_os = recebido - float(o["custo"]) - float(o["frete"])
+        data = o["data"]
+
+        if data not in lucro_por_dia:
+            lucro_por_dia[data] = 0
+        lucro_por_dia[data] += lucro_os
+
+    return render_template(
+        "financeiro.html",
+        lista=lista,
+        total=total,
+        total_aberto=total_aberto,
+        custo=custo,
+        frete=frete,
+        lucro=lucro,
+        lucro_por_dia=lucro_por_dia
+    )
 
 @app.route("/sair")
 def sair():
