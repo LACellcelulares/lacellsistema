@@ -18,7 +18,7 @@ os.makedirs(PASTA_PDF, exist_ok=True)
 # -----------------------------------------
 # CONFIGURAÇÃO DOS USUÁRIOS + DROPBOX
 # -----------------------------------------
-DROPBOX_TOKEN = "sl.u.AGZ4ZN5fgJtTVSKYe-r_9Jw1nf3vhW-I5pWwNYvi9xXux6m-rCtGF9_9PggQd9HK0zstOGmEH2JG0HZGtEmra7TaPzNd0xOhBmN4hhdfBD_yl3zPokOIUGZcAMgNTDQS6S5iCgZ_CZ9AddffMeqRwgvV1APXsbfMBk9pifnX720uesXMjtSWqmuwLPXM1NiT6_hsNHJthDGfp-cdlrAWWFNT7p5dbi7XCeQ2KB4Uqy1g_Aej5QrOxUsCDVbkwUqiYWyheMjWV5j3ZLnbnZgY8CPTeyYV4LHbDyWS1wzlrRb4sx5wWGfD4tqJayc6fkQ5-Jwk-fqb3FT-SAIkf-MpSg1iUotodGvBPwVkd7VAWIZl1I9aYA317zP-t-YV3EXgJIyKcuId1wOH7VBTbgJNHGdnT1BVQEyfcujRkVOl0Y6kDuQFv7OP8W0mvCJfZSUaLuyoLwEN2t1SuulX_W7O2-dPTWdBOCfEUbLUe8RfTSV7lmRmtUJgKd4JHtspXtnAv5cz4lL2Cl2wiXkWy0pB4sLl0RLA9xNv9fzX_atUDlw8YMfaAuevUde_WwA98ATlhfs4mt5h0l5qjq68FLCrXVgS-m1RubzyNVNdcXo8pseib1TLuVmGyTeShu7cokPx8hbO51VkIh2JuyZzyjDwlZYiPTbt8U_x6H1p-Sywawq1Lbd6Zkrubczm5hYUUfMYeWrDD08I5yxI_Z5fsMHQd-TxuVGsUo-5PpA3_C04f96d8yK8PGmDonw53KTxmD2B9VgBo1Ly-ds7-QhT72SyM4EIdFNeZ0PyDKjSuJZxzoTCaIMJxS298qBs8qS3X-7X5ftkVlsUKikwyg0GhRpiR6o5PGB_WHOpNgoVpYIVyZV3vrpJgBbAEl3vwcD7bwt1sj-yT8k6qqerBOYJC79e59QJGt3DwAFf33L5DJPA0XLtHJru-4eBfHbTfdWYOuf8Q-qqFZtkSX3QLoEGfXIN5WyaMFQ8-9D-lyFze50NEZ8qjrM9ES8Ni-0nVa-g-IsV2gXeuvGVx_Le2ahPidB2lbKI-acO66lnKViu0lbG9ftnbKZIannJiP-kHNv-OG65kh8BHWa-wpGKMrcBulepc2URkH_z9YnhXaNvzxErtvZszmPIY-N-Ek7wKW9OjTBVhiHm3d2blLC_-WzIFUTsBbrCHh54HReHZHnQRmczn3mxqbDL4y-e5B2cSFfe5hJuiv8joxin9QL0BNyyCOL579ZUhYJOwY9kEFtJrrI9z5bTvbQfcCJxUVJx2WZrEPkWGeazbnHaS3zvaS-MZN0Zjhy2KJtdX1puaOQkq7XV6TAKuMX_WLtwNX5SmBba9aMWdbbY_2ZsCfWd0YOyBs7-F0ufaOKfiBJ5nUg9WyKZAQAm0suC0R_px3ALT1aEn0Ir3dNqz5y-Dk1jbShHoIN59lHt7zcYQUlpnIoE-M30zb0fQw"
+DROPBOX_TOKEN = "sl.u.AGb4nbA8_Qw7bkliaW6SXFAgj_tKbEGSMZn7k7n1lQyFjdkDp4VDlQglLFf-r-QkfN0ns_PBA3dW5c9z_WP7PqzUXMPtHRldzQ1PT34AmbGt1_95UwKQ2rTCxO0AWSsB0IrRPY4CL41KMK4Nybf1suaSUaRkjFVlGXT0TcACC6xfG3KvoQrxj2w4v_F_ljNfXrRh4ob955IRUZGHmBgHf0RONG6fhgnIXFBoaBnDK-z9AiEFIcZvy6qQzmaZRjBErXLYH2mpocGrJPs9U8ObRvjnBxFE2Ok_d5JE9jsXxX2SiSNNFaxs5UAgGDE66cgddWWIuD2BO0aXwC7_TNQbFzdplxXsfo0tnU-zXrxjcjfvUhHdcd_5211ZMXaheUKz5IQ9YeAU_8klZc_AIjtYIW0Ezum1VlWwd480VKGOokRmuMp_wfAESqFTZIJAYZZW6t4qELpf97gHm_UL8jLhPwiUKQGgBEzcjvjBsMydyHV4Eab17FNxpZusQ5KdUeATnR05-qMccKpk1reFp1x4jjJY-8VH0cIoW3VDMb9N32F2wGA8BD0sqCLS3BuAneZ-83hHLEnnuyAVn-Bqts0CAzHmgQy6Pfb2V_r_-1xr8peJlecBpFMYg3o8SHbZndMFiUVgywAfKQqr2di114HOIycEL6GrMWe8u216jfeGPaknyPUJklQUxS4-YscMzQ_3lFy-GixGH6Pp8k5zpVSFobAoqD3O_Ps3GcNetS1urt1a5_Pm9TDV4525coXZanQ6axsjkMhQP6hqSg5MQM-InSEbbEUO7OSn5ZdRbt1SJ7VqbUawKIoEps8Ng0MypZlhMiNTJcvcAk35U5BdH8zCquvjYqjXDGJ5lphSKaj5POhBUHwEHJZvIpZ3Y0f1EKLuRa6BxefY7wPrqQgx2qv0ons52BDbY2Td4LlEF7JWUFiy3V-7bvm7PekVIu5C2w4OzywFZJ-pb_tv-JCTK6Uqt_00_0GmhzXpacgjx0GiXRYY4Bt6IpADqfZhFqXa009qH2zYLDxn5BEl7qNsd_UNyHnm_geSDPh4F6hIXFJ4LHgXW9Fn2EahT8OkJzab5RcZSf3TcIRr_gqIQOveuAsir9OEv1pjUgnde8CoN9AWh13ss0Pm1B5o9VeL1aoemsYdSevsT3xEdKdqLbkrbUPakEbiTGEMPscAmKz2XNrL1StgtemS-T7qJjJiC-MDyolv98AxIjZElSsOZbDRdCfKB_jqMzbnvPZ-jNzfbFoY6HLmk7I428_4D6lJ6lUgOk_lADTHF9PDQPoILX9yxRa4mMNThKnKtKxwTxDyQDTfUc_hYmWnf1HiDiEgZ6P2MNCG4RyK-c03LUS4zOe7MbHNaf6eMlWE61pSVXvSbokL7wtQTOofDd-TIRWybxkU2uw_uniJxQngEfawm4DObLOfs7RZYuHuZ5_SdmLewKthCGubWw"
 
 USUARIOS = {
     "pytty": {
@@ -57,9 +57,11 @@ def carregar(loja):
 def salvar(lista, loja):
     arq = caminho_db(loja)
 
+    # salva local
     with open(arq, "w") as f:
         json.dump(lista, f, indent=2)
 
+    # backup local
     backup = datetime.now().strftime(f"backup_{loja.replace(' ','_')}_%Y%m%d_%H%M%S.json")
     with open(backup, "w") as f:
         json.dump(lista, f, indent=2)
@@ -87,10 +89,20 @@ def salvar(lista, loja):
             "Content-Type": "application/octet-stream"
         }
 
-        requests.post(url, headers=headers, data=json.dumps(lista))
+        r = requests.post(
+            url,
+            headers=headers,
+            data=json.dumps(lista).encode("utf-8")
+        )
 
-    except:
-        pass
+        print("📡 DROPBOX STATUS:", r.status_code)
+        print("📄 DROPBOX RESPOSTA:", r.text)
+
+        if r.status_code != 200:
+            print("❌ ERRO AO SALVAR NA NUVEM!")
+
+    except Exception as e:
+        print("❌ ERRO DROPBOX:", e)
 
 # -----------------------------------------
 # PDF
